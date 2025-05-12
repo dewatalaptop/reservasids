@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistem Reservasi Dolan Sawah</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+    header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 20px 10px;
+      text-align: center;
+    }
+    header small {
+      display: block;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #333;
+    }
+    nav button {
+      background-color: #333;
+      border: none;
+      color: white;
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    nav button:hover {
+      background-color: #575757;
+    }
+    .tabcontent {
+      display: none;
+      padding: 20px;
+    }
+    .tabcontent.active {
+      display: block;
+    }
+    input, select, textarea {
+      padding: 8px;
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    label {
+      font-weight: bold;
+    }
+    .reservation-entry {
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #fff;
+    }
+    .rangkuman-entry {
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      margin-bottom: 15px;
+      padding: 10px;
+    }
+    .label-ds {
+      background: #4CAF50;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .label-sw {
+      background: #f44336;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .label-refill {
+      background: #ffeb3b;
+      color: black;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .btn-share {
+      margin-top: 15px;
+      background: #25D366;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .btn-share:hover {
+      background: #1da851;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sistem Reservasi Dolan Sawah</h1>
+    <small>by Ryan</small>
+  </header>
+
+  <nav>
+    <button onclick="openTab(event, 'Reservasi')">Reservasi</button>
+    <button onclick="openTab(event, 'Rangkuman')">Rangkuman</button>
+    <button onclick="openTab(event, 'Stok')">Stok Perlengkapan</button>
+    <button onclick="openTab(event, 'Info')">Info Tempat</button>
+  </nav>
+
+  <div id="Reservasi" class="tabcontent active">
+    <h2>Formulir Reservasi</h2>
+    <div id="reservation-form">
+      <!-- Placeholder untuk form input dinamis -->
+      <p>Silakan lengkapi form ini secara manual atau hubungi admin.</p>
+    </div>
+  </div>
+
+  <div id="Rangkuman" class="tabcontent">
+    <h2>Rangkuman Reservasi</h2>
+    <div id="rangkuman-list">
+      <p>Belum ada data. Silakan isi di tab Reservasi.</p>
+    </div>
+    <input type="text" id="whatsapp-number" placeholder="Masukkan nomor WhatsApp (contoh: 628123456789)">
+    <button class="btn-share" onclick="shareToWhatsApp()">Bagikan ke WhatsApp</button>
+  </div>
+
+  <div id="Stok" class="tabcontent">
+    <h2>Stok Perlengkapan</h2>
+    <div id="stok-list">
+      <ul>
+        <li>Chafing Dish: 8</li>
+        <li>Magicom: 5</li>
+        <li>Pemanas Sup: 4</li>
+        <li>Dispenser Teh: 3</li>
+        <li>Tempat Es: 6</li>
+      </ul>
+      <p><strong>Keterangan:</strong> Alat berlabel SW disewa dari luar. Alat DS berarti tersedia.</p>
+    </div>
+  </div>
+
+  <div id="Info" class="tabcontent">
+    <h2>Info Tempat & Paket</h2>
+    <ul>
+      <li>Lantai 1: 240 orang</li>
+      <li>Lantai 2: 64 orang</li>
+      <li>Lantai 3: 112 orang</li>
+      <li>Gubug 1: 40 orang</li>
+      <li>Gubug 2: 15 orang</li>
+      <li>Gubug 3: 110 orang</li>
+    </ul>
+    <p>Tempat dan kapasitas akan terupdate otomatis saat reservasi masuk.</p>
+  </div>
+
+  <footer style="text-align:center; padding:10px; background:#f0f0f0; margin-top:20px;">
+    <small>&copy; 2025 Dolan Sawah - Sistem Reservasi Otomatis</small>
+  </footer>
+
+  <script>
+    function openTab(evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].classList.remove("active");
+      }
+      document.getElementById(tabName).classList.add("active");
+    }
+
+    function shareToWhatsApp() {
+      const nomor = document.getElementById("whatsapp-number").value;
+      const ringkasan = document.getElementById("rangkuman-list").innerText;
+      if (!nomor) {
+        alert("Masukkan nomor WhatsApp terlebih dahulu.");
+        return;
+      }
+      const pesan = encodeURIComponent(ringkasan);
+      const url = "https://wa.me/" + nomor + "?text=" + pesan;
+      window.open(url, "_blank");
+    }
+  </script>
+</body>
+</html>
