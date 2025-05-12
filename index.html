@@ -1,104 +1,206 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Sistem Reservasi untuk Dolan Sawah">
   <title>Sistem Reservasi Dolan Sawah</title>
   <style>
+    :root {
+      --primary-color: #4CAF50;
+      --secondary-color: #333;
+      --accent-color: #25D366;
+      --danger-color: #f44336;
+      --warning-color: #ffeb3b;
+      --light-bg: #f9f9f9;
+    }
+    
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background: #f9f9f9;
+      background: var(--light-bg);
       color: #333;
+      line-height: 1.6;
     }
+    
     header {
-      background-color: #4CAF50;
+      background-color: var(--primary-color);
       color: white;
       padding: 20px 10px;
       text-align: center;
     }
+    
     header small {
       display: block;
-      font-size: 12px;
+      font-size: 0.8rem;
       margin-top: 5px;
+      opacity: 0.9;
     }
+    
     nav {
       display: flex;
       justify-content: center;
-      background-color: #333;
+      background-color: var(--secondary-color);
+      flex-wrap: wrap;
     }
+    
     nav button {
-      background-color: #333;
+      background-color: transparent;
       border: none;
       color: white;
       padding: 14px 20px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      position: relative;
     }
-    nav button:hover {
+    
+    nav button:hover, nav button.active {
       background-color: #575757;
     }
+    
+    nav button.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: var(--primary-color);
+    }
+    
     .tabcontent {
       display: none;
       padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
     }
+    
     .tabcontent.active {
       display: block;
+      animation: fadeIn 0.5s;
     }
-    input, select, textarea {
-      padding: 8px;
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    input, select, textarea, button {
+      padding: 10px;
       width: 100%;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
       border: 1px solid #ccc;
       border-radius: 4px;
+      box-sizing: border-box;
+      font-family: inherit;
     }
+    
     label {
       font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
     }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
     .reservation-entry {
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       margin-bottom: 20px;
       padding: 15px;
       background: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
+    
     .rangkuman-entry {
       background: #e3f2fd;
       border: 1px solid #90caf9;
       margin-bottom: 15px;
-      padding: 10px;
+      padding: 15px;
+      border-radius: 5px;
     }
+    
+    .label {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    
     .label-ds {
-      background: #4CAF50;
+      background: var(--primary-color);
       color: white;
-      padding: 2px 6px;
-      border-radius: 4px;
     }
+    
     .label-sw {
-      background: #f44336;
+      background: var(--danger-color);
       color: white;
-      padding: 2px 6px;
-      border-radius: 4px;
     }
+    
     .label-refill {
-      background: #ffeb3b;
-      color: black;
-      padding: 2px 6px;
-      border-radius: 4px;
+      background: var(--warning-color);
+      color: #000;
     }
-    .btn-share {
-      margin-top: 15px;
-      background: #25D366;
-      color: white;
-      border: none;
+    
+    .btn {
+      display: inline-block;
       padding: 10px 16px;
       border-radius: 4px;
-      font-size: 16px;
+      font-size: 1rem;
       cursor: pointer;
+      text-align: center;
+      transition: background 0.3s;
+      border: none;
     }
-    .btn-share:hover {
+    
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #3d8b40;
+    }
+    
+    .btn-whatsapp {
+      background: var(--accent-color);
+      color: white;
+      width: auto;
+      margin-top: 15px;
+    }
+    
+    .btn-whatsapp:hover {
       background: #1da851;
+    }
+    
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    
+    .no-data {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-style: italic;
+    }
+    
+    @media (max-width: 768px) {
+      nav button {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+      }
+      
+      .tabcontent {
+        padding: 15px;
+      }
     }
   </style>
 </head>
@@ -109,80 +211,294 @@
   </header>
 
   <nav>
-    <button onclick="openTab(event, 'Reservasi')">Reservasi</button>
-    <button onclick="openTab(event, 'Rangkuman')">Rangkuman</button>
-    <button onclick="openTab(event, 'Stok')">Stok Perlengkapan</button>
-    <button onclick="openTab(event, 'Info')">Info Tempat</button>
+    <button class="tablink active" onclick="openTab(event, 'Reservasi')">Reservasi</button>
+    <button class="tablink" onclick="openTab(event, 'Rangkuman')">Rangkuman</button>
+    <button class="tablink" onclick="openTab(event, 'Stok')">Stok Perlengkapan</button>
+    <button class="tablink" onclick="openTab(event, 'Info')">Info Tempat</button>
   </nav>
 
-  <div id="Reservasi" class="tabcontent active">
-    <h2>Formulir Reservasi</h2>
-    <div id="reservation-form">
-      <!-- Placeholder untuk form input dinamis -->
-      <p>Silakan lengkapi form ini secara manual atau hubungi admin.</p>
-    </div>
-  </div>
+  <main>
+    <section id="Reservasi" class="tabcontent active">
+      <h2>Formulir Reservasi</h2>
+      <form id="reservation-form">
+        <div class="form-group">
+          <label for="nama-pemesan">Nama Pemesan</label>
+          <input type="text" id="nama-pemesan" placeholder="Masukkan nama pemesan" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="tanggal">Tanggal Acara</label>
+          <input type="date" id="tanggal" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="waktu">Waktu Acara</label>
+          <input type="time" id="waktu" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="jumlah-tamu">Jumlah Tamu</label>
+          <input type="number" id="jumlah-tamu" min="1" placeholder="Masukkan jumlah tamu" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="lokasi">Lokasi yang Dipilih</label>
+          <select id="lokasi" required>
+            <option value="">Pilih lokasi...</option>
+            <option value="lantai1">Lantai 1 (240 orang)</option>
+            <option value="lantai2">Lantai 2 (64 orang)</option>
+            <option value="lantai3">Lantai 3 (112 orang)</option>
+            <option value="gubug1">Gubug 1 (40 orang)</option>
+            <option value="gubug2">Gubug 2 (15 orang)</option>
+            <option value="gubug3">Gubug 3 (110 orang)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="kebutuhan-khusus">Kebutuhan Khusus</label>
+          <textarea id="kebutuhan-khusus" rows="3" placeholder="Masukkan kebutuhan khusus jika ada"></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Simpan Reservasi</button>
+      </form>
+    </section>
 
-  <div id="Rangkuman" class="tabcontent">
-    <h2>Rangkuman Reservasi</h2>
-    <div id="rangkuman-list">
-      <p>Belum ada data. Silakan isi di tab Reservasi.</p>
-    </div>
-    <input type="text" id="whatsapp-number" placeholder="Masukkan nomor WhatsApp (contoh: 628123456789)">
-    <button class="btn-share" onclick="shareToWhatsApp()">Bagikan ke WhatsApp</button>
-  </div>
+    <section id="Rangkuman" class="tabcontent">
+      <h2>Rangkuman Reservasi</h2>
+      <div id="rangkuman-list" class="no-data">
+        <p>Belum ada data reservasi.</p>
+      </div>
+      
+      <div class="form-group">
+        <label for="whatsapp-number">Nomor WhatsApp Tujuan</label>
+        <input type="tel" id="whatsapp-number" placeholder="Contoh: 628123456789" pattern="[0-9]{10,15}">
+        <small>Format: 62xxxxxxxxxx (tanpa + atau 0 di depan)</small>
+      </div>
+      
+      <button class="btn btn-whatsapp" onclick="shareToWhatsApp()">Bagikan ke WhatsApp</button>
+    </section>
 
-  <div id="Stok" class="tabcontent">
-    <h2>Stok Perlengkapan</h2>
-    <div id="stok-list">
-      <ul>
-        <li>Chafing Dish: 8</li>
-        <li>Magicom: 5</li>
-        <li>Pemanas Sup: 4</li>
-        <li>Dispenser Teh: 3</li>
-        <li>Tempat Es: 6</li>
-      </ul>
-      <p><strong>Keterangan:</strong> Alat berlabel SW disewa dari luar. Alat DS berarti tersedia.</p>
-    </div>
-  </div>
+    <section id="Stok" class="tabcontent">
+      <h2>Stok Perlengkapan</h2>
+      <div class="grid-container">
+        <div class="reservation-entry">
+          <h3>Chafing Dish <span class="label label-ds">DS</span></h3>
+          <p>Stok tersedia: 8 unit</p>
+        </div>
+        
+        <div class="reservation-entry">
+          <h3>Magicom <span class="label label-sw">SW</span></h3>
+          <p>Stok tersedia: 5 unit</p>
+        </div>
+        
+        <div class="reservation-entry">
+          <h3>Pemanas Sup <span class="label label-ds">DS</span></h3>
+          <p>Stok tersedia: 4 unit</p>
+        </div>
+        
+        <div class="reservation-entry">
+          <h3>Dispenser Teh <span class="label label-refill">Refill</span></h3>
+          <p>Stok tersedia: 3 unit</p>
+        </div>
+        
+        <div class="reservation-entry">
+          <h3>Tempat Es <span class="label label-ds">DS</span></h3>
+          <p>Stok tersedia: 6 unit</p>
+        </div>
+      </div>
+      
+      <div class="reservation-entry" style="margin-top: 20px;">
+        <p><strong>Keterangan:</strong></p>
+        <ul>
+          <li><span class="label label-ds">DS</span> = Alat tersedia di Dolan Sawah</li>
+          <li><span class="label label-sw">SW</span> = Alat disewa dari luar</li>
+          <li><span class="label label-refill">Refill</span> = Perlu isi ulang bahan</li>
+        </ul>
+      </div>
+    </section>
 
-  <div id="Info" class="tabcontent">
-    <h2>Info Tempat & Paket</h2>
-    <ul>
-      <li>Lantai 1: 240 orang</li>
-      <li>Lantai 2: 64 orang</li>
-      <li>Lantai 3: 112 orang</li>
-      <li>Gubug 1: 40 orang</li>
-      <li>Gubug 2: 15 orang</li>
-      <li>Gubug 3: 110 orang</li>
-    </ul>
-    <p>Tempat dan kapasitas akan terupdate otomatis saat reservasi masuk.</p>
-  </div>
+    <section id="Info" class="tabcontent">
+      <h2>Info Tempat & Paket</h2>
+      <div class="grid-container">
+        <div class="reservation-entry">
+          <h3>Lantai 1</h3>
+          <p>Kapasitas: 240 orang</p>
+        </div>
+        
+        <div class="reservation-entry">
+          <h3>Lantai 2</h3>
+          <p>Kapasitas: 64 orang</p>
+        </div>
+        
+        <div class="reservation-entry">
+          <h3>Lantai 3</h3>
+          <p>Kapasitas: 112 orang</p>
+        </div>
+        
+        <div class="reservation-entry">
+          <h3>Gubug 1</h3>
+          <p>Kapasitas: 40 orang</p>
+        </div>
+        
+        <div class="reservation-entry">
+          <h3>Gubug 2</h3>
+          <p>Kapasitas: 15 orang</p>
+        </div>
+        
+        <div class="reservation-entry">
+          <h3>Gubug 3</h3>
+          <p>Kapasitas: 110 orang</p>
+        </div>
+      </div>
+      
+      <div class="reservation-entry" style="margin-top: 20px;">
+        <h3>Informasi Tambahan</h3>
+        <p>Kapasitas akan diperbarui otomatis saat ada reservasi masuk. Silakan hubungi admin untuk informasi lebih lanjut.</p>
+      </div>
+    </section>
+  </main>
 
-  <footer style="text-align:center; padding:10px; background:#f0f0f0; margin-top:20px;">
+  <footer style="text-align:center; padding:15px; background:#f0f0f0; margin-top:20px;">
     <small>&copy; 2025 Dolan Sawah - Sistem Reservasi Otomatis</small>
   </footer>
 
   <script>
+    // Simpan data reservasi
+    let reservations = [];
+    
+    // Inisialisasi tab pertama sebagai aktif
+    document.addEventListener('DOMContentLoaded', function() {
+      // Tangani form reservasi
+      document.getElementById('reservation-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addReservation();
+      });
+      
+      // Load data dari localStorage jika ada
+      loadReservations();
+    });
+    
     function openTab(evt, tabName) {
       var i, tabcontent, tablinks;
+      
+      // Sembunyikan semua tab content
       tabcontent = document.getElementsByClassName("tabcontent");
       for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].classList.remove("active");
       }
+      
+      // Hapus class active dari semua tab links
+      tablinks = document.getElementsByClassName("tablink");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+      }
+      
+      // Tampilkan tab yang dipilih dan tandai button sebagai aktif
       document.getElementById(tabName).classList.add("active");
+      evt.currentTarget.classList.add("active");
     }
-
-    function shareToWhatsApp() {
-      const nomor = document.getElementById("whatsapp-number").value;
-      const ringkasan = document.getElementById("rangkuman-list").innerText;
-      if (!nomor) {
-        alert("Masukkan nomor WhatsApp terlebih dahulu.");
+    
+    function addReservation() {
+      const nama = document.getElementById('nama-pemesan').value;
+      const tanggal = document.getElementById('tanggal').value;
+      const waktu = document.getElementById('waktu').value;
+      const jumlahTamu = document.getElementById('jumlah-tamu').value;
+      const lokasi = document.getElementById('lokasi').options[document.getElementById('lokasi').selectedIndex].text;
+      const kebutuhan = document.getElementById('kebutuhan-khusus').value;
+      
+      const newReservation = {
+        id: Date.now(),
+        nama,
+        tanggal,
+        waktu,
+        jumlahTamu,
+        lokasi,
+        kebutuhan
+      };
+      
+      reservations.push(newReservation);
+      saveReservations();
+      updateSummary();
+      
+      // Reset form
+      document.getElementById('reservation-form').reset();
+      
+      // Tampilkan notifikasi
+      alert('Reservasi berhasil disimpan!');
+    }
+    
+    function updateSummary() {
+      const summaryList = document.getElementById('rangkuman-list');
+      
+      if (reservations.length === 0) {
+        summaryList.innerHTML = '<p class="no-data">Belum ada data reservasi.</p>';
         return;
       }
-      const pesan = encodeURIComponent(ringkasan);
-      const url = "https://wa.me/" + nomor + "?text=" + pesan;
-      window.open(url, "_blank");
+      
+      let html = '';
+      reservations.forEach(res => {
+        html += `
+          <div class="rangkuman-entry">
+            <h3>${res.nama}</h3>
+            <p><strong>Tanggal:</strong> ${res.tanggal} | <strong>Waktu:</strong> ${res.waktu}</p>
+            <p><strong>Lokasi:</strong> ${res.lokasi}</p>
+            <p><strong>Jumlah Tamu:</strong> ${res.jumlahTamu} orang</p>
+            ${res.kebutuhan ? `<p><strong>Kebutuhan Khusus:</strong> ${res.kebutuhan}</p>` : ''}
+            <small>ID Reservasi: ${res.id}</small>
+          </div>
+        `;
+      });
+      
+      summaryList.innerHTML = html;
+    }
+    
+    function shareToWhatsApp() {
+      const nomor = document.getElementById('whatsapp-number').value;
+      
+      if (!nomor) {
+        alert('Masukkan nomor WhatsApp terlebih dahulu.');
+        return;
+      }
+      
+      if (!/^[0-9]{10,15}$/.test(nomor)) {
+        alert('Format nomor WhatsApp tidak valid. Gunakan format 628123456789 (10-15 digit angka)');
+        return;
+      }
+      
+      if (reservations.length === 0) {
+        alert('Tidak ada data reservasi untuk dibagikan.');
+        return;
+      }
+      
+      let pesan = `*RINGKASAN RESERVASI DOLAN SAWAH*\n\n`;
+      
+      reservations.forEach((res, index) => {
+        pesan += `*Reservasi ${index + 1}:*\n`;
+        pesan += `Nama: ${res.nama}\n`;
+        pesan += `Tanggal: ${res.tanggal}\n`;
+        pesan += `Waktu: ${res.waktu}\n`;
+        pesan += `Lokasi: ${res.lokasi}\n`;
+        pesan += `Jumlah Tamu: ${res.jumlahTamu} orang\n`;
+        if (res.kebutuhan) {
+          pesan += `Kebutuhan Khusus: ${res.kebutuhan}\n`;
+        }
+        pesan += `ID: ${res.id}\n\n`;
+      });
+      
+      const url = `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`;
+      window.open(url, '_blank');
+    }
+    
+    function saveReservations() {
+      localStorage.setItem('dolanSawahReservations', JSON.stringify(reservations));
+    }
+    
+    function loadReservations() {
+      const saved = localStorage.getItem('dolanSawahReservations');
+      if (saved) {
+        reservations = JSON.parse(saved);
+        updateSummary();
+      }
     }
   </script>
 </body>
