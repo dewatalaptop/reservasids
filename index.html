@@ -5,182 +5,213 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reservasi Dolan Sawah</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f7f7f7;
-    }
-    header {
-      background-color: #4CAF50;
-      color: white;
-      padding: 1em;
-      text-align: center;
-    }
-    nav {
-      display: flex;
-      justify-content: space-around;
-      background: #333;
-      color: white;
-    }
-    nav button {
-      flex: 1;
-      padding: 1em;
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1em;
-      cursor: pointer;
-    }
-    nav button.active {
-      background: #4CAF50;
-    }
-    section {
-      display: none;
-      padding: 1em;
-    }
-    section.active {
-      display: block;
-    }
-    .whatsapp-button {
-      background-color: #25D366;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      font-size: 1em;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+    body { font-family: Arial, sans-serif; margin: 0; background-color: #e0f7fa; color: #003f5c; }
+    header { background-color: #005f73; color: white; padding: 20px; text-align: center; }
+    header small { display: block; font-size: 10px; margin-top: 5px; color: #cfe8ec; }
+    .container { padding: 20px; }
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 20px; }
+    .date { background-color: #94d2bd; padding: 10px; text-align: center; border-radius: 4px; cursor: pointer; transition: background 0.3s; }
+    .date:hover { background-color: #0a9396; color: white; }
+    .warning { background-color: #ff6b6b; color: white; padding: 10px; margin-top: 10px; border-radius: 5px; text-align: center; display: none; }
+    .form-popup, .summary { margin-top: 20px; background-color: #f1faee; padding: 15px; border-radius: 5px; }
+    button { background-color: #0077b6; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; margin-top: 5px; }
+    button:hover { background-color: #023e8a; }
+    footer { text-align: center; font-size: 10px; color: #fff; background-color: #005f73; padding: 10px; margin-top: 20px; }
+    .menu-detail { margin-top: 5px; font-size: 13px; color: #333; }
+    .menu-detail b { font-size: 14px; display: block; margin-bottom: 3px; }
+    @media print { header, .calendar, button, footer { display: none; } }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Reservasi Dolan Sawah</h1>
+    <h2>Reservasi Dolan Sawah</h2>
+    <small>by Ryan</small>
   </header>
 
-  <nav>
-    <button onclick="showTab('reservasi')">Reservasi</button>
-    <button onclick="showTab('rangkuman')">Rangkuman</button>
-    <button onclick="showTab('stok')">Stok</button>
-    <button onclick="showTab('info')">Info Tempat</button>
-  </nav>
+  <div class="container">
+    <select id="bulanSelect">
+      <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+      <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
+      <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+      <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+    </select>
+    <div class="warning" id="warningBox">Kapasitas hampir penuh</div>
+    <div class="calendar" id="calendar"></div>
 
-  <section id="reservasi" class="active">
-    <h2>Form Reservasi</h2>
-    <!-- Form input reservasi bisa ditambahkan di sini -->
-    <p>(Form reservasi tidak ditampilkan dalam contoh ini)</p>
-  </section>
+    <div class="summary" id="summary" style="display:none;"></div>
+    <div class="form-popup" id="formPopup" style="display:none;">
+      <h3>Input Reservasi</h3>
+      <label>Password: <input type="password" id="adminPass" /></label><br/>
+      <div id="formFields" style="display:none;">
+        <label>Nama: <input type="text" id="nama" /></label><br/>
+        <label>Jam Reservasi: <input type="time" id="jam" /></label><br/>
+        <label>Jumlah Peserta: <input type="number" id="jumlah" /></label><br/>
+        <label>Menu: 
+          <select id="menu">
+            <option>Paket A</option><option>Paket B</option><option>Paket C</option>
+            <option>Paket D</option><option>Paket E</option><option>Paket F</option>
+            <option>Paket G</option><option>Paket H</option><option>Paket I</option><option>Paket J</option>
+            <option>OTS</option><option>Paket Rantang</option>
+          </select>
+        </label><br/>
+        <label>Tempat:
+          <select id="tempat">
+            <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
+            <option>Gubug 1</option><option>Gubug 2</option><option>Gubug 3</option>
+          </select>
+        </label><br/>
+        <label>Request Tambahan:<br/>
+          <textarea id="tambahan"></textarea>
+        </label><br/>
+        <button onclick="simpanReservasi()">Simpan</button>
+      </div>
+    </div>
 
-  <section id="rangkuman">
-    <h2>Rangkuman Reservasi Bulanan</h2>
-    <label for="bulan">Pilih Bulan:</label>
-    <input type="month" id="bulan" onchange="tampilkanRangkuman()"/>
-    <div id="hasilRangkuman"></div>
-    <button class="whatsapp-button" onclick="kirimWhatsApp()">Bagikan via WhatsApp</button>
-  </section>
+    <button onclick="printData()">Print</button>
+    <button onclick="shareViaEmail()">Bagikan via Email</button>
+  </div>
 
-  <section id="stok">
-    <h2>Stok Perlengkapan</h2>
-    <p>(Data stok bisa dimasukkan di sini)</p>
-  </section>
-
-  <section id="info">
-    <h2>Info Tempat</h2>
-    <p>(Info tentang tempat, kapasitas, dan fasilitas)</p>
-  </section>
+  <footer>by Ryan</footer>
 
   <script>
-    const tabButtons = document.querySelectorAll("nav button");
-    const sections = document.querySelectorAll("section");
+    const kapasitasTempat = {
+      "Lantai 1": 240, "Lantai 2": 64, "Lantai 3": 112,
+      "Gubug 1": 40, "Gubug 2": 15, "Gubug 3": 110,
+    };
 
-    function showTab(id) {
-      sections.forEach(section => section.classList.remove("active"));
-      tabButtons.forEach(button => button.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-      event.target.classList.add("active");
+    const detailMenu = {
+      "Paket A": ["Nasi putih", "Ayam kremes", "Sambel", "Lalapan", "Teh", "Es"],
+      "Paket B": ["Nasi putih", "Daging kelem", "Bakmi", "Teh", "Es"],
+      "Paket C": ["Nasi putih", "Ayam geprek", "Sop Sosis jamur", "Semangka", "Teh", "Es"],
+      "Paket D": ["Nasi putih", "Nila bakar", "Sayur asem", "Sambal", "Pisang goreng", "Teh", "Es"],
+      "Paket E": ["Nasi putih", "Ayam lada hitam", "Capcay", "Soun jamur", "Bakso kuah", "Kerupuk", "Bolu gulung", "Teh", "Es"],
+      "Paket F": ["Steak Ayam", "Kentang goreng", "Wortel + buncis", "Puding Fla", "Soft drink", "Air mineral cup"],
+      "Paket G": ["Nasi putih", "Kakap asam manis", "Ayam goreng mentega", "Tumis buncis daging sapi", "Sambal", "Teh", "Es"],
+      "Paket H": ["Nasi putih", "Sup iga sapi", "Kerupuk udang", "Sambel kecap", "Tahu + tempe goreng", "Sosis solo", "Bolu gulung", "Teh", "Es", "Air mineral cup"],
+      "Paket I": ["Nasi", "Iga bakar", "Sop", "Sambal", "Kerupuk", "Lalapan", "Sosis solo", "Semangka", "Teh", "Es", "Air mineral"],
+      "Paket J": ["Nasi", "Sambel goreng ati", "Bihun goreng", "Daging kelem", "Acar kuning", "Kerupuk udang", "Sop Sosis jamur", "Sosis solo", "Pie buah", "Teh", "Softdrink", "Air mineral cup"],
+      "OTS": [],
+      "Paket Rantang": []
+    };
+
+    let dataReservasi = JSON.parse(localStorage.getItem('reservasiDolan')) || {};
+    let tanggalDipilih = '';
+
+    const calendarEl = document.getElementById('calendar');
+    const warningBox = document.getElementById('warningBox');
+    const summaryEl = document.getElementById('summary');
+    const formPopup = document.getElementById('formPopup');
+    const bulanSelect = document.getElementById('bulanSelect');
+
+    function buatKalender() {
+      calendarEl.innerHTML = '';
+      for (let i = 1; i <= 31; i++) {
+        const div = document.createElement('div');
+        div.className = 'date';
+        div.textContent = i;
+        div.onclick = () => pilihTanggal(i);
+        calendarEl.appendChild(div);
+      }
     }
 
-    // Simulasi data di localStorage
-    if (!localStorage.getItem("dataReservasi")) {
-      const contohData = [
-        {
-          tanggal: "2025-05-03",
-          nama: "Budi",
-          paket: "Paket A",
-          jumlah: 4,
-          catatan: "Ulang tahun"
-        },
-        {
-          tanggal: "2025-05-13",
-          nama: "Siti",
-          paket: "Paket B",
-          jumlah: 6,
-          catatan: ""
-        },
-        {
-          tanggal: "2025-06-02",
-          nama: "Andi",
-          paket: "Paket C",
-          jumlah: 2,
-          catatan: "Pagi"
-        }
-      ];
-      localStorage.setItem("dataReservasi", JSON.stringify(contohData));
-    }
+    function pilihTanggal(tgl) {
+      const bulan = bulanSelect.value;
+      const key = `${bulan.padStart(2,'0')}-${String(tgl).padStart(2, '0')}`;
+      tanggalDipilih = key;
+      const data = dataReservasi[key] || [];
 
-    function tampilkanRangkuman() {
-      const bulan = document.getElementById("bulan").value;
-      const data = JSON.parse(localStorage.getItem("dataReservasi") || "[]");
-      const hasil = document.getElementById("hasilRangkuman");
-      hasil.innerHTML = "";
+      const totalPeserta = data.reduce((sum, r) => sum + Number(r.jumlah), 0);
+      const totalKapasitas = Object.values(kapasitasTempat).reduce((a, b) => a + b, 0);
+      const persen = (totalPeserta / totalKapasitas) * 100;
 
-      if (!bulan) {
-        hasil.innerHTML = "<p>Silakan pilih bulan terlebih dahulu.</p>";
-        return;
-      }
+      warningBox.style.display = persen > 60 ? 'block' : 'none';
 
-      const dataBulan = data.filter(item => item.tanggal.startsWith(bulan));
-      if (dataBulan.length === 0) {
-        hasil.innerHTML = "<p>Tidak ada reservasi di bulan ini.</p>";
-        return;
-      }
-
-      let html = "<ul>";
-      dataBulan.forEach(item => {
-        html += `<li><b>${item.tanggal}</b>: ${item.nama} (${item.jumlah} org) - ${item.paket}${item.catatan ? " - " + item.catatan : ""}</li>`;
+      summaryEl.innerHTML = `<h3>Reservasi Tanggal ${key}</h3>`;
+      data.forEach((r, idx) => {
+        const isiMenu = detailMenu[r.menu]?.length
+          ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>')
+          : "-";
+        const div = document.createElement('div');
+        div.innerHTML = `<b>${r.nama}</b> (${r.tempat}, jam ${r.jam}, ${r.jumlah} orang)<br/>
+          <div class="menu-detail"><b>${r.menu}:</b>${isiMenu}</div>
+          <div><i>Tambahan:</i> ${r.tambahan || '-'}</div>
+          <button onclick="hapusReservasi('${key}', ${idx})">Hapus</button><hr/>`;
+        summaryEl.appendChild(div);
       });
-      html += "</ul>";
-      hasil.innerHTML = html;
+      summaryEl.style.display = 'block';
+      formPopup.style.display = 'block';
+      document.getElementById('formFields').style.display = 'none';
+      document.getElementById('adminPass').value = '';
+      formPopup.setAttribute('data-tanggal', key);
     }
 
-    function kirimWhatsApp() {
-      const bulan = document.getElementById("bulan").value;
-      const data = JSON.parse(localStorage.getItem("dataReservasi") || "[]");
+    document.getElementById('adminPass').oninput = function () {
+      document.getElementById('formFields').style.display = this.value === 'fusion437666' ? 'block' : 'none';
+    };
 
-      if (!bulan) {
-        alert("Silakan pilih bulan terlebih dahulu.");
-        return;
+    function simpanReservasi() {
+      const key = formPopup.getAttribute('data-tanggal');
+      const nama = document.getElementById('nama').value;
+      const jam = document.getElementById('jam').value;
+      const jumlah = parseInt(document.getElementById('jumlah').value);
+      const menu = document.getElementById('menu').value;
+      const tempat = document.getElementById('tempat').value;
+      const tambahan = document.getElementById('tambahan').value;
+
+      const existing = dataReservasi[key] || [];
+
+      if (tempat === "Gubug 1") {
+        const conflict = existing.some(r =>
+          r.tempat === "Gubug 1" &&
+          Math.abs(parseFloat(r.jam.replace(":", ".")) - parseFloat(jam.replace(":", "."))) < 3.5
+        );
+        if (conflict) return alert("Gubug 1 sudah terisi di jam tersebut!");
       }
 
-      const dataBulan = data.filter(item => item.tanggal.startsWith(bulan));
-      if (dataBulan.length === 0) {
-        alert("Tidak ada data untuk bulan tersebut.");
-        return;
-      }
-
-      let pesan = `*Rangkuman Reservasi Dolan Sawah*\nBulan: ${bulan}\n\n`;
-      dataBulan.forEach(item => {
-        pesan += `• ${item.tanggal}: ${item.nama} (${item.jumlah} org) - ${item.paket}`;
-        if (item.catatan) pesan += ` - ${item.catatan}`;
-        pesan += `\n`;
-      });
-
-      const encodedPesan = encodeURIComponent(pesan);
-      const url = `https://wa.me/?text=${encodedPesan}`;
-      window.open(url, "_blank");
+      existing.push({ nama, jam, jumlah, menu, tempat, tambahan });
+      dataReservasi[key] = existing;
+      localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+      alert("Reservasi berhasil disimpan!");
+      pilihTanggal(parseInt(key.split("-")[1]));
     }
+
+    function hapusReservasi(tgl, idx) {
+      const pass = prompt("Masukkan password admin:");
+      if (pass !== 'fusion437666') return alert("Password salah!");
+
+      dataReservasi[tgl].splice(idx, 1);
+      localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+      pilihTanggal(parseInt(tgl.split("-")[1]));
+    }
+
+    function printData() {
+      window.print();
+    }
+
+    function shareViaEmail() {
+      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
+        return alert("Silakan pilih tanggal terlebih dahulu.");
+      }
+      const list = dataReservasi[tanggalDipilih];
+      const summary = `Tanggal ${tanggalDipilih}:\n` + list.map((r, i) => {
+        const isi = detailMenu[r.menu]?.length
+          ? detailMenu[r.menu].map(x => `     - ${x}`).join('\n')
+          : "     - (tanpa detail menu)";
+        return (
+          `  ${i + 1}. ${r.nama} (${r.tempat}, Jam ${r.jam}, ${r.jumlah} orang)\n` +
+          `     Menu: ${r.menu}\n` +
+          `${isi}\n` +
+          `     Tambahan: ${r.tambahan || '-'}\n`
+        );
+      }).join('\n');
+
+      const emailLink = `mailto:?subject=Reservasi ${tanggalDipilih} Dolan Sawah&body=${encodeURIComponent(summary)}`;
+      window.location.href = emailLink;
+    }
+
+    bulanSelect.value = new Date().toISOString().slice(5, 7);
+    buatKalender();
   </script>
-
 </body>
 </html>
