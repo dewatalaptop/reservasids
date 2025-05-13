@@ -1,3 +1,4 @@
+<!-- KODE HTML LENGKAP YANG TELAH DIREVISI -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -91,6 +92,18 @@
       margin-top: 20px;
     }
 
+    .menu-detail {
+      margin-top: 5px;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .menu-detail b {
+      font-size: 14px;
+      display: block;
+      margin-bottom: 3px;
+    }
+
     @media print {
       header, .calendar, button, footer {
         display: none;
@@ -167,6 +180,19 @@
       "Gubug 1": 40, "Gubug 2": 15, "Gubug 3": 110,
     };
 
+    const detailMenu = {
+      "Paket A": ["Nasi putih", "Ayam kremes", "Sambel", "Lalapan", "Teh", "Es"],
+      "Paket B": ["Nasi putih", "Daging kelem", "Bakmi", "Teh", "Es"],
+      "Paket C": ["Nasi putih", "Ayam geprek", "Sop Sosis jamur", "Semangka", "Teh", "Es"],
+      "Paket D": ["Nasi putih", "Nila bakar", "Sayur asem", "Sambal", "Pisang goreng", "Teh", "Es"],
+      "Paket E": ["Nasi putih", "Ayam lada hitam", "Capcay", "Soun jamur", "Bakso kuah", "Kerupuk", "Bolu gulung", "Teh", "Es"],
+      "Paket F": ["Steak Ayam", "Kentang goreng", "Wortel + buncis", "Puding Fla", "Soft drink", "Air mineral cup"],
+      "Paket G": ["Nasi putih", "Kakap asam manis", "Ayam goreng mentega", "Tumis buncis daging sapi", "Sambal", "Teh", "Es"],
+      "Paket H": ["Nasi putih", "Sup iga sapi", "Kerupuk udang", "Sambel kecap", "Tahu + tempe goreng", "Sosis solo", "Bolu gulung", "Teh", "Es", "Air mineral cup"],
+      "Paket I": ["Nasi", "Iga bakar", "Sop", "Sambal", "Kerupuk", "Lalapan", "Sosis solo", "Semangka", "Teh", "Es", "Air mineral"],
+      "Paket J": ["Nasi", "Sambel goreng ati", "Bihun goreng", "Daging kelem", "Acar kuning", "Kerupuk udang", "Sop Sosis jamur", "Sosis solo", "Pie buah", "Teh", "Softdrink", "Air mineral cup"]
+    };
+
     let dataReservasi = JSON.parse(localStorage.getItem('reservasiDolan')) || {};
 
     const calendarEl = document.getElementById('calendar');
@@ -197,19 +223,18 @@
 
       warningBox.style.display = persen > 60 ? 'block' : 'none';
 
-      // tampilkan ringkasan
       summaryEl.innerHTML = `<h3>Reservasi Tanggal ${key}</h3>`;
       data.forEach((r, idx) => {
+        const isiMenu = detailMenu[r.menu]?.map(item => `• ${item}`).join('<br/>') || "-";
         const div = document.createElement('div');
         div.innerHTML = `<b>${r.nama}</b> (${r.tempat}, jam ${r.jam}, ${r.jumlah} orang)<br/>
-          Menu: ${r.menu}<br/>
-          Tambahan: ${r.tambahan || '-'}<br/>
-          <button onclick="hapusReservasi('${key}', ${idx})">Hapus</button>`;
+          <div class="menu-detail"><b>${r.menu}:</b>${isiMenu}</div>
+          <div><i>Tambahan:</i> ${r.tambahan || '-'}</div>
+          <button onclick="hapusReservasi('${key}', ${idx})">Hapus</button><hr/>`;
         summaryEl.appendChild(div);
       });
       summaryEl.style.display = 'block';
 
-      // tampilkan form input
       formPopup.style.display = 'block';
       document.getElementById('formFields').style.display = 'none';
       document.getElementById('adminPass').value = '';
@@ -217,11 +242,7 @@
     }
 
     document.getElementById('adminPass').oninput = function () {
-      if (this.value === 'fusion437666') {
-        document.getElementById('formFields').style.display = 'block';
-      } else {
-        document.getElementById('formFields').style.display = 'none';
-      }
+      document.getElementById('formFields').style.display = this.value === 'fusion437666' ? 'block' : 'none';
     };
 
     function simpanReservasi() {
@@ -235,11 +256,11 @@
 
       const existing = dataReservasi[key] || [];
 
-      // Cek aturan Gubug 1 hanya 1 reservasi per 3,5 jam
       if (tempat === "Gubug 1") {
-        const conflict = existing.some(r => {
-          return r.tempat === "Gubug 1" && Math.abs(parseFloat(r.jam.replace(":", ".")) - parseFloat(jam.replace(":", "."))) < 3.5;
-        });
+        const conflict = existing.some(r =>
+          r.tempat === "Gubug 1" &&
+          Math.abs(parseFloat(r.jam.replace(":", ".")) - parseFloat(jam.replace(":", "."))) < 3.5
+        );
         if (conflict) return alert("Gubug 1 sudah terisi di jam tersebut!");
       }
 
