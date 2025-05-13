@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Reservasi Dolan Sawah</title>
+  <title>Sistem Reservasi Dolan Sawah</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -91,72 +91,107 @@
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
     
-    .controls {
+    .calendar-header {
       display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      margin-bottom: 20px;
+      justify-content: space-between;
       align-items: center;
+      margin-bottom: 20px;
     }
     
-    select {
-      padding: 10px 15px;
+    .month-year {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+    
+    .calendar-nav {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .calendar-nav button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 15px;
       border-radius: 6px;
-      border: 1px solid #ddd;
-      background-color: white;
-      font-family: 'Poppins', sans-serif;
-      font-size: 1rem;
-      min-width: 200px;
       cursor: pointer;
+      font-family: 'Poppins', sans-serif;
       transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
     
-    select:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
+    .calendar-nav button:hover {
+      background-color: var(--primary-dark);
     }
     
-    .calendar {
+    .calendar-weekdays {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 12px;
-      margin-top: 25px;
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--primary-dark);
     }
     
-    .date {
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    
+    .calendar-day {
+      min-height: 80px;
+      padding: 8px;
       background-color: white;
-      padding: 15px 10px;
-      text-align: center;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
+      border-radius: 6px;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
       position: relative;
       border: 1px solid #eee;
+      transition: all 0.3s;
     }
     
-    .date:hover {
+    .calendar-day:hover {
       transform: translateY(-3px);
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
       border-color: var(--primary);
     }
     
-    .date.has-reservation::after {
-      content: '';
+    .day-number {
+      font-weight: 600;
+      margin-bottom: 5px;
+      text-align: right;
+    }
+    
+    .has-reservation {
+      background-color: rgba(42, 157, 143, 0.1);
+      border-left: 3px solid var(--primary);
+    }
+    
+    .selected {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .selected .day-number {
+      color: white;
+    }
+    
+    .reservation-count {
       position: absolute;
       top: 5px;
       right: 5px;
-      width: 8px;
-      height: 8px;
       background-color: var(--success);
-      border-radius: 50%;
-    }
-    
-    .date.selected {
-      background-color: var(--primary);
       color: white;
-      font-weight: 500;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
     }
     
     .warning {
@@ -345,28 +380,53 @@
       color: #666;
     }
     
+    .empty-day {
+      color: #ccc;
+      background-color: #f9f9f9;
+    }
+    
+    .today {
+      background-color: rgba(233, 196, 106, 0.3);
+      border: 1px solid var(--secondary);
+    }
+    
     @media (max-width: 768px) {
-      .calendar {
-        grid-template-columns: repeat(4, 1fr);
+      .calendar-day {
+        min-height: 60px;
+        padding: 5px;
       }
       
       .container {
         padding: 15px;
       }
+      
+      .month-year {
+        font-size: 1.2rem;
+      }
     }
     
     @media (max-width: 480px) {
-      .calendar {
-        grid-template-columns: repeat(3, 1fr);
+      .calendar-header {
+        flex-direction: column;
+        gap: 10px;
       }
       
       header h2 {
         font-size: 1.8rem;
       }
+      
+      .calendar-day {
+        min-height: 50px;
+        font-size: 0.8rem;
+      }
+      
+      .day-number {
+        margin-bottom: 2px;
+      }
     }
     
     @media print {
-      header, .calendar, button, footer {
+      header, .calendar-header, .calendar-weekdays, button, footer {
         display: none;
       }
       
@@ -382,61 +442,39 @@
         padding: 0;
       }
     }
-    
-    /* Animation for calendar dates */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .date {
-      animation: fadeIn 0.3s ease forwards;
-      opacity: 0;
-    }
-    
-    .date:nth-child(1) { animation-delay: 0.05s; }
-    .date:nth-child(2) { animation-delay: 0.1s; }
-    .date:nth-child(3) { animation-delay: 0.15s; }
-    .date:nth-child(4) { animation-delay: 0.2s; }
-    .date:nth-child(5) { animation-delay: 0.25s; }
-    .date:nth-child(6) { animation-delay: 0.3s; }
-    .date:nth-child(7) { animation-delay: 0.35s; }
-    .date:nth-child(8) { animation-delay: 0.4s; }
-    .date:nth-child(9) { animation-delay: 0.45s; }
-    .date:nth-child(10) { animation-delay: 0.5s; }
-    /* Continue for all dates if needed */
   </style>
 </head>
 <body>
 
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>by Ryan</small>
+    <small>Version 1.0.14</small>
   </header>
 
   <div class="container">
-    <div class="controls">
-      <select id="bulanSelect">
-        <option value="01"><i class="fas fa-snowflake"></i> Januari</option>
-        <option value="02"><i class="fas fa-heart"></i> Februari</option>
-        <option value="03"><i class="fas fa-seedling"></i> Maret</option>
-        <option value="04"><i class="fas fa-umbrella"></i> April</option>
-        <option value="05"><i class="fas fa-tree"></i> Mei</option>
-        <option value="06"><i class="fas fa-sun"></i> Juni</option>
-        <option value="07"><i class="fas fa-water"></i> Juli</option>
-        <option value="08"><i class="fas fa-campground"></i> Agustus</option>
-        <option value="09"><i class="fas fa-wind"></i> September</option>
-        <option value="10"><i class="fas fa-cloud-rain"></i> Oktober</option>
-        <option value="11"><i class="fas fa-cloud-sun"></i> November</option>
-        <option value="12"><i class="fas fa-holly-berry"></i> Desember</option>
-      </select>
+    <div class="calendar-header">
+      <div class="month-year" id="monthYear">Januari 2023</div>
+      <div class="calendar-nav">
+        <button onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
+        <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+      </div>
     </div>
+    
+    <div class="calendar-weekdays">
+      <div>Minggu</div>
+      <div>Senin</div>
+      <div>Selasa</div>
+      <div>Rabu</div>
+      <div>Kamis</div>
+      <div>Jumat</div>
+      <div>Sabtu</div>
+    </div>
+    
+    <div class="calendar-days" id="calendar"></div>
     
     <div class="warning" id="warningBox">
       <i class="fas fa-exclamation-triangle"></i> Kapasitas hampir penuh!
     </div>
-    
-    <div class="calendar" id="calendar"></div>
 
     <div class="summary" id="summary" style="display:none;"></div>
     
@@ -500,57 +538,92 @@
       "Paket Rantang": []
     };
 
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+
     let dataReservasi = JSON.parse(localStorage.getItem('reservasiDolan')) || {};
     let tanggalDipilih = '';
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
 
     const calendarEl = document.getElementById('calendar');
     const warningBox = document.getElementById('warningBox');
     const summaryEl = document.getElementById('summary');
     const formPopup = document.getElementById('formPopup');
-    const bulanSelect = document.getElementById('bulanSelect');
+    const monthYearEl = document.getElementById('monthYear');
 
     function buatKalender() {
       calendarEl.innerHTML = '';
-      const bulan = bulanSelect.value;
       
-      // Highlight current month in select
-      Array.from(bulanSelect.options).forEach(option => {
-        if (option.value === bulan) {
-          option.selected = true;
-        }
-      });
+      // Update month/year display
+      monthYearEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
       
-      // Create calendar dates
-      for (let i = 1; i <= 31; i++) {
-        const div = document.createElement('div');
-        div.className = 'date';
-        div.textContent = i;
+      // Get first day of month and total days in month
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      
+      // Get today's date for highlighting
+      const today = new Date();
+      const isCurrentMonth = today.getMonth() === currentMonth && today.getFullYear() === currentYear;
+      
+      // Add empty cells for days before the first day of the month
+      for (let i = 0; i < firstDay; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'calendar-day empty-day';
+        calendarEl.appendChild(emptyDay);
+      }
+      
+      // Add days of the month
+      for (let i = 1; i <= daysInMonth; i++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
         
-        const key = `${bulan.padStart(2,'0')}-${String(i).padStart(2, '0')}`;
-        if (dataReservasi[key] && dataReservasi[key].length > 0) {
-          div.classList.add('has-reservation');
+        // Highlight today
+        if (isCurrentMonth && i === today.getDate()) {
+          dayEl.classList.add('today');
         }
         
-        if (key === tanggalDipilih) {
-          div.classList.add('selected');
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.textContent = i;
+        dayEl.appendChild(dayNumber);
+        
+        // Check for reservations
+        const monthStr = String(currentMonth + 1).padStart(2, '0');
+        const dayStr = String(i).padStart(2, '0');
+        const dateKey = `${monthStr}-${dayStr}`;
+        
+        if (dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
+          dayEl.classList.add('has-reservation');
+          
+          const reservationCount = document.createElement('div');
+          reservationCount.className = 'reservation-count';
+          reservationCount.textContent = dataReservasi[dateKey].length;
+          dayEl.appendChild(reservationCount);
         }
         
-        div.onclick = () => pilihTanggal(i);
-        calendarEl.appendChild(div);
+        // Highlight selected date
+        if (dateKey === tanggalDipilih) {
+          dayEl.classList.add('selected');
+        }
+        
+        dayEl.onclick = () => pilihTanggal(i);
+        calendarEl.appendChild(dayEl);
       }
     }
 
-    function pilihTanggal(tgl) {
-      const bulan = bulanSelect.value;
-      const key = `${bulan.padStart(2,'0')}-${String(tgl).padStart(2, '0')}`;
+    function pilihTanggal(day) {
+      const monthStr = String(currentMonth + 1).padStart(2, '0');
+      const dayStr = String(day).padStart(2, '0');
+      const key = `${monthStr}-${dayStr}`;
       tanggalDipilih = key;
       const data = dataReservasi[key] || [];
 
       // Update calendar UI
-      document.querySelectorAll('.date').forEach(dateEl => {
-        dateEl.classList.remove('selected');
-        if (dateEl.textContent == tgl) {
-          dateEl.classList.add('selected');
+      document.querySelectorAll('.calendar-day').forEach(dayEl => {
+        dayEl.classList.remove('selected');
+        if (dayEl.querySelector('.day-number')?.textContent == day) {
+          dayEl.classList.add('selected');
         }
       });
 
@@ -581,8 +654,11 @@
         summaryEl.appendChild(capacityInfo);
       }
 
+      // Format date for display
+      const formattedDate = `${day} ${monthNames[currentMonth]} ${currentYear}`;
+      
       // Show reservations
-      summaryEl.innerHTML = `<h3><i class="far fa-calendar-alt"></i> Reservasi Tanggal ${key}</h3>`;
+      summaryEl.innerHTML = `<h3><i class="far fa-calendar-alt"></i> Reservasi Tanggal ${formattedDate}</h3>`;
       
       if (data.length === 0) {
         summaryEl.innerHTML += `<p style="text-align: center; color: #666; padding: 20px 0;">
@@ -616,6 +692,30 @@
       
       // Scroll to form
       formPopup.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function previousMonth() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      buatKalender();
+      tanggalDipilih = ''; // Reset selected date when changing months
+      summaryEl.style.display = 'none';
+      formPopup.style.display = 'none';
+    }
+
+    function nextMonth() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      buatKalender();
+      tanggalDipilih = ''; // Reset selected date when changing months
+      summaryEl.style.display = 'none';
+      formPopup.style.display = 'none';
     }
 
     document.getElementById('adminPass').oninput = function() {
@@ -663,10 +763,12 @@
       document.getElementById('jumlah').value = '';
       document.getElementById('tambahan').value = '';
       
-      // Remove message after 3 seconds
+      // Remove message after 3 seconds and refresh view
       setTimeout(() => {
         successMsg.remove();
-        pilihTanggal(parseInt(key.split("-")[1]));
+        const day = parseInt(key.split("-")[1]);
+        pilihTanggal(day);
+        buatKalender(); // Refresh calendar to update reservation counts
       }, 3000);
     }
 
@@ -677,7 +779,9 @@
       if (confirm("Apakah Anda yakin ingin menghapus reservasi ini?")) {
         dataReservasi[tgl].splice(idx, 1);
         localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
-        pilihTanggal(parseInt(tgl.split("-")[1]));
+        const day = parseInt(tgl.split("-")[1]);
+        pilihTanggal(day);
+        buatKalender(); // Refresh calendar to update reservation counts
       }
     }
 
@@ -693,8 +797,12 @@
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
         return alert("Silakan pilih tanggal terlebih dahulu.");
       }
+      
+      const [month, day] = tanggalDipilih.split('-');
+      const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
+      
       const list = dataReservasi[tanggalDipilih];
-      const summary = `Detail Reservasi Dolan Sawah - Tanggal ${tanggalDipilih}:\n\n` + 
+      const summary = `Detail Reservasi Dolan Sawah - ${formattedDate}:\n\n` + 
         list.map((r, i) => {
           const isi = detailMenu[r.menu]?.length
             ? detailMenu[r.menu].map(x => `     - ${x}`).join('\n')
@@ -711,16 +819,12 @@
           );
         }).join('\n');
 
-      const emailLink = `mailto:?subject=Reservasi ${tanggalDipilih} Dolan Sawah&body=${encodeURIComponent(summary)}`;
+      const emailLink = `mailto:?subject=Reservasi ${formattedDate} Dolan Sawah&body=${encodeURIComponent(summary)}`;
       window.location.href = emailLink;
     }
 
-    // Initialize
-    bulanSelect.value = new Date().toISOString().slice(5, 7);
+    // Initialize calendar
     buatKalender();
-    
-    // Add month change listener
-    bulanSelect.addEventListener('change', buatKalender);
   </script>
 </body>
 </html>
