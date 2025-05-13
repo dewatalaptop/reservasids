@@ -52,6 +52,7 @@
             <option>Paket A</option><option>Paket B</option><option>Paket C</option>
             <option>Paket D</option><option>Paket E</option><option>Paket F</option>
             <option>Paket G</option><option>Paket H</option><option>Paket I</option><option>Paket J</option>
+            <option>OTS</option><option>Paket Rantang</option>
           </select>
         </label><br/>
         <label>Tempat:
@@ -89,7 +90,9 @@
       "Paket G": ["Nasi putih", "Kakap asam manis", "Ayam goreng mentega", "Tumis buncis daging sapi", "Sambal", "Teh", "Es"],
       "Paket H": ["Nasi putih", "Sup iga sapi", "Kerupuk udang", "Sambel kecap", "Tahu + tempe goreng", "Sosis solo", "Bolu gulung", "Teh", "Es", "Air mineral cup"],
       "Paket I": ["Nasi", "Iga bakar", "Sop", "Sambal", "Kerupuk", "Lalapan", "Sosis solo", "Semangka", "Teh", "Es", "Air mineral"],
-      "Paket J": ["Nasi", "Sambel goreng ati", "Bihun goreng", "Daging kelem", "Acar kuning", "Kerupuk udang", "Sop Sosis jamur", "Sosis solo", "Pie buah", "Teh", "Softdrink", "Air mineral cup"]
+      "Paket J": ["Nasi", "Sambel goreng ati", "Bihun goreng", "Daging kelem", "Acar kuning", "Kerupuk udang", "Sop Sosis jamur", "Sosis solo", "Pie buah", "Teh", "Softdrink", "Air mineral cup"],
+      "OTS": [],
+      "Paket Rantang": []
     };
 
     let dataReservasi = JSON.parse(localStorage.getItem('reservasiDolan')) || {};
@@ -126,7 +129,9 @@
 
       summaryEl.innerHTML = `<h3>Reservasi Tanggal ${key}</h3>`;
       data.forEach((r, idx) => {
-        const isiMenu = detailMenu[r.menu]?.map(item => `• ${item}`).join('<br/>') || "-";
+        const isiMenu = detailMenu[r.menu]?.length
+          ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>')
+          : "-";
         const div = document.createElement('div');
         div.innerHTML = `<b>${r.nama}</b> (${r.tempat}, jam ${r.jam}, ${r.jumlah} orang)<br/>
           <div class="menu-detail"><b>${r.menu}:</b>${isiMenu}</div>
