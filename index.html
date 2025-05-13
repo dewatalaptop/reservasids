@@ -1,114 +1,25 @@
-<!-- KODE HTML LENGKAP YANG TELAH DIREVISI -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reservasi Dolan Sawah</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background-color: #e0f7fa;
-      color: #003f5c;
-    }
-
-    header {
-      background-color: #005f73;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-
-    header small {
-      display: block;
-      font-size: 10px;
-      margin-top: 5px;
-      color: #cfe8ec;
-    }
-
-    .container {
-      padding: 20px;
-    }
-
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .date {
-      background-color: #94d2bd;
-      padding: 10px;
-      text-align: center;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .date:hover {
-      background-color: #0a9396;
-      color: white;
-    }
-
-    .warning {
-      background-color: #ff6b6b;
-      color: white;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 5px;
-      text-align: center;
-      display: none;
-    }
-
-    .form-popup, .summary {
-      margin-top: 20px;
-      background-color: #f1faee;
-      padding: 15px;
-      border-radius: 5px;
-    }
-
-    button {
-      background-color: #0077b6;
-      color: white;
-      border: none;
-      padding: 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 5px;
-    }
-
-    button:hover {
-      background-color: #023e8a;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 10px;
-      color: #fff;
-      background-color: #005f73;
-      padding: 10px;
-      margin-top: 20px;
-    }
-
-    .menu-detail {
-      margin-top: 5px;
-      font-size: 13px;
-      color: #333;
-    }
-
-    .menu-detail b {
-      font-size: 14px;
-      display: block;
-      margin-bottom: 3px;
-    }
-
-    @media print {
-      header, .calendar, button, footer {
-        display: none;
-      }
-    }
+    body { font-family: Arial, sans-serif; margin: 0; background-color: #e0f7fa; color: #003f5c; }
+    header { background-color: #005f73; color: white; padding: 20px; text-align: center; }
+    header small { display: block; font-size: 10px; margin-top: 5px; color: #cfe8ec; }
+    .container { padding: 20px; }
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 20px; }
+    .date { background-color: #94d2bd; padding: 10px; text-align: center; border-radius: 4px; cursor: pointer; transition: background 0.3s; }
+    .date:hover { background-color: #0a9396; color: white; }
+    .warning { background-color: #ff6b6b; color: white; padding: 10px; margin-top: 10px; border-radius: 5px; text-align: center; display: none; }
+    .form-popup, .summary { margin-top: 20px; background-color: #f1faee; padding: 15px; border-radius: 5px; }
+    button { background-color: #0077b6; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; margin-top: 5px; }
+    button:hover { background-color: #023e8a; }
+    footer { text-align: center; font-size: 10px; color: #fff; background-color: #005f73; padding: 10px; margin-top: 20px; }
+    .menu-detail { margin-top: 5px; font-size: 13px; color: #333; }
+    .menu-detail b { font-size: 14px; display: block; margin-bottom: 3px; }
+    @media print { header, .calendar, button, footer { display: none; } }
   </style>
 </head>
 <body>
@@ -120,18 +31,10 @@
 
   <div class="container">
     <select id="bulanSelect">
-      <option value="01">Januari</option>
-      <option value="02">Februari</option>
-      <option value="03">Maret</option>
-      <option value="04">April</option>
-      <option value="05">Mei</option>
-      <option value="06">Juni</option>
-      <option value="07">Juli</option>
-      <option value="08">Agustus</option>
-      <option value="09">September</option>
-      <option value="10">Oktober</option>
-      <option value="11">November</option>
-      <option value="12">Desember</option>
+      <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+      <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
+      <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+      <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
     </select>
     <div class="warning" id="warningBox">Kapasitas hampir penuh</div>
     <div class="calendar" id="calendar"></div>
@@ -153,12 +56,8 @@
         </label><br/>
         <label>Tempat:
           <select id="tempat">
-            <option>Lantai 1</option>
-            <option>Lantai 2</option>
-            <option>Lantai 3</option>
-            <option>Gubug 1</option>
-            <option>Gubug 2</option>
-            <option>Gubug 3</option>
+            <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
+            <option>Gubug 1</option><option>Gubug 2</option><option>Gubug 3</option>
           </select>
         </label><br/>
         <label>Request Tambahan:<br/>
@@ -194,6 +93,7 @@
     };
 
     let dataReservasi = JSON.parse(localStorage.getItem('reservasiDolan')) || {};
+    let tanggalDipilih = '';
 
     const calendarEl = document.getElementById('calendar');
     const warningBox = document.getElementById('warningBox');
@@ -215,6 +115,7 @@
     function pilihTanggal(tgl) {
       const bulan = bulanSelect.value;
       const key = `${bulan.padStart(2,'0')}-${String(tgl).padStart(2, '0')}`;
+      tanggalDipilih = key;
       const data = dataReservasi[key] || [];
 
       const totalPeserta = data.reduce((sum, r) => sum + Number(r.jumlah), 0);
@@ -234,7 +135,6 @@
         summaryEl.appendChild(div);
       });
       summaryEl.style.display = 'block';
-
       formPopup.style.display = 'block';
       document.getElementById('formFields').style.display = 'none';
       document.getElementById('adminPass').value = '';
@@ -285,13 +185,14 @@
     }
 
     function shareViaEmail() {
-      const summary = Object.entries(dataReservasi).map(([tanggal, list]) => {
-        return `Tanggal ${tanggal}:\n` + list.map((r, i) => (
-          `  ${i + 1}. ${r.nama} (${r.tempat}, Jam ${r.jam})\n     Menu: ${r.menu}\n     Tambahan: ${r.tambahan || '-'}`
-        )).join('\n');
-      }).join('\n\n');
-
-      const emailLink = `mailto:?subject=Data Reservasi Dolan Sawah&body=${encodeURIComponent(summary)}`;
+      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
+        return alert("Silakan pilih tanggal terlebih dahulu.");
+      }
+      const list = dataReservasi[tanggalDipilih];
+      const summary = `Tanggal ${tanggalDipilih}:\n` + list.map((r, i) => (
+        `  ${i + 1}. ${r.nama} (${r.tempat}, Jam ${r.jam})\n     Menu: ${r.menu}\n     Tambahan: ${r.tambahan || '-'}`
+      )).join('\n');
+      const emailLink = `mailto:?subject=Reservasi ${tanggalDipilih} Dolan Sawah&body=${encodeURIComponent(summary)}`;
       window.location.href = emailLink;
     }
 
