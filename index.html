@@ -194,9 +194,18 @@
         return alert("Silakan pilih tanggal terlebih dahulu.");
       }
       const list = dataReservasi[tanggalDipilih];
-      const summary = `Tanggal ${tanggalDipilih}:\n` + list.map((r, i) => (
-        `  ${i + 1}. ${r.nama} (${r.tempat}, Jam ${r.jam})\n     Menu: ${r.menu}\n     Tambahan: ${r.tambahan || '-'}`
-      )).join('\n');
+      const summary = `Tanggal ${tanggalDipilih}:\n` + list.map((r, i) => {
+        const isi = detailMenu[r.menu]?.length
+          ? detailMenu[r.menu].map(x => `     - ${x}`).join('\n')
+          : "     - (tanpa detail menu)";
+        return (
+          `  ${i + 1}. ${r.nama} (${r.tempat}, Jam ${r.jam}, ${r.jumlah} orang)\n` +
+          `     Menu: ${r.menu}\n` +
+          `${isi}\n` +
+          `     Tambahan: ${r.tambahan || '-'}\n`
+        );
+      }).join('\n');
+
       const emailLink = `mailto:?subject=Reservasi ${tanggalDipilih} Dolan Sawah&body=${encodeURIComponent(summary)}`;
       window.location.href = emailLink;
     }
