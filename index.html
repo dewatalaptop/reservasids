@@ -1,176 +1,203 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kalender Reservasi Dolan Sawah</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dolan Sawah - Reservasi</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
+      background-color: #e6f4f8;
       margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #0077b6;
+      color: white;
       padding: 1rem;
-      background: #e0f7ff;
-      color: #003f5c;
-    }
-    h1 {
       text-align: center;
-      margin-bottom: 0.2rem;
-      color: #0077b6;
     }
-    .brand {
+    header small {
+      display: block;
+      font-size: 10px;
+      margin-top: 5px;
+    }
+    .calendar-container {
+      padding: 1rem;
       text-align: center;
-      font-size: 0.75rem;
-      color: #999;
-      margin-bottom: 1.5rem;
-    }
-    .bulan-selector {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 1rem;
     }
     select {
-      padding: 0.5rem;
-      border-radius: 5px;
-      border: 1px solid #90e0ef;
-      font-size: 1rem;
+      padding: 5px;
     }
-    .kalender {
+    .dates {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 0.5rem;
+      gap: 10px;
+      margin-top: 1rem;
     }
-    .tanggal {
+    .date {
+      background-color: white;
+      border: 1px solid #0077b6;
+      padding: 15px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .warning {
+      color: red;
+      font-weight: bold;
+      margin: 1rem;
+    }
+    .modal {
+      position: fixed;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
       background: white;
       padding: 1rem;
-      text-align: center;
-      cursor: pointer;
       border-radius: 8px;
-      border: 1px solid #90e0ef;
-      transition: 0.2s;
-    }
-    .tanggal:hover {
-      background: #caf0f8;
-      transform: scale(1.05);
-    }
-    .peringatan {
-      text-align: center;
-      background: #ffd6d6;
-      color: #d00000;
-      font-weight: bold;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      max-width: 90%;
       display: none;
-    }
-    .popup {
-      display: none;
-      position: fixed;
-      top: 20%;
-      left: 10%;
-      width: 80%;
-      background: #ffffff;
-      border: 2px solid #00b4d8;
-      padding: 1rem;
       z-index: 999;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .popup.active {
-      display: block;
+    .modal input, .modal select, .modal textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
     }
-    .btn {
-      background-color: #00b4d8;
+    .modal button {
+      margin: 5px 0;
+      padding: 8px 12px;
+    }
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      z-index: 998;
+    }
+    .reservation-list {
+      text-align: left;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .reservation-item {
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 10px;
+      padding: 5px;
+    }
+    .btn-print {
+      margin-top: 10px;
+      background: #0096c7;
       color: white;
       border: none;
-      border-radius: 5px;
-      padding: 0.5rem 1rem;
-      margin: 0.5rem;
+      padding: 8px 16px;
       cursor: pointer;
-      transition: background-color 0.2s;
     }
-    .btn:hover {
-      background-color: #0077b6;
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .reservation-list, .reservation-list * {
+        visibility: visible;
+      }
+      .reservation-list {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
+  <header>
+    <h2>Dolan Sawah - Kalender Reservasi</h2>
+    <small>by Ryan</small>
+  </header>
 
-  <h1>Kalender Reservasi</h1>
-  <div class="brand">by Ryan</div>
-
-  <div class="bulan-selector">
+  <div class="calendar-container">
+    <label for="bulan">Pilih Bulan:</label>
     <select id="bulan">
-      <option value="1">Januari</option>
-      <option value="2">Februari</option>
-      <option value="3">Maret</option>
-      <option value="4">April</option>
-      <option value="5">Mei</option>
-      <option value="6">Juni</option>
-      <option value="7">Juli</option>
-      <option value="8">Agustus</option>
-      <option value="9">September</option>
-      <option value="10">Oktober</option>
-      <option value="11">November</option>
-      <option value="12">Desember</option>
+      <option value="0">Januari</option>
+      <option value="1">Februari</option>
+      <option value="2">Maret</option>
+      <option value="3">April</option>
+      <option value="4">Mei</option>
+      <option value="5">Juni</option>
+      <option value="6">Juli</option>
+      <option value="7">Agustus</option>
+      <option value="8">September</option>
+      <option value="9">Oktober</option>
+      <option value="10">November</option>
+      <option value="11">Desember</option>
     </select>
+    <div id="peringatan" class="warning"></div>
+    <div class="dates" id="tanggal-grid"></div>
   </div>
 
-  <div class="peringatan" id="peringatan">Kapasitas hampir penuh!</div>
-
-  <div class="kalender" id="kalender">
-    <!-- Tanggal akan dimuat lewat JavaScript -->
-  </div>
-
-  <div class="popup" id="popupTanggal">
-    <h3>Pilih Aksi</h3>
-    <button class="btn" onclick="cekReservasi()">Cek Reservasi</button>
-    <button class="btn" onclick="inputReservasi()">Input Reservasi</button>
-    <button class="btn" onclick="tutupPopup()">Tutup</button>
+  <!-- Modal & Overlay -->
+  <div class="overlay" id="overlay"></div>
+  <div class="modal" id="modal">
+    <div id="modal-content"></div>
   </div>
 
   <script>
-    const kalender = document.getElementById("kalender");
-    const popup = document.getElementById("popupTanggal");
-    const peringatan = document.getElementById("peringatan");
+    const kapasitas = {
+      "Lantai 1": 240,
+      "Lantai 2": 64,
+      "Lantai 3": 112,
+      "Gubug 1": 40,
+      "Gubug 2": 15,
+      "Gubug 3": 110,
+    };
 
-    function buatKalender() {
-      kalender.innerHTML = "";
+    const menu = {
+      "Paket A": ["Nasi putih", "Ayam kremes", "Sambel", "Lalapan", "Teh", "Es"],
+      "Paket B": ["Nasi putih", "Daging kelem", "Bakmi", "Teh", "Es"],
+      "Paket C": ["Nasi putih", "Ayam geprek", "Sop Sosis jamur", "Semangka", "Teh", "Es"],
+      "Paket D": ["Nasi putih", "Nila bakar", "Sayur asem", "Sambal", "Pisang goreng", "Teh", "Es"],
+      "Paket E": ["Nasi putih", "Ayam lada hitam", "Capcay", "Soun jamur", "Bakso kuah", "Kerupuk", "Bolu gulung", "Teh", "Es"],
+      "Paket F": ["Steak Ayam", "Kentang goreng", "Wortel + buncis", "Puding Fla", "Soft drink", "Air mineral cup"],
+      "Paket G": ["Nasi putih", "Kakap asam manis", "Ayam goreng mentega", "Tumis buncis daging sapi", "Sambal", "Teh", "Es"],
+      "Paket H": ["Nasi putih", "Sup iga sapi", "Kerupuk udang", "Sambel kecap", "Tahu + tempe goreng", "Sosis solo", "Bolu gulung", "Teh", "Es", "Air mineral cup"],
+      "Paket I": ["Nasi", "Iga bakar", "Sop", "Sambal", "Kerupuk", "Lalapan", "Sosis solo", "Semangka", "Teh", "Es", "Air mineral"],
+      "Paket J": ["Nasi", "Sambel goreng ati", "Bihun goreng", "Daging kelem", "Acar kuning", "Kerupuk udang", "Sop Sosis jamur", "Sosis solo", "Pie buah", "Teh", "Softdrink", "Air mineral cup"]
+    };
+
+    // Load calendar
+    function loadCalendar() {
+      const grid = document.getElementById("tanggal-grid");
+      grid.innerHTML = "";
       for (let i = 1; i <= 31; i++) {
-        const tanggal = document.createElement("div");
-        tanggal.className = "tanggal";
-        tanggal.innerText = i;
-        tanggal.onclick = () => bukaPopup(i);
-        kalender.appendChild(tanggal);
+        const div = document.createElement("div");
+        div.className = "date";
+        div.textContent = i;
+        div.onclick = () => pilihTanggal(i);
+        grid.appendChild(div);
       }
     }
 
-    function bukaPopup(tanggal) {
-      popup.classList.add("active");
+    // Show modal
+    function showModal(content) {
+      document.getElementById("modal-content").innerHTML = content;
+      document.getElementById("modal").style.display = "block";
+      document.getElementById("overlay").style.display = "block";
     }
 
-    function tutupPopup() {
-      popup.classList.remove("active");
+    // Hide modal
+    function hideModal() {
+      document.getElementById("modal").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
     }
 
-    function cekReservasi() {
-      alert("Fitur cek reservasi akan ditampilkan di sini.");
-    }
+    // Placeholder untuk fungsi pilihTanggal, input, cek, simpan, dan hapus reservasi...
 
-    function inputReservasi() {
-      let pass = prompt("Masukkan password:");
-      if (pass === "fusion437666") {
-        alert("Form input reservasi akan dibuka.");
-      } else {
-        alert("Password salah.");
-      }
-    }
-
-    document.getElementById("bulan").addEventListener("change", function () {
-      buatKalender(); // Kalender bisa diperluas ke variasi hari per bulan
-    });
-
-    // Inisialisasi awal
-    buatKalender();
+    // Inisialisasi
+    document.getElementById("bulan").value = new Date().getMonth();
+    loadCalendar();
+    document.getElementById("overlay").onclick = hideModal;
   </script>
 </body>
 </html>
