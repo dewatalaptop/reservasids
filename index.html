@@ -16,6 +16,7 @@
       --light: #f8f9fa;
       --dark: #343a40;
       --success: #28a745;
+      --whatsapp: #25D366;
     }
     
     * {
@@ -164,7 +165,7 @@
       margin-bottom: 5px;
       text-align: right;
       position: relative;
-      z-index: 1;
+      padding-right: 8px;
     }
     
     .has-reservation {
@@ -183,18 +184,25 @@
     
     .reservation-count {
       position: absolute;
-      top: 5px;
-      right: 5px;
+      top: -10px;
+      right: -8px;
       background-color: var(--success);
       color: white;
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 0.7rem;
-      z-index: 1;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .selected .reservation-count {
+      background-color: white;
+      color: var(--primary);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     
     .warning {
@@ -269,7 +277,7 @@
     }
     
     button.whatsapp {
-      background-color: #25D366;
+      background-color: var(--whatsapp);
     }
     
     footer {
@@ -402,12 +410,19 @@
       padding: 15px;
       background-color: rgba(37, 211, 102, 0.1);
       border-radius: 8px;
-      border-left: 3px solid #25D366;
+      border-left: 3px solid var(--whatsapp);
       display: none;
+    }
+    
+    .whatsapp-options p {
+      margin-bottom: 10px;
+      font-weight: 500;
+      color: var(--dark);
     }
     
     .whatsapp-options button {
       margin-top: 5px;
+      width: 100%;
     }
     
     @media (max-width: 768px) {
@@ -451,6 +466,14 @@
       
       .day-number {
         margin-bottom: 2px;
+      }
+      
+      .reservation-count {
+        width: 18px;
+        height: 18px;
+        font-size: 0.6rem;
+        top: -8px;
+        right: -6px;
       }
     }
     
@@ -571,8 +594,7 @@
       "Paket I": ["Nasi", "Iga bakar", "Sop", "Sambal", "Kerupuk", "Lalapan", "Sosis solo", "Semangka", "Teh", "Es", "Air mineral"],
       "Paket J": ["Nasi", "Sambel goreng ati", "Bihun goreng", "Daging kelem", "Acar kuning", "Kerupuk udang", "Sop Sosis jamur", "Sosis solo", "Pie buah", "Teh", "Softdrink", "Air mineral cup"],
       "OTS": [],
-      "Paket Rantang": [],
-      "Paket Custom (menu ada di catatan)": []
+      "Paket Rantang": []
     };
 
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -624,7 +646,6 @@
         const dayNumber = document.createElement('div');
         dayNumber.className = 'day-number';
         dayNumber.textContent = i;
-        dayEl.appendChild(dayNumber);
         
         // Check for reservations
         const monthStr = String(currentMonth + 1).padStart(2, '0');
@@ -637,8 +658,10 @@
           const reservationCount = document.createElement('div');
           reservationCount.className = 'reservation-count';
           reservationCount.textContent = dataReservasi[dateKey].length;
-          dayEl.appendChild(reservationCount);
+          dayNumber.appendChild(reservationCount);
         }
+        
+        dayEl.appendChild(dayNumber);
         
         // Highlight selected date
         if (dateKey === tanggalDipilih) {
@@ -905,15 +928,15 @@
       } else {
         // Share entire month
         let hasReservations = false;
+        const monthStr = String(currentMonth + 1).padStart(2, '0');
         
         for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i++) {
-          const monthStr = String(currentMonth + 1).padStart(2, '0');
           const dayStr = String(i).padStart(2, '0');
           const dateKey = `${monthStr}-${dayStr}`;
-          const formattedDate = `${i} ${monthNames[currentMonth]} ${currentYear}`;
           
           if (dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
             hasReservations = true;
+            const formattedDate = `${i} ${monthNames[currentMonth]} ${currentYear}`;
             message += `*${formattedDate}*\n`;
             
             dataReservasi[dateKey].forEach((r, idx) => {
