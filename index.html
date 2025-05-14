@@ -94,7 +94,7 @@
 
     .calendar-header {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column; /* Changed to column */
       align-items: center;
       margin-bottom: 20px;
     }
@@ -103,8 +103,8 @@
       font-size: 1.5rem;
       font-weight: 600;
       color: var(--primary-dark);
-      text-align: center; /* Added to center month/year */
-      flex-grow: 1; /* Added to center month/year */
+      text-align: center;
+      margin-bottom: 10px; /* Added margin below month/year */
     }
 
     .calendar-nav {
@@ -369,15 +369,15 @@
 
     .action-buttons {
       display: flex;
-      gap: 15px;
+      gap: 10px;
       margin-top: 20px;
       flex-wrap: wrap;
-      justify-content: center; /* Added to center action buttons */
+      justify-content: center; /* Center the buttons */
     }
 
     .action-buttons button {
-      flex-grow: 1; /* Added to make buttons take equal width */
-      min-width: 0; /* Prevent overflow for long text */
+      flex-grow: 1; /* Make buttons take equal width */
+      min-width: 0; /* Prevent overflow */
     }
 
     .capacity-meter {
@@ -433,18 +433,18 @@
       width: 100%;
     }
 
-    /* Add these new styles at the end of the style section */
+    /* Style for the data action buttons */
     .data-actions {
       display: flex;
       gap: 10px;
-      margin-top: 20px;
+      margin-top: 10px; /* Reduced margin to group with share buttons */
       flex-wrap: wrap;
-      justify-content: center; /* Added to center data actions buttons */
+      justify-content: center; /* Center the buttons */
     }
 
     .data-actions button {
-      flex-grow: 1; /* Added to make data actions buttons take equal width */
-      min-width: 0; /* Prevent overflow for long text */
+      flex-grow: 1; /* Make buttons take equal width */
+      min-width: 0; /* Prevent overflow */
     }
 
     .data-transfer {
@@ -500,23 +500,27 @@
       }
 
       .action-buttons {
-        flex-direction: row; /* Changed to row for horizontal layout */
-        gap: 10px;
+        flex-direction: row; /* Horizontal layout for smaller screens */
+        gap: 8px;
       }
 
       .action-buttons button {
-        width: auto; /* Adjust width based on content */
-        flex-grow: 1; /* Distribute available space equally */
+        width: auto;
+        flex-grow: 1;
+        font-size: 0.9rem; /* Adjust font size for smaller screens */
+        padding: 8px 12px; /* Adjust padding */
       }
 
       .data-actions {
-        flex-direction: row; /* Changed to row for horizontal layout */
-        gap: 10px;
+        flex-direction: row; /* Horizontal layout for smaller screens */
+        gap: 8px;
       }
 
       .data-actions button {
-        width: auto; /* Adjust width based on content */
-        flex-grow: 1; /* Distribute available space equally */
+        width: auto;
+        flex-grow: 1;
+        font-size: 0.9rem; /* Adjust font size for smaller screens */
+        padding: 8px 12px; /* Adjust padding */
       }
     }
 
@@ -548,7 +552,7 @@
       }
 
       .action-buttons {
-        flex-direction: column; /* Revert to column on smaller screens */
+        flex-direction: column; /* Back to vertical for very small screens */
       }
 
       .action-buttons button {
@@ -556,7 +560,7 @@
       }
 
       .data-actions {
-        flex-direction: column; /* Revert to column on smaller screens */
+        flex-direction: column; /* Back to vertical for very small screens */
       }
 
       .data-actions button {
@@ -574,11 +578,9 @@
 
   <div class="container">
     <div class="calendar-header">
-      <div class="calendar-nav">
-        <button onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
-      </div>
       <div class="month-year" id="monthYear">Januari 2023</div>
       <div class="calendar-nav">
+        <button onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
         <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
       </div>
     </div>
@@ -634,9 +636,6 @@
       <button onclick="printData()"><i class="fas fa-print"></i> Print</button>
       <button class="secondary" onclick="shareViaEmail()"><i class="fas fa-envelope"></i> Bagikan via Email</button>
       <button class="whatsapp" onclick="toggleWhatsAppOptions()"><i class="fab fa-whatsapp"></i> Bagikan via WhatsApp</button>
-    </div>
-
-    <div class="data-actions">
       <button onclick="showExportData()"><i class="fas fa-file-export"></i> Export Data</button>
       <button onclick="showImportData()"><i class="fas fa-file-import"></i> Import Data</button>
     </div>
@@ -824,7 +823,7 @@
           div.innerHTML =
             `<b><i class="fas fa-user"></i> ${r.nama}</b><br/>
             <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} orang</span>
-            <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br/>${isiMenu}</div>
+            <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br />${isiMenu}</div>
             <div><i class="fas fa-            comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
             <hr/>
             <button class="danger" onclick="hapusReservasi('${key}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>`;
