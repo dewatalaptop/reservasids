@@ -371,13 +371,13 @@
       display: flex;
       gap: 10px;
       margin-top: 20px;
-      flex-wrap: wrap;
-      justify-content: center; /* Center the buttons */
+      flex-wrap: wrap; /* Biarkan tombol pindah ke baris baru jika tidak cukup ruang */
+      justify-content: center; /* Pusatkan tombol secara horizontal */
     }
 
     .action-buttons button {
-      flex-grow: 1; /* Make buttons take equal width */
-      min-width: 0; /* Prevent overflow */
+      flex: 1 1 auto; /* Membuat tombol memiliki fleksibilitas ukuran */
+      min-width: 0; /* Mencegah overflow */
     }
 
     .capacity-meter {
@@ -437,14 +437,14 @@
     .data-actions {
       display: flex;
       gap: 10px;
-      margin-top: 10px; /* Reduced margin to group with share buttons */
-      flex-wrap: wrap;
-      justify-content: center; /* Center the buttons */
+      margin-top: 10px;
+      flex-wrap: wrap; /* Biarkan tombol pindah ke baris baru jika tidak cukup ruang */
+      justify-content: center; /* Pusatkan tombol secara horizontal */
     }
 
     .data-actions button {
-      flex-grow: 1; /* Make buttons take equal width */
-      min-width: 0; /* Prevent overflow */
+      flex: 1 1 auto; /* Membuat tombol memiliki fleksibilitas ukuran */
+      min-width: 0; /* Mencegah overflow */
     }
 
     .data-transfer {
@@ -476,8 +476,9 @@
       padding: 10px;
       border-radius: 5px;
       border: 1px solid #ddd;
-      margin-bottom: 10px;
-      font-family: 'Poppins',      sans-serif;
+      margin-bottom: 10px
+
+      font-family: 'Poppins', sans-serif;
       resize: vertical;
     }
 
@@ -500,27 +501,27 @@
       }
 
       .action-buttons {
-        flex-direction: row; /* Horizontal layout for smaller screens */
+        flex-direction: row; /* Tetap horizontal pada layar kecil */
         gap: 8px;
       }
 
       .action-buttons button {
         width: auto;
         flex-grow: 1;
-        font-size: 0.9rem; /* Adjust font size for smaller screens */
-        padding: 8px 12px; /* Adjust padding */
+        font-size: 0.9rem;
+        padding: 8px 12px;
       }
 
       .data-actions {
-        flex-direction: row; /* Horizontal layout for smaller screens */
+        flex-direction: row; /* Tetap horizontal pada layar kecil */
         gap: 8px;
       }
 
       .data-actions button {
         width: auto;
         flex-grow: 1;
-        font-size: 0.9rem; /* Adjust font size for smaller screens */
-        padding: 8px 12px; /* Adjust padding */
+        font-size: 0.9rem;
+        padding: 8px 12px;
       }
     }
 
@@ -552,7 +553,7 @@
       }
 
       .action-buttons {
-        flex-direction: column; /* Back to vertical for very small screens */
+        flex-direction: column; /* Kembali ke vertikal pada layar sangat kecil jika perlu */
       }
 
       .action-buttons button {
@@ -560,7 +561,7 @@
       }
 
       .data-actions {
-        flex-direction: column; /* Back to vertical for very small screens */
+        flex-direction: column; /* Kembali ke vertikal pada layar sangat kecil jika perlu */
       }
 
       .data-actions button {
