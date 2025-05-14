@@ -163,6 +163,8 @@
       font-weight: 600;
       margin-bottom: 5px;
       text-align: right;
+      position: relative;
+      z-index: 1;
     }
     
     .has-reservation {
@@ -192,6 +194,7 @@
       align-items: center;
       justify-content: center;
       font-size: 0.7rem;
+      z-index: 1;
     }
     
     .warning {
@@ -263,6 +266,10 @@
     
     button.danger {
       background-color: var(--danger);
+    }
+    
+    button.whatsapp {
+      background-color: #25D366;
     }
     
     footer {
@@ -390,6 +397,19 @@
       border: 1px solid var(--secondary);
     }
     
+    .whatsapp-options {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: rgba(37, 211, 102, 0.1);
+      border-radius: 8px;
+      border-left: 3px solid #25D366;
+      display: none;
+    }
+    
+    .whatsapp-options button {
+      margin-top: 5px;
+    }
+    
     @media (max-width: 768px) {
       .calendar-day {
         min-height: 60px;
@@ -402,6 +422,15 @@
       
       .month-year {
         font-size: 1.2rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .action-buttons button {
+        width: 100%;
       }
     }
     
@@ -510,6 +539,13 @@
     <div class="action-buttons">
       <button onclick="printData()"><i class="fas fa-print"></i> Print</button>
       <button class="secondary" onclick="shareViaEmail()"><i class="fas fa-envelope"></i> Bagikan via Email</button>
+      <button class="whatsapp" onclick="toggleWhatsAppOptions()"><i class="fab fa-whatsapp"></i> Bagikan via WhatsApp</button>
+    </div>
+    
+    <div class="whatsapp-options" id="whatsappOptions">
+      <p>Pilih opsi berbagi:</p>
+      <button class="whatsapp" onclick="shareViaWhatsApp('day')"><i class="fab fa-whatsapp"></i> Bagikan 1 Hari</button>
+      <button class="whatsapp" onclick="shareViaWhatsApp('month')"><i class="fab fa-whatsapp"></i> Bagikan Seluruh Bulan</button>
     </div>
   </div>
 
@@ -535,7 +571,8 @@
       "Paket I": ["Nasi", "Iga bakar", "Sop", "Sambal", "Kerupuk", "Lalapan", "Sosis solo", "Semangka", "Teh", "Es", "Air mineral"],
       "Paket J": ["Nasi", "Sambel goreng ati", "Bihun goreng", "Daging kelem", "Acar kuning", "Kerupuk udang", "Sop Sosis jamur", "Sosis solo", "Pie buah", "Teh", "Softdrink", "Air mineral cup"],
       "OTS": [],
-      "Paket Rantang": []
+      "Paket Rantang": [],
+      "Paket Custom (menu ada di catatan)": []
     };
 
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -551,6 +588,7 @@
     const summaryEl = document.getElementById('summary');
     const formPopup = document.getElementById('formPopup');
     const monthYearEl = document.getElementById('monthYear');
+    const whatsappOptions = document.getElementById('whatsappOptions');
 
     function buatKalender() {
       calendarEl.innerHTML = '';
@@ -690,6 +728,9 @@
       document.getElementById('adminPass').value = '';
       formPopup.setAttribute('data-tanggal', key);
       
+      // Hide WhatsApp options when selecting a new date
+      whatsappOptions.style.display = 'none';
+      
       // Scroll to form
       formPopup.scrollIntoView({ behavior: 'smooth' });
     }
@@ -704,6 +745,7 @@
       tanggalDipilih = ''; // Reset selected date when changing months
       summaryEl.style.display = 'none';
       formPopup.style.display = 'none';
+      whatsappOptions.style.display = 'none';
     }
 
     function nextMonth() {
@@ -716,6 +758,11 @@
       tanggalDipilih = ''; // Reset selected date when changing months
       summaryEl.style.display = 'none';
       formPopup.style.display = 'none';
+      whatsappOptions.style.display = 'none';
+    }
+
+    function toggleWhatsAppOptions() {
+      whatsappOptions.style.display = whatsappOptions.style.display === 'block' ? 'none' : 'block';
     }
 
     document.getElementById('adminPass').oninput = function() {
@@ -821,6 +868,76 @@
 
       const emailLink = `mailto:?subject=Reservasi ${formattedDate} Dolan Sawah&body=${encodeURIComponent(summary)}`;
       window.location.href = emailLink;
+    }
+
+    function shareViaWhatsApp(scope) {
+      let message = `*Reservasi Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n\n`;
+      
+      if (scope === 'day') {
+        if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
+          return alert("Silakan pilih tanggal terlebih dahulu.");
+        }
+        
+        const [month, day] = tanggalDipilih.split('-');
+        const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
+        const list = dataReservasi[tanggalDipilih];
+        
+        message += `*Tanggal: ${formattedDate}*\n\n`;
+        
+        if (list.length === 0) {
+          message += "Belum ada reservasi untuk tanggal ini\n";
+        } else {
+          list.forEach((r, i) => {
+            const isi = detailMenu[r.menu]?.length
+              ? detailMenu[r.menu].map(x => `       - ${x}`).join('\n')
+              : "       - (tanpa detail menu)";
+            message += (
+              `*${i + 1}. ${r.nama}*\n` +
+              `   Tempat: ${r.tempat}\n` +
+              `   Jam: ${r.jam}\n` +
+              `   Jumlah: ${r.jumlah} orang\n` +
+              `   Menu: ${r.menu}\n` +
+              `${isi}\n` +
+              `   Catatan: ${r.tambahan || '-'}\n\n`
+            );
+          });
+        }
+      } else {
+        // Share entire month
+        let hasReservations = false;
+        
+        for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i++) {
+          const monthStr = String(currentMonth + 1).padStart(2, '0');
+          const dayStr = String(i).padStart(2, '0');
+          const dateKey = `${monthStr}-${dayStr}`;
+          const formattedDate = `${i} ${monthNames[currentMonth]} ${currentYear}`;
+          
+          if (dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
+            hasReservations = true;
+            message += `*${formattedDate}*\n`;
+            
+            dataReservasi[dateKey].forEach((r, idx) => {
+              message += (
+                `  - ${r.nama} (${r.tempat}, ${r.jam}, ${r.jumlah} orang)\n` +
+                `    Menu: ${r.menu}\n`
+              );
+              
+              if (r.tambahan) {
+                message += `    Catatan: ${r.tambahan}\n`;
+              }
+              
+              message += '\n';
+            });
+          }
+        }
+        
+        if (!hasReservations) {
+          message += "Belum ada reservasi untuk bulan ini\n";
+        }
+      }
+      
+      const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(whatsappLink, '_blank');
     }
 
     // Initialize calendar
