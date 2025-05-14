@@ -18,13 +18,13 @@
       --success: #28a745;
       --whatsapp: #25D366;
     }
-    
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    
+
     body {
       font-family: 'Poppins', sans-serif;
       margin: 0;
@@ -36,7 +36,7 @@
       background-position: center;
       min-height: 100vh;
     }
-    
+
     body::before {
       content: '';
       position: fixed;
@@ -47,7 +47,7 @@
       background-color: rgba(255, 255, 255, 0.85);
       z-index: -1;
     }
-    
+
     header {
       background: linear-gradient(135deg, var(--primary-dark), var(--primary));
       color: white;
@@ -57,7 +57,7 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     header::after {
       content: '';
       position: absolute;
@@ -67,14 +67,14 @@
       height: 5px;
       background: linear-gradient(90deg, var(--secondary), var(--accent));
     }
-    
+
     header h2 {
       font-size: 2.2rem;
       margin-bottom: 5px;
       font-weight: 600;
       text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
     }
-    
+
     header small {
       display: block;
       font-size: 0.8rem;
@@ -82,7 +82,7 @@
       color: rgba(255, 255, 255, 0.8);
       font-weight: 300;
     }
-    
+
     .container {
       max-width: 1200px;
       margin: 30px auto;
@@ -91,25 +91,25 @@
       border-radius: 10px;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
-    
+
     .calendar-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
     }
-    
+
     .month-year {
       font-size: 1.5rem;
       font-weight: 600;
       color: var(--primary-dark);
     }
-    
+
     .calendar-nav {
       display: flex;
       gap: 10px;
     }
-    
+
     .calendar-nav button {
       background-color: var(--primary);
       color: white;
@@ -123,11 +123,11 @@
       align-items: center;
       gap: 5px;
     }
-    
+
     .calendar-nav button:hover {
       background-color: var(--primary-dark);
     }
-    
+
     .calendar-weekdays {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -136,13 +136,13 @@
       margin-bottom: 10px;
       color: var(--primary-dark);
     }
-    
+
     .calendar-days {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 8px;
     }
-    
+
     .calendar-day {
       min-height: 80px;
       padding: 8px;
@@ -153,13 +153,13 @@
       border: 1px solid #eee;
       transition: all 0.3s;
     }
-    
+
     .calendar-day:hover {
       transform: translateY(-3px);
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
       border-color: var(--primary);
     }
-    
+
     .day-number {
       font-weight: 600;
       margin-bottom: 5px;
@@ -167,21 +167,21 @@
       position: relative;
       padding-right: 8px;
     }
-    
+
     .has-reservation {
       background-color: rgba(42, 157, 143, 0.1);
       border-left: 3px solid var(--primary);
     }
-    
+
     .selected {
       background-color: var(--primary);
       color: white;
     }
-    
+
     .selected .day-number {
       color: white;
     }
-    
+
     .reservation-count {
       position: absolute;
       top: -10px;
@@ -198,13 +198,13 @@
       font-weight: bold;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
-    
+
     .selected .reservation-count {
       background-color: white;
       color: var(--primary);
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
-    
+
     .warning {
       background-color: var(--danger);
       color: white;
@@ -216,13 +216,13 @@
       font-weight: 500;
       animation: pulse 2s infinite;
     }
-    
+
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.02); }
       100% { transform: scale(1); }
     }
-    
+
     .form-popup, .summary {
       margin-top: 25px;
       background-color: white;
@@ -231,7 +231,7 @@
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
       border-top: 4px solid var(--primary);
     }
-    
+
     .form-popup h3, .summary h3 {
       color: var(--primary-dark);
       margin-bottom: 15px;
@@ -240,11 +240,11 @@
       align-items: center;
       gap: 10px;
     }
-    
+
     .form-popup h3 i, .summary h3 i {
       color: var(--accent);
     }
-    
+
     button {
       background-color: var(--primary);
       color: white;
@@ -260,26 +260,26 @@
       align-items: center;
       gap: 8px;
     }
-    
+
     button:hover {
       background-color: var(--primary-dark);
       transform: translateY(-2px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-    
+
     button.secondary {
       background-color: var(--secondary);
       color: var(--dark);
     }
-    
+
     button.danger {
       background-color: var(--danger);
     }
-    
+
     button.whatsapp {
       background-color: var(--whatsapp);
     }
-    
+
     footer {
       text-align: center;
       font-size: 0.8rem;
@@ -289,7 +289,7 @@
       margin-top: 40px;
       position: relative;
     }
-    
+
     footer::before {
       content: '';
       position: absolute;
@@ -299,7 +299,7 @@
       height: 3px;
       background: linear-gradient(90deg, var(--secondary), var(--accent));
     }
-    
+
     .menu-detail {
       margin-top: 8px;
       font-size: 0.85rem;
@@ -309,21 +309,21 @@
       border-radius: 5px;
       border-left: 3px solid var(--secondary);
     }
-    
+
     .menu-detail b {
       font-size: 0.9rem;
       display: block;
       margin-bottom: 5px;
       color: var(--primary-dark);
     }
-    
+
     label {
       display: block;
       margin-bottom: 10px;
       font-weight: 500;
       color: var(--primary-dark);
     }
-    
+
     input, select, textarea {
       width: 100%;
       padding: 10px;
@@ -333,18 +333,18 @@
       font-family: 'Poppins', sans-serif;
       transition: all 0.3s;
     }
-    
+
     input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
     }
-    
+
     textarea {
       min-height: 80px;
       resize: vertical;
     }
-    
+
     .reservation-item {
       padding: 15px;
       margin-bottom: 15px;
@@ -354,24 +354,24 @@
       border-left: 4px solid var(--primary);
       position: relative;
     }
-    
+
     .reservation-item hr {
       border: none;
       border-top: 1px dashed #eee;
       margin: 10px 0;
     }
-    
+
     .reservation-item b {
       color: var(--primary-dark);
     }
-    
+
     .action-buttons {
       display: flex;
       gap: 15px;
       margin-top: 20px;
       flex-wrap: wrap;
     }
-    
+
     .capacity-meter {
       height: 8px;
       background-color: #eee;
@@ -379,14 +379,14 @@
       margin-top: 15px;
       overflow: hidden;
     }
-    
+
     .capacity-fill {
       height: 100%;
       background: linear-gradient(90deg, var(--success), var(--accent));
       width: 0%;
       transition: width 0.5s ease;
     }
-    
+
     .capacity-info {
       display: flex;
       justify-content: space-between;
@@ -394,17 +394,17 @@
       font-size: 0.8rem;
       color: #666;
     }
-    
+
     .empty-day {
       color: #ccc;
       background-color: #f9f9f9;
     }
-    
+
     .today {
       background-color: rgba(233, 196, 106, 0.3);
       border: 1px solid var(--secondary);
     }
-    
+
     .whatsapp-options {
       margin-top: 15px;
       padding: 15px;
@@ -413,85 +413,89 @@
       border-left: 3px solid var(--whatsapp);
       display: none;
     }
-    
+
     .whatsapp-options p {
       margin-bottom: 10px;
       font-weight: 500;
       color: var(--dark);
     }
-    
+
     .whatsapp-options button {
       margin-top: 5px;
       width: 100%;
     }
-    
+
+    /* Add these new styles at the end of the style section */
+    .data-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .data-transfer {
+      margin-top: 25px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      border-top: 4px solid var(--accent);
+      display: none;
+    }
+
+    .data-transfer h3 {
+      color: var(--primary-dark);
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .data-transfer h3 i {
+      color: var(--accent);
+    }
+
+    .data-transfer textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+      font-family: 'Poppins', sans-serif;
+      resize: vertical;
+    }
+
+    .data-transfer button {
+      margin-right: 10px;
+    }
+
     @media (max-width: 768px) {
       .calendar-day {
         min-height: 60px;
         padding: 5px;
       }
-      
+
       .container {
         padding: 15px;
       }
-      
+
       .month-year {
         font-size: 1.2rem;
       }
-      
+
       .action-buttons {
         flex-direction: column;
         gap: 10px;
       }
-      
+
       .action-buttons button {
         width: 100%;
       }
-    }
-    
-    @media (max-width: 480px) {
-      .calendar-header {
+
+      .data-actions {
         flex-direction: column;
-        gap: 10px;
-      }
-      
-      header h2 {
-        font-size: 1.8rem;
-      }
-      
-      .calendar-day {
-        min-height: 50px;
-        font-size: 0.8rem;
-      }
-      
-      .day-number {
-        margin-bottom: 2px;
-      }
-      
-      .reservation-count {
-        width: 18px;
-        height: 18px;
-        font-size: 0.6rem;
-        top: -8px;
-        right: -6px;
-      }
-    }
-    
-    @media print {
-      header, .calendar-header, .calendar-weekdays, button, footer {
-        display: none;
-      }
-      
-      .container {
-        background-color: white;
-        padding: 0;
-        box-shadow: none;
-      }
-      
-      .summary, .form-popup {
-        box-shadow: none;
-        border: none;
-        padding: 0;
       }
     }
   </style>
@@ -511,7 +515,7 @@
         <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
       </div>
     </div>
-    
+
     <div class="calendar-weekdays">
       <div>Minggu</div>
       <div>Senin</div>
@@ -521,24 +525,24 @@
       <div>Jumat</div>
       <div>Sabtu</div>
     </div>
-    
+
     <div class="calendar-days" id="calendar"></div>
-    
+
     <div class="warning" id="warningBox">
       <i class="fas fa-exclamation-triangle"></i> Kapasitas hampir penuh!
     </div>
 
     <div class="summary" id="summary" style="display:none;"></div>
-    
+
     <div class="form-popup" id="formPopup" style="display:none;">
       <h3><i class="fas fa-calendar-plus"></i> Input Reservasi</h3>
       <label><i class="fas fa-lock"></i> Password: <input type="password" id="adminPass" placeholder="Masukkan password admin"/></label>
-      
+
       <div id="formFields" style="display:none;">
         <label><i class="fas fa-user"></i> Nama: <input type="text" id="nama" placeholder="Nama pemesan"/></label>
         <label><i class="fas fa-clock"></i> Jam Reservasi: <input type="time" id="jam" /></label>
         <label><i class="fas fa-users"></i> Jumlah Peserta: <input type="number" id="jumlah" placeholder="Jumlah orang"/></label>
-        <label><i class="fas fa-utensils"></i> Menu: 
+        <label><i class="fas fa-utensils"></i> Menu:
           <select id="menu">
             <option>Paket A</option><option>Paket B</option><option>Paket C</option>
             <option>Paket D</option><option>Paket E</option><option>Paket F</option>
@@ -564,7 +568,19 @@
       <button class="secondary" onclick="shareViaEmail()"><i class="fas fa-envelope"></i> Bagikan via Email</button>
       <button class="whatsapp" onclick="toggleWhatsAppOptions()"><i class="fab fa-whatsapp"></i> Bagikan via WhatsApp</button>
     </div>
-    
+
+    <div class="data-actions">
+      <button onclick="showExportData()"><i class="fas fa-file-export"></i> Export Data</button>
+      <button onclick="showImportData()"><i class="fas fa-file-import"></i> Import Data</button>
+    </div>
+
+    <div class="data-transfer" id="dataTransfer">
+      <h3><i class="fas fa-exchange-alt"></i> <span id="dataTransferTitle">Transfer Data</span></h3>
+      <textarea id="dataTransferCode" placeholder="Paste kode data di sini..."></textarea>
+      <button onclick="processDataTransfer()" id="dataTransferButton"><i class="fas fa-check-circle"></i> Proses</button>
+      <button class="danger" onclick="hideDataTransfer()"><i class="fas fa-times-circle"></i> Batal</button>
+    </div>
+
     <div class="whatsapp-options" id="whatsappOptions">
       <p>Pilih opsi berbagi:</p>
       <button class="whatsapp" onclick="shareViaWhatsApp('day')"><i class="fab fa-whatsapp"></i> Bagikan 1 Hari</button>
@@ -612,63 +628,67 @@
     const formPopup = document.getElementById('formPopup');
     const monthYearEl = document.getElementById('monthYear');
     const whatsappOptions = document.getElementById('whatsappOptions');
+    const dataTransferDiv = document.getElementById('dataTransfer');
+    const dataTransferTitle = document.getElementById('dataTransferTitle');
+    const dataTransferCode = document.getElementById('dataTransferCode');
+    const dataTransferButton = document.getElementById('dataTransferButton');
 
     function buatKalender() {
       calendarEl.innerHTML = '';
-      
+
       // Update month/year display
       monthYearEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-      
+
       // Get first day of month and total days in month
       const firstDay = new Date(currentYear, currentMonth, 1).getDay();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      
+
       // Get today's date for highlighting
       const today = new Date();
       const isCurrentMonth = today.getMonth() === currentMonth && today.getFullYear() === currentYear;
-      
+
       // Add empty cells for days before the first day of the month
       for (let i = 0; i < firstDay; i++) {
         const emptyDay = document.createElement('div');
         emptyDay.className = 'calendar-day empty-day';
         calendarEl.appendChild(emptyDay);
       }
-      
+
       // Add days of the month
       for (let i = 1; i <= daysInMonth; i++) {
         const dayEl = document.createElement('div');
         dayEl.className = 'calendar-day';
-        
+
         // Highlight today
         if (isCurrentMonth && i === today.getDate()) {
           dayEl.classList.add('today');
         }
-        
+
         const dayNumber = document.createElement('div');
         dayNumber.className = 'day-number';
         dayNumber.textContent = i;
-        
+
         // Check for reservations
         const monthStr = String(currentMonth + 1).padStart(2, '0');
         const dayStr = String(i).padStart(2, '0');
         const dateKey = `${monthStr}-${dayStr}`;
-        
+
         if (dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
           dayEl.classList.add('has-reservation');
-          
+
           const reservationCount = document.createElement('div');
           reservationCount.className = 'reservation-count';
           reservationCount.textContent = dataReservasi[dateKey].length;
           dayNumber.appendChild(reservationCount);
         }
-        
+
         dayEl.appendChild(dayNumber);
-        
+
         // Highlight selected date
         if (dateKey === tanggalDipilih) {
           dayEl.classList.add('selected');
         }
-        
+
         dayEl.onclick = () => pilihTanggal(i);
         calendarEl.appendChild(dayEl);
       }
@@ -703,13 +723,13 @@
       // Update capacity meter
       document.querySelector('.capacity-meter')?.remove();
       document.querySelector('.capacity-info')?.remove();
-      
+
       if (totalPeserta > 0) {
         const capacityMeter = document.createElement('div');
         capacityMeter.className = 'capacity-meter';
-        capacityMeter.innerHTML = '<div class="capacity-fill" style="width:' + persen + '%"></div>';
+        capacityMeter.innerHTML = `<div class="capacity-fill" style="width:${persen}%"></div>`;
         summaryEl.appendChild(capacityMeter);
-        
+
         const capacityInfo = document.createElement('div');
         capacityInfo.className = 'capacity-info';
         capacityInfo.innerHTML = `<span>${totalPeserta} orang terdaftar</span><span>Kapasitas total: ${totalKapasitas} orang</span>`;
@@ -718,10 +738,10 @@
 
       // Format date for display
       const formattedDate = `${day} ${monthNames[currentMonth]} ${currentYear}`;
-      
+
       // Show reservations
       summaryEl.innerHTML = `<h3><i class="far fa-calendar-alt"></i> Reservasi Tanggal ${formattedDate}</h3>`;
-      
+
       if (data.length === 0) {
         summaryEl.innerHTML += `<p style="text-align: center; color: #666; padding: 20px 0;">
           <i class="far fa-calendar-times" style="font-size: 2rem; color: #ccc; margin-bottom: 10px; display: block;"></i>
@@ -734,27 +754,26 @@
             : "-";
           const div = document.createElement('div');
           div.className = 'reservation-item';
-          div.innerHTML = `
-            <b><i class="fas fa-user"></i> ${r.nama}</b><br/>
+          div.innerHTML =
+            `<b><i class="fas fa-user"></i> ${r.nama}</b><br/>
             <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} orang</span>
-            <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b>${isiMenu}</div>
+            <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br/>${isiMenu}</div>
             <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
             <hr/>
-            <button class="danger" onclick="hapusReservasi('${key}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>
-          `;
+            <button class="danger" onclick="hapusReservasi('${key}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>`;
           summaryEl.appendChild(div);
         });
       }
-      
+
       summaryEl.style.display = 'block';
       formPopup.style.display = 'block';
       document.getElementById('formFields').style.display = 'none';
       document.getElementById('adminPass').value = '';
       formPopup.setAttribute('data-tanggal', key);
-      
+
       // Hide WhatsApp options when selecting a new date
       whatsappOptions.style.display = 'none';
-      
+
       // Scroll to form
       formPopup.scrollIntoView({ behavior: 'smooth' });
     }
@@ -770,6 +789,7 @@
       summaryEl.style.display = 'none';
       formPopup.style.display = 'none';
       whatsappOptions.style.display = 'none';
+      dataTransferDiv.style.display = 'none';
     }
 
     function nextMonth() {
@@ -783,10 +803,13 @@
       summaryEl.style.display = 'none';
       formPopup.style.display = 'none';
       whatsappOptions.style.display = 'none';
+      dataTransferDiv.style.display = 'none';
     }
 
     function toggleWhatsAppOptions() {
       whatsappOptions.style.display = whatsappOptions.style.display === 'block' ? 'none' : 'block';
+      dataTransferDiv.
+      style.display = 'none';
     }
 
     document.getElementById('adminPass').oninput = function() {
@@ -820,20 +843,20 @@
       existing.push({ nama, jam, jumlah, menu, tempat, tambahan });
       dataReservasi[key] = existing;
       localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
-      
+
       // Show success message
       const successMsg = document.createElement('div');
       successMsg.innerHTML = `<div style="background-color: var(--success); color: white; padding: 10px; border-radius: 5px; margin-top: 10px; text-align: center;">
         <i class="fas fa-check-circle"></i> Reservasi berhasil disimpan!
       </div>`;
       formPopup.appendChild(successMsg);
-      
+
       // Clear form
       document.getElementById('nama').value = '';
       document.getElementById('jam').value = '';
       document.getElementById('jumlah').value = '';
       document.getElementById('tambahan').value = '';
-      
+
       // Remove message after 3 seconds and refresh view
       setTimeout(() => {
         successMsg.remove();
@@ -868,25 +891,25 @@
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
         return alert("Silakan pilih tanggal terlebih dahulu.");
       }
-      
+
       const [month, day] = tanggalDipilih.split('-');
       const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
-      
+
       const list = dataReservasi[tanggalDipilih];
-      const summary = `Detail Reservasi Dolan Sawah - ${formattedDate}:\n\n` + 
+      const summary = `Detail Reservasi Dolan Sawah - ${formattedDate}:\n\n` +
         list.map((r, i) => {
           const isi = detailMenu[r.menu]?.length
-            ? detailMenu[r.menu].map(x => `     - ${x}`).join('\n')
-            : "     - (tanpa detail menu)";
+            ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
+            : "    - (tanpa detail menu)";
           return (
-            `  ${i + 1}. ${r.nama}\n` +
-            `     Tempat: ${r.tempat}\n` +
-            `     Jam: ${r.jam}\n` +
-            `     Jumlah: ${r.jumlah} orang\n` +
-            `     Menu: ${r.menu}\n` +
+              `${i + 1}. ${r.nama}\n` +
+                 `    Tempat: ${r.tempat}\n` +
+                 `    Jam: ${r.jam}\n` +
+                 `    Jumlah: ${r.jumlah} orang\n` +
+                 `    Menu: ${r.menu}\n` +
             `${isi}\n` +
-            `     Catatan: ${r.tambahan || '-'}\n` +
-            `     -----------------------------\n`
+                 `    Catatan: ${r.tambahan || '-'}\n` +
+                 `    -----------------------------\n`
           );
         }).join('\n');
 
@@ -896,33 +919,33 @@
 
     function shareViaWhatsApp(scope) {
       let message = `*Reservasi Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n\n`;
-      
+
       if (scope === 'day') {
         if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
           return alert("Silakan pilih tanggal terlebih dahulu.");
         }
-        
+
         const [month, day] = tanggalDipilih.split('-');
         const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
         const list = dataReservasi[tanggalDipilih];
-        
+
         message += `*Tanggal: ${formattedDate}*\n\n`;
-        
+
         if (list.length === 0) {
           message += "Belum ada reservasi untuk tanggal ini\n";
         } else {
           list.forEach((r, i) => {
             const isi = detailMenu[r.menu]?.length
-              ? detailMenu[r.menu].map(x => `       - ${x}`).join('\n')
-              : "       - (tanpa detail menu)";
+              ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
+              : "    - (tanpa detail menu)";
             message += (
               `*${i + 1}. ${r.nama}*\n` +
-              `   Tempat: ${r.tempat}\n` +
-              `   Jam: ${r.jam}\n` +
-              `   Jumlah: ${r.jumlah} orang\n` +
-              `   Menu: ${r.menu}\n` +
+                 `    Tempat: ${r.tempat}\n` +
+                 `    Jam: ${r.jam}\n` +
+                 `    Jumlah: ${r.jumlah} orang\n` +
+                 `    Menu: ${r.menu}\n` +
               `${isi}\n` +
-              `   Catatan: ${r.tambahan || '-'}\n\n`
+                 `    Catatan: ${r.tambahan || '-'}\n\n`
             );
           });
         }
@@ -930,38 +953,122 @@
         // Share entire month
         let hasReservations = false;
         const monthStr = String(currentMonth + 1).padStart(2, '0');
-        
+
         for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i++) {
           const dayStr = String(i).padStart(2, '0');
           const dateKey = `${monthStr}-${dayStr}`;
-          
+
           if (dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
             hasReservations = true;
             const formattedDate = `${i} ${monthNames[currentMonth]} ${currentYear}`;
             message += `*${formattedDate}*\n`;
-            
+
             dataReservasi[dateKey].forEach((r, idx) => {
               message += (
-                `  - ${r.nama} (${r.tempat}, ${r.jam}, ${r.jumlah} orang)\n` +
-                `    Menu: ${r.menu}\n`
+                  `- ${r.nama} (${r.tempat}, ${r.jam}, ${r.jumlah} orang)\n` +
+                    `  Menu: ${r.menu}\n`
               );
-              
+
               if (r.tambahan) {
-                message += `    Catatan: ${r.tambahan}\n`;
+                message += `  Catatan: ${r.tambahan}\n`;
               }
-              
+
               message += '\n';
             });
           }
         }
-        
+
         if (!hasReservations) {
           message += "Belum ada reservasi untuk bulan ini\n";
         }
       }
-      
+
       const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(whatsappLink, '_blank');
+    }
+
+    function showExportData() {
+      dataTransferDiv.style.display = 'block';
+      dataTransferTitle.textContent = 'Export Data';
+      dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Generate Kode';
+      dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
+
+      // Convert data to compressed JSON string
+      const exportData = {
+        version: '1.0',
+        data: dataReservasi,
+        timestamp: new Date().toISOString()
+      };
+
+      const jsonString = JSON.stringify(exportData);
+      const compressedData = btoa(unescape(encodeURIComponent(jsonString)));
+
+      dataTransferCode.value = compressedData;
+      dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showImportData() {
+      dataTransferDiv.style.display = 'block';
+      dataTransferTitle.textContent = 'Import Data';
+      dataTransferButton.innerHTML = '<i class="fas fa-check-circle"></i> Import Data';
+      dataTransferCode.placeholder = 'Paste kode data di sini...';
+      dataTransferCode.value = '';
+      dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function hideDataTransfer() {
+      dataTransferDiv.style.display = 'none';
+    }
+
+    function processDataTransfer() {
+      const code = dataTransferCode.value.trim();
+
+      if (!code) {
+        alert('Silakan masukkan kode data terlebih dahulu!');
+        return;
+      }
+
+      try {
+        // Check if we're exporting or importing
+        if (dataTransferButton.innerHTML.includes('Generate')) {
+          // Copy to clipboard
+          navigator.clipboard.writeText(code).then(() => {
+            alert('Kode berhasil disalin ke clipboard!');
+          }).catch(err => {
+            alert('Gagal menyalin ke clipboard: ' + err);
+          });
+        } else {
+          // Importing data
+          if (!confirm('Import data akan menimpa semua data yang ada. Lanjutkan?')) {
+            return;
+          }
+
+          // Decode the data
+          const jsonString = decodeURIComponent(escape(atob(code)));
+          const importData = JSON.parse(jsonString);
+
+          if (!importData.data || !importData.version) {
+            throw new Error('Format data tidak valid');
+          }
+
+          // Save the imported data
+          dataReservasi = importData.data;
+          localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+
+          // Refresh the view
+          buatKalender();
+          if (tanggalDipilih) {
+            const day = parseInt(tanggalDipilih.split("-")[1]);
+            pilihTanggal(day);
+          }
+
+          alert('Data berhasil diimport!');
+          hideDataTransfer();
+        }
+      } catch (error) {
+        alert('Error memproses data: ' + error.message);
+        console.error(error);
+      }
     }
 
     // Initialize calendar
