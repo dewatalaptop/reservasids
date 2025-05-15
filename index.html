@@ -475,10 +475,9 @@
       min-height: 150px;
       padding: 10px;
       border-radius: 5px;
-      border:
+      border: 1px solid #ddd;
+      margin-bottom: 10px
 
- 1px solid #ddd;
-      margin-bottom: 10px;
       font-family: 'Poppins', sans-serif;
       resize: vertical;
     }
@@ -614,19 +613,13 @@
         <label><i class="fas fa-clock"></i> Jam Reservasi: <input type="time" id="jam" /></label>
         <label><i class="fas fa-users"></i> Jumlah Peserta: <input type="number" id="jumlah" placeholder="Jumlah orang"/></label>
         <label><i class="fas fa-utensils"></i> Menu:
-          <select id="menu" onchange="tampilkanInputCustom()">
+          <select id="menu">
             <option>Paket A</option><option>Paket B</option><option>Paket C</option>
             <option>Paket D</option><option>Paket E</option><option>Paket F</option>
             <option>Paket G</option><option>Paket H</option><option>Paket I</option><option>Paket J</option>
             <option>OTS</option><option>Paket Rantang</option>
-            <option value="Custom">Custom</option>
           </select>
         </label>
-        <div id="inputCustomMenu" style="display:none;">
-          <label><i class="fas fa-list"></i> Detail Menu Custom:
-            <textarea id="detailCustom" placeholder="Masukkan detail menu secara manual"></textarea>
-          </label>
-        </div>
         <label><i class="fas fa-map-marker-alt"></i> Tempat:
           <select id="tempat">
             <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
@@ -685,7 +678,7 @@
       "Paket J": ["Nasi", "Sambel goreng ati", "Bihun goreng", "Daging kelem", "Acar kuning", "Kerupuk udang", "Sop Sosis jamur", "Sosis solo", "Pie buah", "Teh", "Softdrink", "Air mineral cup"],
       "OTS": [],
       "Paket Rantang": [],
-      "Paket Custom": ["Menu ada di catatan"] // Placeholder untuk custom, detail akan diambil dari input
+      "Paket Custom": ["Menu ada di catatan"]
     };
 
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -695,7 +688,6 @@
     let tanggalDipilih = '';
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
-    let indexEdit = -1; // Menyimpan index reservasi yang sedang diedit
 
     const calendarEl = document.getElementById('calendar');
     const warningBox = document.getElementById('warningBox');
@@ -824,29 +816,18 @@
         </p>`;
       } else {
         data.forEach((r, idx) => {
-          let isiMenu = "-";
-          if (r.menu !== 'Custom') {
-            isiMenu = detailMenu[r.menu]?.length
-              ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>')
-              : "-";
-          } else if (r.detailCustom) {
-            isiMenu
-
- = r.detailCustom.split('\n').map(item => `• ${item}`).join('<br/>');
-          }
-
+          const isiMenu = detailMenu[r.menu]?.length
+            ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>')
+            : "-";
           const div = document.createElement('div');
           div.className = 'reservation-item';
           div.innerHTML =
             `<b><i class="fas fa-user"></i> ${r.nama}</b><br/>
             <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} orang</span>
-            <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}${r.menu === 'Custom' ? ' (Custom)' : ''}:</b><br />${isiMenu}</div>
-            <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
+            <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br />${isiMenu}</div>
+            <div><i class="fas fa-            comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
             <hr/>
-            <div class="data-actions">
-              <button onclick="editReservasi('${key}', ${idx})"><i class="fas fa-edit"></i> Edit</button>
-              <button class="danger" onclick="hapusReservasi('${key}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>
-            </div>`;
+            <button class="danger" onclick="hapusReservasi('${key}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>`;
           summaryEl.appendChild(div);
         });
       }
@@ -901,46 +882,31 @@
       document.getElementById('formFields').style.display = this.value === 'fusion437666' ? 'block' : 'none';
     };
 
-    function tampilkanInputCustom() {
-      const menuSelect = document.getElementById('menu');
-      const inputCustomMenu = document.getElementById('inputCustomMenu');
-      if (menuSelect.value === 'Custom') {
-        inputCustomMenu.style.display = 'block';
-      } else {
-        inputCustomMenu.style.display = 'none';
-      }
-    }
-
     function simpanReservasi() {
       const key = formPopup.getAttribute('data-tanggal');
       const nama = document.getElementById('nama').value;
       const jam = document.getElementById('jam').value;
       const jumlah = parseInt(document.getElementById('jumlah').value);
-      const menuSelect = document.getElementById('menu');
-      const menu = menuSelect.value;
+      const menu = document.getElementById('menu').value;
       const tempat = document.getElementById('tempat').value;
       const tambahan = document.getElementById('tambahan').value;
-      let detailCustom = '';
-
-      if (menu === 'Custom') {
-        detailCustom = document.getElementById('detailCustom').value;
-        if (!detailCustom) {
-          return alert('Harap isi detail menu custom!');
-        }
-      }
 
       if (!nama || !jam || isNaN(jumlah) || !menu || !tempat) {
         return alert('Harap isi semua field yang diperlukan!');
       }
 
       const existing = dataReservasi[key] || [];
-      const reservasiBaru = { nama, jam, jumlah, menu, tempat, tambahan };
 
-      if (menu === 'Custom') {
-        reservasiBaru.detailCustom = detailCustom;
+      // Check for Gubug 1 time conflict
+      if (tempat === "Gubug 1") {
+        const conflict = existing.some(r =>
+          r.tempat === "Gubug 1" &&
+          Math.abs(parseFloat(r.jam.replace(":", ".")) - parseFloat(jam.replace(":", "."))) < 3.5
+        );
+        if (conflict) return alert("Gubug 1 sudah terisi di jam tersebut!");
       }
 
-      existing.push(reservasiBaru);
+      existing.push({ nama, jam, jumlah, menu, tempat, tambahan });
       dataReservasi[key] = existing;
       localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
 
@@ -956,9 +922,6 @@
       document.getElementById('jam').value = '';
       document.getElementById('jumlah').value = '';
       document.getElementById('tambahan').value = '';
-      document.getElementById('detailCustom').value = '';
-      document.getElementById('menu').value = 'Paket A'; // Reset menu ke default
-      document.getElementById('inputCustomMenu').style.display = 'none'; // Sembunyikan input custom
 
       // Remove message after 3 seconds and refresh view
       setTimeout(() => {
@@ -967,104 +930,6 @@
         pilihTanggal(day);
         buatKalender(); // Refresh calendar to update reservation counts
       }, 3000);
-    }
-
-    function editReservasi(tgl, index) {
-      const pass = prompt("Masukkan password admin:");
-      if (pass !== 'fusion437666') return alert("Password salah!");
-
-      const reservasi = dataReservasi[tgl][index];
-      tanggalDipilih = tgl;
-      indexEdit = index;
-
-      // Update calendar UI to reflect the selected date
-      document.querySelectorAll('.calendar-day').forEach(dayEl => {
-        dayEl.classList.remove('selected');
-        if (dayEl.querySelector('.day-number')?.textContent == parseInt(tgl.split('-')[1])) {
-          dayEl.classList.add('selected');
-        }
-      });
-
-      // Populate the form with the reservation data
-      document.getElementById('formFields').style.display = 'block';
-      document.getElementById('nama').value = reservasi.nama;
-      document.getElementById('jam').value = reservasi.jam;
-      document.getElementById('jumlah').value = reservasi.jumlah;
-      document.getElementById('menu').value = reservasi.menu;
-      document.getElementById('tempat').value = reservasi.tempat;
-      document.getElementById('tambahan').value = reservasi.tambahan || '';
-
-      // Show custom menu input if the selected menu is 'Custom'
-      const inputCustomMenu = document.getElementById('inputCustomMenu');
-      if (reservasi.menu === 'Custom' && reservasi.detailCustom) {
-        inputCustomMenu.style.display = 'block';
-        document.getElementById('detailCustom').value = reservasi.detailCustom;
-      } else {
-        inputCustomMenu.style.display = 'none';
-        document.getElementById('detailCustom').value = '';
-      }
-
-      // Change the button text to "Update Reservasi" and update its onclick function
-      const simpanButton = document.querySelector('#formPopup button');
-      simpanButton.textContent = 'Update Reservasi';
-      simpanButton.onclick = function() {
-        updateReservasi(tgl);
-      };
-
-      formPopup.style.display = 'block';
-      formPopup.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function updateReservasi(tgl) {
-      const nama = document.getElementById('nama').value;
-      const jam = document.getElementById('jam').value;
-      const jumlah = parseInt(document.getElementById('jumlah').value);
-      const menuSelect = document.getElementById('menu');
-      const menu = menuSelect.value;
-      const tempat = document.getElementById('tempat').value;
-      const tambahan = document.getElementById('tambahan').value;
-      let detailCustom = '';
-
-      if (menu === 'Custom') {
-        detailCustom = document.getElementById('detailCustom').value;
-        if (!detailCustom) {
-          return alert('Harap isi detail menu custom!');
-        }
-      }
-
-      if (!nama || !jam || isNaN(jumlah) || !menu || !tempat) {
-        return alert('Harap isi semua field yang diperlukan!');
-      }
-
-      // Check for Gubug 1 time conflict (excluding the reservation being edited)
-      if (tempat === "Gubug 1") {
-        const conflict = dataReservasi[tgl].some((r, i) =>
-          i !== indexEdit &&
-          r.tempat === "Gubug 1" &&
-          Math.abs(parseFloat(r.jam.replace(":", ".")) - parseFloat(jam.replace(":", "."))) < 3.5
-        );
-        if (conflict) return alert("Gubug 1 sudah terisi di jam tersebut!");
-      }
-
-      const updatedReservasi = { nama, jam, jumlah, menu, tempat, tambahan };
-      if (menu === 'Custom') {
-        updatedReservasi.detailCustom = detailCustom;
-      }
-
-      dataReservasi[tgl][indexEdit] = updatedReservasi;
-      localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
-      indexEdit = -1; // Reset index edit
-
-      // Change the button text back to "Simpan Reservasi" and update its onclick function
-      const simpanButton = document.querySelector('#formPopup button');
-      simpanButton.textContent = 'Simpan Reservasi';
-      simpanButton.onclick = simpanReservasi;
-
-      // Hide the form and refresh the reservation list
-      formPopup.style.display = 'none';
-      const day = parseInt(tgl.split("-")[1]);
-      pilihTanggal(day);
-      buatKalender();
     }
 
     function hapusReservasi(tgl, idx) {
@@ -1099,20 +964,15 @@
       const list = dataReservasi[tanggalDipilih];
       const summary = `Detail Reservasi Dolan Sawah - ${formattedDate}:\n\n` +
         list.map((r, i) => {
-          let isi = "-";
-          if (r.menu !== 'Custom') {
-            isi = detailMenu[r.menu]?.length
-              ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
-              : "    - (tanpa detail menu)";
-          } else if (r.detailCustom) {
-            isi = r.detailCustom.split('\n').map(x => `    - ${x}`).join('\n');
-          }
+          const isi = detailMenu[r.menu]?.length
+            ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
+            : "    - (tanpa detail menu)";
           return (
               `${i + 1}. ${r.nama}\n` +
                  `    Tempat: ${r.tempat}\n` +
                  `    Jam: ${r.jam}\n` +
                  `    Jumlah: ${r.jumlah} orang\n` +
-                 `    Menu: ${r.menu}${r.menu === 'Custom' ? ' (Custom)' : ''}\n` +
+                 `    Menu: ${r.menu}\n` +
             `${isi}\n` +
                  `    Catatan: ${r.tambahan || '-'}\n` +
                  `    -----------------------------\n`
@@ -1141,20 +1001,15 @@
           message += "Belum ada reservasi untuk tanggal ini\n";
         } else {
           list.forEach((r, i) => {
-            let isi = "-";
-            if (r.menu !== 'Custom') {
-              isi = detailMenu[r.menu]?.length
-                ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
-                : "    - (tanpa detail menu)";
-            } else if (r.detailCustom) {
-              isi = r.detailCustom.split('\n').map(x => `    - ${x}`).join('\n');
-            }
+            const isi = detailMenu[r.menu]?.length
+              ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
+              : "    - (tanpa detail menu)";
             message += (
               `*${i + 1}. ${r.nama}*\n` +
                  `    Tempat: ${r.tempat}\n` +
                  `    Jam: ${r.jam}\n` +
                  `    Jumlah: ${r.jumlah} orang\n` +
-                 `    Menu: ${r.menu}${r.menu === 'Custom' ? ' (Custom)' : ''}\n` +
+                 `    Menu: ${r.menu}\n` +
               `${isi}\n` +
                  `    Catatan: ${r.tambahan || '-'}\n\n`
             );
@@ -1177,14 +1032,13 @@
             dataReservasi[dateKey].forEach((r, idx) => {
               message += (
                   `- ${r.nama} (${r.tempat}, ${r.jam}, ${r.jumlah} orang)\n` +
-                    `  Menu: ${r.menu}${r.menu === 'Custom' ? ' (Custom)' : ''}\n`
+                    `  Menu: ${r.menu}\n`
               );
-              if (r.detailCustom) {
-                message += `    Detail: ${r.detailCustom.split('\n').join(', ')}\n`;
-              }
+
               if (r.tambahan) {
                 message += `  Catatan: ${r.tambahan}\n`;
               }
+
               message += '\n';
             });
           }
@@ -1205,6 +1059,7 @@
       dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Generate Kode';
       dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
 
+      // Convert data to compressed JSON string
       const exportData = {
         version: '1.0',
         data: dataReservasi,
@@ -1219,9 +1074,7 @@
     }
 
     function showImportData() {
-      dataTransferDiv.style.display = '
-
-block';
+      dataTransferDiv.style.display = 'block';
       dataTransferTitle.textContent = 'Import Data';
       dataTransferButton.innerHTML = '<i class="fas fa-check-circle"></i> Import Data';
       dataTransferCode.placeholder = 'Paste kode data di sini...';
