@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     :root {
       --primary: #2a9d8f;
@@ -468,21 +469,24 @@
     }
 
     .data-transfer h3 i {
-      color: var       (--accent);
-    }
-
-    .data-transfer h3 i {
       color: var(--accent);
     }
 
     .data-transfer #qrcode-container {
-      display: none;
+      display
+      : none;
       text-align: center;
       margin-bottom: 15px;
     }
 
     .data-transfer #qrcode-container canvas {
       margin-bottom: 10px;
+    }
+
+    .data-transfer #qr-reader {
+      width: 300px;
+      margin: 10px auto;
+      display: none;
     }
 
     .data-transfer textarea {
@@ -661,6 +665,7 @@
         <canvas id="qrcode" width="200" height="200"></canvas>
         <p style="font-size: 0.9em; color: #555; margin-top: 5px;">Pindai kode QR ini</p>
       </div>
+      <div id="qr-reader" style="width: 300px; margin: 10px auto; display:none;"></div>
       <textarea id="dataTransferCode" placeholder="Paste kode data di sini..."></textarea>
       <button onclick="processDataTransfer()" id="dataTransferButton"><i class="fas fa-check-circle"></i> Proses</button>
       <button class="danger" onclick="hideDataTransfer()"><i class="fas fa-times-circle"></i> Batal</button>
@@ -719,7 +724,9 @@
     const dataTransferButton = document.getElementById('dataTransferButton');
     const qrcodeContainer = document.getElementById('qrcode-container');
     const qrcodeCanvas = document.getElementById('qrcode');
+    const qrReaderDiv = document.getElementById('qr-reader');
     let qrcode; // Variabel untuk menyimpan instance QR code
+    let html5QrCode; // Instance untuk html5-qrcode scanner
 
     function buatKalender() {
       calendarEl.innerHTML = '';
@@ -825,13 +832,14 @@
       }
 
       // Format date for display
-      const formattedDate = `${day} ${monthNames[currentMonth]} ${currentYear}`;
+      const formattedDate = `${day} ${monthNames[currentMonth]} ${current
+Year}`;
 
       // Show reservations
       summaryEl.innerHTML = `<h3><i class="far fa-calendar-alt"></i> Reservasi Tanggal ${formattedDate}</h3>`;
 
       if (data.length === 0) {
-        summaryEl.innerHTML += `<p style="text-          align: center; color: #666; padding: 20px 0;">
+        summaryEl.innerHTML += `<p style="text-align: center; color: #666; padding: 20px 0;">
           <i class="far fa-calendar-times" style="font-size: 2rem; color: #ccc; margin-bottom: 10px; display: block;"></i>
           Belum ada reservasi untuk tanggal ini
         </p>`;
@@ -846,7 +854,7 @@
             `<b><i class="fas fa-user"></i> ${r.nama}</b><br/>
             <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} orang</span>
             <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br />${isiMenu}</div>
-            <div><i class="fas fa-            comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
+            <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
             <hr/>
             <button class="danger" onclick="hapusReservasi('${key}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>`;
           summaryEl.appendChild(div);
@@ -862,8 +870,12 @@
       // Hide WhatsApp options when selecting a new date
       whatsappOptions.style.display = 'none';
 
-      // Hide data transfer section
+      // Hide data transfer section and stop QR code scanner if active
       dataTransferDiv.style.display = 'none';
+      if (html5QrCode) {
+        html5QrCode.stop();
+        qrReaderDiv.style.display = 'none';
+      }
 
       // Scroll to form
       formPopup.scrollIntoView({ behavior: 'smooth' });
@@ -881,6 +893,10 @@
       formPopup.style.display = 'none';
       whatsappOptions.style.display = 'none';
       dataTransferDiv.style.display = 'none';
+      if (html5QrCode) {
+        html5QrCode.stop();
+        qrReaderDiv.style.display = 'none';
+      }
     }
 
     function nextMonth() {
@@ -895,11 +911,19 @@
       formPopup.style.display = 'none';
       whatsappOptions.style.display = 'none';
       dataTransferDiv.style.display = 'none';
+      if (html5QrCode) {
+        html5QrCode.stop();
+        qrReaderDiv.style.display = 'none';
+      }
     }
 
     function toggleWhatsAppOptions() {
       whatsappOptions.style.display = whatsappOptions.style.display === 'block' ? 'none' : 'block';
       dataTransferDiv.style.display = 'none';
+      if (html5QrCode) {
+        html5QrCode.stop();
+        qrReaderDiv.style.display = 'none';
+      }
     }
 
     document.getElementById('adminPass').oninput = function() {
@@ -1080,10 +1104,14 @@
     function showExportData() {
       dataTransferDiv.style.display = 'block';
       dataTransferTitle.textContent = 'Export Data';
-      dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Salin Kode'; // Ubah teks tombol
+      dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Salin Kode';
       dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
       qrcodeContainer.style.display = 'block';
       dataTransferCode.style.display = 'none';
+      qrReaderDiv.style.display = 'none'; // Hide QR reader if it was active
+      if (html5QrCode) {
+        html5QrCode.stop(); // Stop the scanner
+      }
 
       // Convert data to compressed JSON string
       const exportData = {
@@ -1096,19 +1124,15 @@
       const compressedData = btoa(unescape(encodeURIComponent(jsonString)));
 
       // Generate QR code
-      if (!qrcode) {
-        qrcode = new QRCode(qrcodeCanvas, {
-          text: compressedData,
-          width: 200,
-          height: 200,
-          colorDark: "#000000",
-          colorLight: "#ffffff",
-          correctLevel: QRCode.CorrectLevel.H
-        });
-      } else {
-        qrcode.clear(); // Bersihkan QR code sebelumnya
-        qrcode.makeCode(compressedData); // Buat QR code baru
-      }
+      qrcodeCanvas.innerHTML = ''; // Clear previous QR code if any
+      qrcode = new QRCode(qrcodeCanvas, {
+        text: compressedData,
+        width: 200,
+        height: 200,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
 
       dataTransferCode.value = compressedData; // Tetap isi textarea untuk opsi salin manual
       dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
@@ -1121,12 +1145,37 @@
       dataTransferCode.placeholder = 'Pindai kode QR atau paste di sini...';
       qrcodeContainer.style.display = 'none';
       dataTransferCode.style.display = 'block';
-      dataTransferCode.value = '';
+      qrReaderDiv.style.display = 'block';
       dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
+
+      // Initialize and start the html5-qrcode scanner
+      if (!html5QrCode) {
+        html5QrCode = new Html5QrcodeScanner(
+          "qr-reader", { fps: 10, qrbox: 250 }
+        );
+        html5QrCode.render(onScanSuccess, onScanFailure);
+      } else {
+        html5QrCode.start(onScanSuccess, onScanFailure);
+      }
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+      // Handle the scanned QR code data
+      dataTransferCode.value = decodedText;
+      processDataTransfer(); // Automatically process the scanned data
+    }
+
+    function onScanFailure(error) {
+      // Optional: Handle error or show a message if needed
+      // console.warn(`QR code scan failed = ${error}`);
     }
 
     function hideDataTransfer() {
       dataTransferDiv.style.display = 'none';
+      if (html5QrCode) {
+        html5QrCode.stop();
+        qrReaderDiv.style.display = 'none';
+      }
     }
 
     function processDataTransfer() {
