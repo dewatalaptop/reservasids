@@ -475,8 +475,9 @@
       min-height: 150px;
       padding: 10px;
       border-radius: 5px;
-      border: 1px
-solid #ddd;
+      border
+
+: 1px solid #ddd;
       margin-bottom: 10px;
       font-family: 'Poppins', sans-serif;
       resize: vertical;
@@ -829,8 +830,9 @@ solid #ddd;
               ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>')
               : "-";
           } else if (r.detailCustom) {
-            isiMenu = r.detail
-Custom.split('\n').map(item => `• ${item}`).join('<br/>');
+            isiMenu
+
+ = r.detailCustom.split('\n').map(item => `• ${item}`).join('<br/>');
           }
 
           const div = document.createElement('div');
@@ -932,18 +934,9 @@ Custom.split('\n').map(item => `• ${item}`).join('<br/>');
       }
 
       const existing = dataReservasi[key] || [];
-
-      // Check for Gubug 1 time conflict
-      if (tempat === "Gubug 1") {
-        const conflict = existing.some(r =>
-          r.tempat === "Gubug 1" &&
-          Math.abs(parseFloat(r.jam.replace(":", ".")) - parseFloat(jam.replace(":", "."))) < 3.5
-        );
-        if (conflict) return alert("Gubug 1 sudah terisi di jam tersebut!");
-      }
-
       const reservasiBaru = { nama, jam, jumlah, menu, tempat, tambahan };
-      if (menu === 'Custom' && detailCustom) {
+
+      if (menu === 'Custom') {
         reservasiBaru.detailCustom = detailCustom;
       }
 
@@ -1054,7 +1047,7 @@ Custom.split('\n').map(item => `• ${item}`).join('<br/>');
       }
 
       const updatedReservasi = { nama, jam, jumlah, menu, tempat, tambahan };
-      if (menu === 'Custom' && detailCustom) {
+      if (menu === 'Custom') {
         updatedReservasi.detailCustom = detailCustom;
       }
 
@@ -1212,7 +1205,6 @@ Custom.split('\n').map(item => `• ${item}`).join('<br/>');
       dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Generate Kode';
       dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
 
-      //
       const exportData = {
         version: '1.0',
         data: dataReservasi,
@@ -1227,7 +1219,9 @@ Custom.split('\n').map(item => `• ${item}`).join('<br/>');
     }
 
     function showImportData() {
-      dataTransferDiv.style.display = 'block';
+      dataTransferDiv.style.display = '
+
+block';
       dataTransferTitle.textContent = 'Import Data';
       dataTransferButton.innerHTML = '<i class="fas fa-check-circle"></i> Import Data';
       dataTransferCode.placeholder = 'Paste kode data di sini...';
