@@ -225,7 +225,7 @@
       100% { transform: scale(1); }
     }
 
-    .form-popup, .summary {
+    .form-popup, .summary, .edit-form-popup {
       margin-top: 25px;
       background-color: white;
       padding: 20px;
@@ -234,7 +234,7 @@
       border-top: 4px solid var(--primary);
     }
 
-    .form-popup h3, .summary h3 {
+    .form-popup h3, .summary h3, .edit-form-popup h3 {
       color: var(--primary-dark);
       margin-bottom: 15px;
       font-size: 1.4rem;
@@ -243,7 +243,7 @@
       gap: 10px;
     }
 
-    .form-popup h3 i, .summary h3 i {
+    .form-popup h3 i, .summary h3 i, .edit-form-popup h3 i {
       color: var(--accent);
     }
 
@@ -355,6 +355,13 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       border-left: 4px solid var(--primary);
       position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .reservation-details {
+      flex-grow: 1;
     }
 
     .reservation-item hr {
@@ -476,14 +483,43 @@
       padding: 10px;
       border-radius: 5px;
       border: 1px solid #ddd;
-      margin-bottom: 10px
-
+      margin-bottom: 10px;
       font-family: 'Poppins', sans-serif;
       resize: vertical;
     }
 
     .data-transfer button {
       margin-right: 10px;
+    }
+
+    .edit-form-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    .edit-form-popup label {
+      margin-bottom: 8px;
+    }
+
+    .edit-form-popup button {
+      margin-right: 10px;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      display: none;
     }
 
     @media (max-width: 768px) {
@@ -522,6 +558,15 @@
         flex-grow: 1;
         font-size: 0.9rem;
         padding: 8px 12px;
+      }
+
+      .reservation-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .data-actions {
+        margin-top: 10px;
       }
     }
 
@@ -574,7 +619,7 @@
 
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 1.0.14</small>
+    <small>Version 1.0.15 (with Edit)</small>
   </header>
 
   <div class="container">
@@ -655,6 +700,36 @@
     </div>
   </div>
 
+  <div class="edit-form-popup" id="editFormPopup">
+    <h3><i class="fas fa-edit"></i> Edit Reservasi</h3>
+    <label><i class="fas fa-user"></i> Nama: <input type="text" id="editNama" placeholder="Nama pemesan"/></label>
+    <label><i class="fas fa-clock"></i> Jam Reservasi: <input type="time" id="editJam" /></label>
+    <label><i class="fas fa-users"></i> Jumlah Peserta: <input type="number" id="editJumlah" placeholder="Jumlah orang"/></label>
+    <label><i class="fas fa-utensils"></i> Menu:
+      <select id="editMenu">
+        <option>Paket A</option><option>Paket B</option><option>Paket C</option>
+        <option>Paket D</option><option>Paket E</option><option>Paket F</option>
+        <option>Paket G</option><option>Paket H</option><option>Paket I</option><option>Paket J</option>
+        <option>OTS</option><option>Paket Rantang</option>
+      </select>
+    </label>
+    <label><i class="fas fa-map-marker-alt"></i> Tempat:
+      <select id="editTempat">
+        <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
+        <option>Gubug 1</option><option>Gubug 2</option><option>Gubug 3</option>
+      </select>
+    </label>
+    <label><i class="fas fa-comment-dots"></i> Request Tambahan:
+      <textarea id="editTambahan" placeholder="Permintaan khusus atau catatan tambahan"></textarea>
+    </label>
+    <div class="data-actions">
+      <button onclick="simpanPerubahanReservasi()"><i class="fas fa-save"></i> Simpan Perubahan</button>
+      <button class="danger" onclick="tutupEditForm()"><i class="fas fa-times-circle"></i> Batal</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+
   <footer>
     <p><i class="fas fa-code"></i> Dibuat <i class="fas fa-heart" style="color: #e76f51;"></i> oleh Ryan</p>
   </footer>
@@ -688,6 +763,8 @@
     let tanggalDipilih = '';
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
+    let reservasiIndexDiedit = null;
+    let tanggalReservasiDiedit = null;
 
     const calendarEl = document.getElementById('calendar');
     const warningBox = document.getElementById('warningBox');
@@ -699,6 +776,14 @@
     const dataTransferTitle = document.getElementById('dataTransferTitle');
     const dataTransferCode = document.getElementById('dataTransferCode');
     const dataTransferButton = document.getElementById('dataTransferButton');
+    const editFormPopup = document.getElementById('editFormPopup');
+    const overlay = document.getElementById('overlay');
+    const editNamaInput = document.getElementById('editNama');
+    const editJamInput = document.getElementById('editJam');
+    const editJumlahInput = document.getElementById('editJumlah');
+    const editMenuSelect = document.getElementById('editMenu');
+    const editTempatSelect = document.getElementById('editTempat');
+    const editTambahanTextarea = document.getElementById('editTambahan');
 
     function buatKalender() {
       calendarEl.innerHTML = '';
@@ -822,12 +907,17 @@
           const div = document.createElement('div');
           div.className = 'reservation-item';
           div.innerHTML =
-            `<b><i class="fas fa-user"></i> ${r.nama}</b><br/>
-            <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} orang</span>
-            <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br />${isiMenu}</div>
-            <div><i class="fas fa-            comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
-            <hr/>
-            <button class="danger" onclick="hapusReservasi('${key}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>`;
+            `<div class="reservation-details">
+              <b><i class="fas fa-user"></i> ${r.nama}</b><br/>
+              <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} orang</span>
+              <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br />${isiMenu}</div>
+              <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
+              <hr/>
+            </div>
+            <div class="data-actions">
+              <button onclick="editReservasi('${key}', ${idx})"><i class="fas fa-edit"></i> Edit</button>
+              <button class="danger" onclick="hapusReservasi('${key}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>
+            </div>`;
           summaryEl.appendChild(div);
         });
       }
@@ -840,6 +930,7 @@
 
       // Hide WhatsApp options when selecting a new date
       whatsappOptions.style.display = 'none';
+      hideEditForm(); // Ensure edit form is closed
 
       // Scroll to form
       formPopup.scrollIntoView({ behavior: 'smooth' });
@@ -857,6 +948,7 @@
       formPopup.style.display = 'none';
       whatsappOptions.style.display = 'none';
       dataTransferDiv.style.display = 'none';
+      hideEditForm();
     }
 
     function nextMonth() {
@@ -871,11 +963,13 @@
       formPopup.style.display = 'none';
       whatsappOptions.style.display = 'none';
       dataTransferDiv.style.display = 'none';
+      hideEditForm();
     }
 
     function toggleWhatsAppOptions() {
       whatsappOptions.style.display = whatsappOptions.style.display === 'block' ? 'none' : 'block';
       dataTransferDiv.style.display = 'none';
+      hideEditForm();
     }
 
     document.getElementById('adminPass').oninput = function() {
@@ -943,6 +1037,75 @@
         pilihTanggal(day);
         buatKalender(); // Refresh calendar to update reservation counts
       }
+    }
+
+    function editReservasi(tgl, index) {
+      const pass = prompt("Masukkan password admin untuk mengedit:");
+      if (pass !== 'fusion437666') return alert("Password salah!");
+
+      tanggalReservasiDiedit = tgl;
+      reservasiIndexDiedit = index;
+      const reservasi = dataReservasi[tgl][index];
+
+      editNamaInput.value = reservasi.nama;
+      editJamInput.value = reservasi.jam;
+      editJumlahInput.value = reservasi.jumlah;
+      editMenuSelect.value = reservasi.menu;
+      editTempatSelect.value = reservasi.tempat;
+      editTambahanTextarea.value = reservasi.tambahan || '';
+
+      editFormPopup.style.display = 'block';
+      overlay.style.display = 'block';
+    }
+
+    function tutupEditForm() {
+      editFormPopup.style.display = 'none';
+      overlay.style.display = 'none';
+      tanggalReservasiDiedit = null;
+      reservasiIndexDiedit = null;
+    }
+
+    function simpanPerubahanReservasi() {
+      if (!tanggalReservasiDiedit || reservasiIndexDiedit === null) {
+        return alert("Terjadi kesalahan dalam mengidentifikasi reservasi yang akan diubah.");
+      }
+
+      const nama = editNamaInput.value;
+      const jam = editJamInput.value;
+      const jumlah = parseInt(editJumlahInput.value);
+      const menu = editMenuSelect.value;
+      const tempat = editTempatSelect.value;
+      const tambahan = editTambahanTextarea.value;
+
+      if (!nama || !jam || isNaN(jumlah) || !menu || !tempat) {
+        return alert('Harap isi semua field yang diperlukan!');
+      }
+
+      const existing = dataReservasi[tanggalReservasiDiedit];
+      const originalJam = existing[reservasiIndexDiedit]?.jam;
+      const originalTempat = existing[reservasiIndexDiedit]?.tempat;
+
+      // Check for Gubug 1 time conflict (excluding the one being edited)
+      if (tempat === "Gubug 1") {
+        const conflict = existing.some((r, idx) =>
+          idx !== reservasiIndexDiedit &&
+          r.tempat === "Gubug 1" &&
+          Math.abs(parseFloat(r.jam.replace(":", ".")) - parseFloat(jam.replace(":", "."))) < 3.5
+        );
+        if (conflict && (tempat !== originalTempat || jam !== originalJam)) {
+          return alert("Gubug 1 sudah terisi di jam tersebut!");
+        }
+      }
+
+      dataReservasi[tanggalReservasiDiedit][reservasiIndexDiedit] = {
+        nama, jam, jumlah, menu, tempat, tambahan
+      };
+
+      localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+      tutupEditForm();
+      const day = parseInt(tanggalReservasiDiedit.split("-")[1]);
+      pilihTanggal(day);
+      buatKalender(); // Refresh calendar
     }
 
     function printData() {
@@ -1050,95 +1213,103 @@
       }
 
       const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      window.open(whatsappLink, '_blank');
-    }
+      window.
+open(whatsappLink, '_blank');
+            }
 
-    function showExportData() {
-      dataTransferDiv.style.display = 'block';
-      dataTransferTitle.textContent = 'Export Data';
-      dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Generate Kode';
-      dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
+            function showExportData() {
+              dataTransferDiv.style.display = 'block';
+              dataTransferTitle.textContent = 'Export Data';
+              dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Generate Kode';
+              dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
 
-      // Convert data to compressed JSON string
-      const exportData = {
-        version: '1.0',
-        data: dataReservasi,
-        timestamp: new Date().toISOString()
-      };
+              // Convert data to compressed JSON string
+              const exportData = {
+                version: '1.0',
+                data: dataReservasi,
+                timestamp: new Date().toISOString()
+              };
 
-      const jsonString = JSON.stringify(exportData);
-      const compressedData = btoa(unescape(encodeURIComponent(jsonString)));
+              const jsonString = JSON.stringify(exportData);
+              const compressedData = btoa(unescape(encodeURIComponent(jsonString)));
 
-      dataTransferCode.value = compressedData;
-      dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
-    }
+              dataTransferCode.value = compressedData;
+              dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
+              hideEditForm();
+            }
 
-    function showImportData() {
-      dataTransferDiv.style.display = 'block';
-      dataTransferTitle.textContent = 'Import Data';
-      dataTransferButton.innerHTML = '<i class="fas fa-check-circle"></i> Import Data';
-      dataTransferCode.placeholder = 'Paste kode data di sini...';
-      dataTransferCode.value = '';
-      dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
-    }
+            function showImportData() {
+              dataTransferDiv.style.display = 'block';
+              dataTransferTitle.textContent = 'Import Data';
+              dataTransferButton.innerHTML = '<i class="fas fa-check-circle"></i> Import Data';
+              dataTransferCode.placeholder = 'Paste kode data di sini...';
+              dataTransferCode.value = '';
+              dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
+              hideEditForm();
+            }
 
-    function hideDataTransfer() {
-      dataTransferDiv.style.display = 'none';
-    }
+            function hideDataTransfer() {
+              dataTransferDiv.style.display = 'none';
+            }
 
-    function processDataTransfer() {
-      const code = dataTransferCode.value.trim();
+            function hideEditForm() {
+              editFormPopup.style.display = 'none';
+              overlay.style.display = 'none';
+            }
 
-      if (!code) {
-        alert('Silakan masukkan kode data terlebih dahulu!');
-        return;
-      }
+            function processDataTransfer() {
+              const code = dataTransferCode.value.trim();
 
-      try {
-        // Check if we're exporting or importing
-        if (dataTransferButton.innerHTML.includes('Generate')) {
-          // Copy to clipboard
-          navigator.clipboard.writeText(code).then(() => {
-            alert('Kode berhasil disalin ke clipboard!');
-          }).catch(err => {
-            alert('Gagal menyalin ke clipboard: ' + err);
-          });
-        } else {
-          // Importing data
-          if (!confirm('Import data akan menimpa semua data yang ada. Lanjutkan?')) {
-            return;
-          }
+              if (!code) {
+                alert('Silakan masukkan kode data terlebih dahulu!');
+                return;
+              }
 
-          // Decode the data
-          const jsonString = decodeURIComponent(escape(atob(code)));
-          const importData = JSON.parse(jsonString);
+              try {
+                // Check if we're exporting or importing
+                if (dataTransferButton.innerHTML.includes('Generate')) {
+                  // Copy to clipboard
+                  navigator.clipboard.writeText(code).then(() => {
+                    alert('Kode berhasil disalin ke clipboard!');
+                  }).catch(err => {
+                    alert('Gagal menyalin ke clipboard: ' + err);
+                  });
+                } else {
+                  // Importing data
+                  if (!confirm('Import data akan menimpa semua data yang ada. Lanjutkan?')) {
+                    return;
+                  }
 
-          if (!importData.data || !importData.version) {
-            throw new Error('Format data tidak valid');
-          }
+                  // Decode the data
+                  const jsonString = decodeURIComponent(escape(atob(code)));
+                  const importData = JSON.parse(jsonString);
 
-          // Save the imported data
-          dataReservasi = importData.data;
-          localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+                  if (!importData.data || !importData.version) {
+                    throw new Error('Format data tidak valid');
+                  }
 
-          // Refresh the view
-          buatKalender();
-          if (tanggalDipilih) {
-            const day = parseInt(tanggalDipilih.split("-")[1]);
-            pilihTanggal(day);
-          }
+                  // Save the imported data
+                  dataReservasi = importData.data;
+                  localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
 
-          alert('Data berhasil diimport!');
-          hideDataTransfer();
-        }
-      } catch (error) {
-        alert('Error memproses data: ' + error.message);
-        console.error(error);
-      }
-    }
+                  // Refresh the view
+                  buatKalender();
+                  if (tanggalDipilih) {
+                    const day = parseInt(tanggalDipilih.split("-")[1]);
+                    pilihTanggal(day);
+                  }
 
-    // Initialize calendar
-    buatKalender();
-  </script>
-</body>
-</html>
+                  alert('Data berhasil diimport!');
+                  hideDataTransfer();
+                }
+              } catch (error) {
+                alert('Error memproses data: ' + error.message);
+                console.error(error);
+              }
+            }
+
+            // Initialize calendar
+            buatKalender();
+          </script>
+        </body>
+        </html>
