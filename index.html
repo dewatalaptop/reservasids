@@ -825,8 +825,7 @@
         const dayStr = String(i).padStart(2, '0');
         const dateKey = `${monthStr}-${dayStr}`;
 
-        if (
-          dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
+        if (dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
           dayEl.classList.add('has-reservation');
 
           const reservationCount = document.createElement('div');
@@ -901,13 +900,6 @@
           Belum ada reservasi untuk tanggal ini
         </p>`;
       } else {
-        // Urutkan data berdasarkan jam reservasi
-        data.sort((a, b) => {
-          const timeA = a.jam;
-          const timeB = b.jam;
-          return timeA.localeCompare(timeB);
-        });
-
         data.forEach((r, idx) => {
           const isiMenu = detailMenu[r.menu]?.length
             ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>')
@@ -1132,10 +1124,7 @@
       const [month, day] = tanggalDipilih.split('-');
       const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
 
-      let list = dataReservasi[tanggalDipilih] || [];
-      // Urutkan berdasarkan jam
-      list.sort((a, b) => a.jam.localeCompare(b.jam));
-
+      const list = dataReservasi[tanggalDipilih];
       const summary = `Detail Reservasi Dolan Sawah - ${formattedDate}:\n\n` +
         list.map((r, i) => {
           const isi = detailMenu[r.menu]?.length
@@ -1167,9 +1156,7 @@
 
         const [month, day] = tanggalDipilih.split('-');
         const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
-        let list = dataReservasi[tanggalDipilih] || [];
-        // Urutkan berdasarkan jam
-        list.sort((a, b) => a.jam.localeCompare(b.jam));
+        const list = dataReservasi[tanggalDipilih];
 
         message += `*Tanggal: ${formattedDate}*\n\n`;
 
@@ -1196,140 +1183,133 @@
         let hasReservations = false;
         const monthStr = String(currentMonth + 1).padStart(2, '0');
 
-        // Kumpulkan semua reservasi dalam satu array dan urutkan
-        let allReservations = [];
         for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i++) {
           const dayStr = String(i).padStart(2, '0');
           const dateKey = `${monthStr}-${dayStr}`;
+
           if (dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
             hasReservations = true;
             const formattedDate = `${i} ${monthNames[currentMonth]} ${currentYear}`;
-            dataReservasi[dateKey].forEach(r
-              => {
-              allReservations.push({...r, tanggal: formattedDate});
+            message += `*${formattedDate}*\n`;
+
+            dataReservasi[dateKey].forEach((r, idx) => {
+              message += (
+                  `- ${r.nama} (${r.tempat}, ${r.jam}, ${r.jumlah} orang)\n` +
+                    `  Menu: ${r.menu}\n`
+              );
+
+              if (r.tambahan) {
+                message += `  Catatan: ${r.tambahan}\n`;
+              }
+
+              message += '\n';
             });
           }
         }
 
-        if (hasReservations) {
-          // Urutkan semua reservasi berdasarkan jam
-          allReservations.sort((a, b) => a.jam.localeCompare(b.jam));
-
-          allReservations.forEach(r => {
-            message += `*${r.tanggal}*\n`;
-            message += (
-                `- ${r.nama} (${r.tempat}, ${r.jam}, ${r.jumlah} orang)\n` +
-                  `  Menu: ${r.menu}\n`
-            );
-
-            if (r.tambahan) {
-              message += `  Catatan: ${r.tambahan}\n`;
-            }
-
-            message += '\n';
-          });
-        } else {
+        if (!hasReservations) {
           message += "Belum ada reservasi untuk bulan ini\n";
         }
       }
 
       const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      window.open(whatsappLink, '_blank');
-    }
+      window.
+open(whatsappLink, '_blank');
+            }
 
-    function showExportData() {
-      dataTransferDiv.style.display = 'block';
-      dataTransferTitle.textContent = 'Export Data';
-      dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Generate Kode';
-      dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
+            function showExportData() {
+              dataTransferDiv.style.display = 'block';
+              dataTransferTitle.textContent = 'Export Data';
+              dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Generate Kode';
+              dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
 
-      // Convert data to compressed JSON string
-      const exportData = {
-        version: '1.0',
-        data: dataReservasi,
-        timestamp: new Date().toISOString()
-      };
+              // Convert data to compressed JSON string
+              const exportData = {
+                version: '1.0',
+                data: dataReservasi,
+                timestamp: new Date().toISOString()
+              };
 
-      const jsonString = JSON.stringify(exportData);
-      const compressedData = btoa(unescape(encodeURIComponent(jsonString)));
+              const jsonString = JSON.stringify(exportData);
+              const compressedData = btoa(unescape(encodeURIComponent(jsonString)));
 
-      dataTransferCode.value = compressedData;
-      dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
-      hideEditForm();
-    }
+              dataTransferCode.value = compressedData;
+              dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
+              hideEditForm();
+            }
 
-    function showImportData() {
-      dataTransferDiv.style.display = 'block';
-      dataTransferTitle.textContent = 'Import Data';
-      dataTransferButton.innerHTML = '<i class="fas fa-check-circle"></i> Import Data';
-      dataTransferCode.placeholder = 'Paste kode data di sini...';
-      dataTransferCode.value = '';
-      dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
-      hideEditForm();
-    }
+            function showImportData() {
+              dataTransferDiv.style.display = 'block';
+              dataTransferTitle.textContent = 'Import Data';
+              dataTransferButton.innerHTML = '<i class="fas fa-check-circle"></i> Import Data';
+              dataTransferCode.placeholder = 'Paste kode data di sini...';
+              dataTransferCode.value = '';
+              dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
+              hideEditForm();
+            }
 
-    function hideDataTransfer() {
-      dataTransferDiv.style.display = 'none';
-    }
+            function hideDataTransfer() {
+              dataTransferDiv.style.display = 'none';
+            }
 
-    function hideEditForm() {
-      editFormPopup.style.display = 'none';
-      overlay.style.display = 'none';
-    }
+            function hideEditForm() {
+              editFormPopup.style.display = 'none';
+              overlay.style.display = 'none';
+            }
 
-    function processDataTransfer() {
-      const code = dataTransferCode.value.trim();
+            function processDataTransfer() {
+              const code = dataTransferCode.value.trim();
 
-      if (!code) {
-        alert('Silakan masukkan kode data terlebih dahulu!');
-        return;
-      }
+              if (!code) {
+                alert('Silakan masukkan kode data terlebih dahulu!');
+                return;
+              }
 
-      try {
-        // Check if we're exporting or importing
-        if (dataTransferButton.innerHTML.includes('Generate')) {
-          // Copy to clipboard
-          navigator.clipboard.writeText(code).then(() => {
-            alert('Kode berhasil disalin ke clipboard!');
-          }).catch(err => {
-            alert('Gagal menyalin ke clipboard: ' + err);
-          });
-        } else {
-          // Importing data
-          if (!confirm('Import data akan menimpa semua data yang ada. Lanjutkan?')) {
-            return;
-          }
+              try {
+                // Check if we're exporting or importing
+                if (dataTransferButton.innerHTML.includes('Generate')) {
+                  // Copy to clipboard
+                  navigator.clipboard.writeText(code).then(() => {
+                    alert('Kode berhasil disalin ke clipboard!');
+                  }).catch(err => {
+                    alert('Gagal menyalin ke clipboard: ' + err);
+                  });
+                } else {
+                  // Importing data
+                  if (!confirm('Import data akan menimpa semua data yang ada. Lanjutkan?')) {
+                    return;
+                  }
 
-          // Decode the data
-          const jsonString = decodeURIComponent(escape(atob(code)));
-          const importData = JSON.parse(jsonString);
+                  // Decode the data
+                  const jsonString = decodeURIComponent(escape(atob(code)));
+                  const importData = JSON.parse(jsonString);
 
-          if (!importData.data || !importData.version) {
-            throw new Error('Format data tidak valid');
-          }
+                  if (!importData.data || !importData.version) {
+                    throw new Error('Format data tidak valid');
+                  }
 
-          // Save the imported data
-          dataReservasi = importData.data;
-          localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+                  // Save the imported data
+                  dataReservasi = importData.data;
+                  localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
 
-          // Refresh the view
-          buatKalender();
-          if (tanggalDipilih) {
-            const day = parseInt(tanggalDipilih.split("-")[1]);
-            pilihTanggal(day);
-          }
+                  // Refresh the view
+                  buatKalender();
+                  if (tanggalDipilih) {
+                    const day = parseInt(tanggalDipilih.split("-")[1]);
+                    pilihTanggal(day);
+                  }
 
-          alert('Data berhasil diimport!');
-          hideDataTransfer();
-        }
-      } catch (error) {
-        alert('Error memproses data: ' + error.message);
-        console.error(error);
-      }
-    }
+                  alert('Data berhasil diimport!');
+                  hideDataTransfer();
+                }
+              } catch (error) {
+                alert('Error memproses data: ' + error.message);
+                console.error(error);
+              }
+            }
 
-    // Initialize calendar
-    buatKalender();
-  </script>
-</body>
-</html>
+            // Initialize calendar
+            buatKalender();
+          </script>
+        </body>
+        </html>
