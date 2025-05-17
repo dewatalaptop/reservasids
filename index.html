@@ -94,7 +94,7 @@
 
     .calendar-header {
       display: flex;
-      flex-direction: column; /* Changed to column */
+      flex-direction: column;
       align-items: center;
       margin-bottom: 20px;
     }
@@ -104,7 +104,7 @@
       font-weight: 600;
       color: var(--primary-dark);
       text-align: center;
-      margin-bottom: 10px; /* Added margin below month/year */
+      margin-bottom: 10px;
     }
 
     .calendar-nav {
@@ -378,13 +378,13 @@
       display: flex;
       gap: 10px;
       margin-top: 20px;
-      flex-wrap: wrap; /* Biarkan tombol pindah ke baris baru jika tidak cukup ruang */
-      justify-content: center; /* Pusatkan tombol secara horizontal */
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .action-buttons button {
-      flex: 1 1 auto; /* Membuat tombol memiliki fleksibilitas ukuran */
-      min-width: 0; /* Mencegah overflow */
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     .capacity-meter {
@@ -420,12 +420,24 @@
       border: 1px solid var(--secondary);
     }
 
+    /* Updated WhatsApp options style */
+    .whatsapp-options-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
     .whatsapp-options {
-      margin-top: 15px;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      margin-top: 5px;
       padding: 15px;
       background-color: rgba(37, 211, 102, 0.1);
       border-radius: 8px;
       border-left: 3px solid var(--whatsapp);
+      z-index: 10;
       display: none;
     }
 
@@ -440,18 +452,49 @@
       width: 100%;
     }
 
-    /* Style for the data action buttons */
+    /* Updated sort options style */
+    .sort-options-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .sort-options {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      margin-top: 5px;
+      padding: 15px;
+      background-color: rgba(42, 157, 143, 0.1);
+      border-radius: 8px;
+      border-left: 3px solid var(--primary);
+      z-index: 10;
+      display: none;
+    }
+
+    .sort-options p {
+      margin-bottom: 10px;
+      font-weight: 500;
+      color: var(--dark);
+    }
+
+    .sort-options button {
+      margin-top: 5px;
+      width: 100%;
+    }
+
     .data-actions {
       display: flex;
       gap: 10px;
       margin-top: 10px;
-      flex-wrap: wrap; /* Biarkan tombol pindah ke baris baru jika tidak cukup ruang */
-      justify-content: center; /* Pusatkan tombol secara horizontal */
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .data-actions button {
-      flex: 1 1 auto; /* Membuat tombol memiliki fleksibilitas ukuran */
-      min-width: 0; /* Mencegah overflow */
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     .data-transfer {
@@ -522,26 +565,6 @@
       display: none;
     }
 
-    .sort-options {
-      margin-top: 15px;
-      padding: 15px;
-      background-color: rgba(42, 157, 143, 0.1);
-      border-radius: 8px;
-      border-left: 3px solid var(--primary);
-      display: none;
-    }
-
-    .sort-options p {
-      margin-bottom: 10px;
-      font-weight: 500;
-      color: var(--dark);
-    }
-
-    .sort-options button {
-      margin-top: 5px;
-      width: 100%;
-    }
-
     @media (max-width: 768px) {
       .calendar-day {
         min-height: 60px;
@@ -557,7 +580,7 @@
       }
 
       .action-buttons {
-        flex-direction: row; /* Tetap horizontal pada layar kecil */
+        flex-direction: row;
         gap: 8px;
       }
 
@@ -569,7 +592,7 @@
       }
 
       .data-actions {
-        flex-direction: row; /* Tetap horizontal pada layar kecil */
+        flex-direction: row;
         gap: 8px;
       }
 
@@ -586,6 +609,13 @@
       }
 
       .data-actions {
+        margin-top: 10px;
+      }
+
+      /* Adjust dropdowns for mobile */
+      .whatsapp-options, .sort-options {
+        position: relative;
+        width: 100%;
         margin-top: 10px;
       }
     }
@@ -618,7 +648,7 @@
       }
 
       .action-buttons {
-        flex-direction: column; /* Kembali ke vertikal pada layar sangat kecil jika perlu */
+        flex-direction: column;
       }
 
       .action-buttons button {
@@ -626,7 +656,7 @@
       }
 
       .data-actions {
-        flex-direction: column; /* Kembali ke vertikal pada layar sangat kecil jika perlu */
+        flex-direction: column;
       }
 
       .data-actions button {
@@ -700,17 +730,29 @@
 
     <div class="action-buttons">
       <button onclick="printData()"><i class="fas fa-print"></i> Print</button>
-      <button class="secondary" onclick="toggleSortOptions()"><i class="fas fa-sort"></i> Urutkan Data</button>
+      
+      <div class="sort-options-container">
+        <button class="secondary" onclick="toggleSortOptions(event)"><i class="fas fa-sort"></i> Urutkan Data</button>
+        <div class="sort-options" id="sortOptions">
+          <p>Urutkan data berdasarkan:</p>
+          <button onclick="sortReservations('jam')"><i class="fas fa-clock"></i> Jam Reservasi</button>
+          <button onclick="sortReservations('tempat')"><i class="fas fa-map-marker-alt"></i> Tempat Reservasi</button>
+        </div>
+      </div>
+      
       <button class="secondary" onclick="shareViaEmail()"><i class="fas fa-envelope"></i> Bagikan via Email</button>
-      <button class="whatsapp" onclick="toggleWhatsAppOptions()"><i class="fab fa-whatsapp"></i> Bagikan via WhatsApp</button>
+      
+      <div class="whatsapp-options-container">
+        <button class="whatsapp" onclick="toggleWhatsAppOptions(event)"><i class="fab fa-whatsapp"></i> Bagikan via WhatsApp</button>
+        <div class="whatsapp-options" id="whatsappOptions">
+          <p>Pilih opsi berbagi:</p>
+          <button class="whatsapp" onclick="shareViaWhatsApp('day')"><i class="fab fa-whatsapp"></i> Bagikan 1 Hari</button>
+          <button class="whatsapp" onclick="shareViaWhatsApp('month')"><i class="fab fa-whatsapp"></i> Bagikan Seluruh Bulan</button>
+        </div>
+      </div>
+      
       <button onclick="showExportData()"><i class="fas fa-file-export"></i> Export Data</button>
       <button onclick="showImportData()"><i class="fas fa-file-import"></i> Import Data</button>
-    </div>
-
-    <div class="sort-options" id="sortOptions">
-      <p>Urutkan data berdasarkan:</p>
-      <button onclick="sortReservations('jam')"><i class="fas fa-clock"></i> Jam Reservasi</button>
-      <button onclick="sortReservations('tempat')"><i class="fas fa-map-marker-alt"></i> Tempat Reservasi</button>
     </div>
 
     <div class="data-transfer" id="dataTransfer">
@@ -718,12 +760,6 @@
       <textarea id="dataTransferCode" placeholder="Paste kode data di sini..."></textarea>
       <button onclick="processDataTransfer()" id="dataTransferButton"><i class="fas fa-check-circle"></i> Proses</button>
       <button class="danger" onclick="hideDataTransfer()"><i class="fas fa-times-circle"></i> Batal</button>
-    </div>
-
-    <div class="whatsapp-options" id="whatsappOptions">
-      <p>Pilih opsi berbagi:</p>
-      <button class="whatsapp" onclick="shareViaWhatsApp('day')"><i class="fab fa-whatsapp"></i> Bagikan 1 Hari</button>
-      <button class="whatsapp" onclick="shareViaWhatsApp('month')"><i class="fab fa-whatsapp"></i> Bagikan Seluruh Bulan</button>
     </div>
   </div>
 
@@ -997,19 +1033,29 @@
       hideEditForm();
     }
 
-    function toggleWhatsAppOptions() {
+    function toggleWhatsAppOptions(event) {
+      event.stopPropagation();
       whatsappOptions.style.display = whatsappOptions.style.display === 'block' ? 'none' : 'block';
-      dataTransferDiv.style.display = 'none';
       sortOptions.style.display = 'none';
       hideEditForm();
     }
 
-    function toggleSortOptions() {
+    function toggleSortOptions(event) {
+      event.stopPropagation();
       sortOptions.style.display = sortOptions.style.display === 'block' ? 'none' : 'block';
       whatsappOptions.style.display = 'none';
-      dataTransferDiv.style.display = 'none';
       hideEditForm();
     }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!event.target.closest('.whatsapp-options-container')) {
+        whatsappOptions.style.display = 'none';
+      }
+      if (!event.target.closest('.sort-options-container')) {
+        sortOptions.style.display = 'none';
+      }
+    });
 
     document.getElementById('adminPass').oninput = function() {
       document.getElementById('formFields').style.display = this.value === 'fusion437666' ? 'block' : 'none';
