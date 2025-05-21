@@ -572,20 +572,57 @@
 
     /* New styles for search */
     .search-container {
-      margin-bottom: 15px;
       position: relative;
+      margin: 0 auto 20px;
+      max-width: 600px;
+      width: 100%;
     }
 
     .search-container input {
       padding-left: 35px;
+      border-radius: 30px;
+      border: 2px solid var(--primary);
+      background-color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
     .search-container i {
       position: absolute;
-      left: 10px;
+      left: 15px;
       top: 50%;
       transform: translateY(-50%);
       color: var(--primary);
+    }
+
+    .global-search-container {
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      padding: 0 20px;
+      margin-bottom: 20px;
+    }
+
+    .search-results-container {
+      margin-top: 25px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      border-top: 4px solid var(--primary);
+      display: none;
+    }
+
+    .search-results-container h3 {
+      color: var(--primary-dark);
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-results-container h3 i {
+      color: var(--accent);
     }
 
     @media (max-width: 768px) {
@@ -695,6 +732,18 @@
   </header>
 
   <div class="container">
+    <div class="global-search-container">
+      <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input type="text" id="globalSearchInput" placeholder="Cari reservasi di seluruh database (nama, tempat, menu, tanggal...)">
+      </div>
+    </div>
+
+    <div class="search-results-container" id="searchResults">
+      <h3><i class="fas fa-search"></i> Hasil Pencarian</h3>
+      <div id="searchResultsContent"></div>
+    </div>
+
     <div class="calendar-header">
       <div class="month-year" id="monthYear">Januari 2023</div>
       <div class="calendar-nav">
@@ -884,6 +933,9 @@
     const editTambahanTextarea = document.getElementById('editTambahan');
     const sortOptions = document.getElementById('sortOptions');
     const searchInput = document.getElementById('searchInput');
+    const globalSearchInput = document.getElementById('globalSearchInput');
+    const searchResults = document.getElementById('searchResults');
+    const searchResultsContent = document.getElementById('searchResultsContent');
 
     function validatePhoneNumber(phone) {
       const phoneRegex = /^(?:\+628|08)\d{8,11}$/;
@@ -1049,6 +1101,115 @@
       const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       window.open(whatsappLink, '_blank');
     }
+
+    // Global search function
+    function performGlobalSearch(query) {
+      if (!query) {
+        searchResults.style.display = 'none';
+        return;
+      }
+
+      const results = [];
+      const queryLower = query.toLowerCase();
+
+      // Search through all reservations
+      for (const dateKey in dataReservasi) {
+        if (dataReservasi.hasOwnProperty(dateKey)) {
+          const [month, day] = dateKey.split('-');
+          const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
+          
+          dataReservasi[dateKey].forEach(reservation => {
+            if (
+              reservation.nama.toLowerCase().includes(queryLower) ||
+              reservation.tempat.toLowerCase().includes(queryLower) ||
+              reservation.menu.toLowerCase().includes(queryLower) ||
+              reservation.tambahan?.toLowerCase().includes(queryLower) ||
+              reservation.nomorHp?.includes(query) ||
+              formattedDate.toLowerCase().includes(queryLower)
+            ) {
+              results.push({
+                ...reservation,
+                date: formattedDate,
+                dateKey
+              });
+            }
+          });
+        }
+      }
+
+      displaySearchResults(results);
+    }
+
+    function displaySearchResults(results) {
+      searchResultsContent.innerHTML = '';
+
+      if (results.length === 0) {
+        searchResultsContent.innerHTML = `<p style="text-align: center; color: #666; padding: 20px 0;">
+          <i class="far fa-calendar-times" style="font-size: 2rem; color: #ccc; margin-bottom: 10px; display: block;"></i>
+          Tidak ditemukan reservasi yang cocok dengan pencarian Anda
+        </p>`;
+      } else {
+        const groupedByDate = results.reduce((acc, result) => {
+          if (!acc[result.dateKey]) {
+            acc[result.dateKey] = [];
+          }
+          acc[result.dateKey].push(result);
+          return acc;
+        }, {});
+
+        for (const dateKey in groupedByDate) {
+          const [month, day] = dateKey.split('-');
+          const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
+          
+          const dateHeader = document.createElement('h4');
+          dateHeader.innerHTML = `<i class="far fa-calendar-alt"></i> ${formattedDate} <button onclick="navigateToDate('${dateKey}')" style="margin-left: 10px; padding: 2px 8px; font-size: 0.8rem;"><i class="fas fa-external-link-alt"></i> Buka</button>`;
+          searchResultsContent.appendChild(dateHeader);
+
+          groupedByDate[dateKey].forEach((r, idx) => {
+            const isiMenu = detailMenu[r.menu]?.length
+              ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>')
+              : "-";
+            const dpInfo = r.dp ? `<div class="dp-info"><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)}</div>` : '';
+            const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> Nomor HP: ${r.nomorHp}</div>` : '';
+            const div = document.createElement('div');
+            div.className = 'reservation-item';
+            div.innerHTML =
+              `<div class="reservation-details">
+                <b><i class="fas fa-user"></i> ${r.nama}</b><br/>
+                <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} orang</span>
+                ${dpInfo}
+                ${phoneInfo}
+                <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br />${isiMenu}</div>
+                <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
+                <hr/>
+              </div>
+              <div class="data-actions">
+                ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.nomorHp}', '${r.nama}', '${r.tempat}', '${r.jam}', '${r.jumlah}', '${r.menu}', '${r.tambahan || '-'}', '${r.dp || 0}')"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
+                <button onclick="editReservasi('${dateKey}', ${idx})"><i class="fas fa-edit"></i> Edit</button>
+                <button class="danger" onclick="hapusReservasi('${dateKey}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>
+              </div>`;
+            searchResultsContent.appendChild(div);
+          });
+        }
+      }
+
+      searchResults.style.display = 'block';
+      searchResults.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function navigateToDate(dateKey) {
+      const [month, day] = dateKey.split('-');
+      currentMonth = parseInt(month) - 1;
+      currentYear = new Date().getFullYear(); // You might want to adjust this based on your data
+      buatKalender();
+      pilihTanggal(parseInt(day));
+      searchResults.style.display = 'none';
+    }
+
+    // Event listener for global search
+    globalSearchInput.addEventListener('input', function() {
+      performGlobalSearch(this.value);
+    });
 
     searchInput.addEventListener('input', function() {
       const query = this.value.toLowerCase();
@@ -1511,6 +1672,11 @@
         alert('Error memproses data: ' + error.message);
         console.error(error);
       }
+    }
+
+    function tutupEditForm() {
+      editFormPopup.style.display = 'none';
+      overlay.style.display = 'none';
     }
 
     buatKalender();
