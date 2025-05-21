@@ -565,6 +565,13 @@
       display: none;
     }
 
+    .dp-info {
+      margin-top: 5px;
+      font-size: 0.85rem;
+      color: #2a9d8f;
+      font-weight: 500;
+    }
+
     @media (max-width: 768px) {
       .calendar-day {
         min-height: 60px;
@@ -707,6 +714,7 @@
         <label><i class="fas fa-user"></i> Nama: <input type="text" id="nama" placeholder="Nama pemesan"/></label>
         <label><i class="fas fa-clock"></i> Jam Reservasi: <input type="time" id="jam" /></label>
         <label><i class="fas fa-users"></i> Jumlah Peserta: <input type="number" id="jumlah" placeholder="Jumlah orang"/></label>
+        <label><i class="fas fa-money-bill-wave"></i> DP (Rupiah): <input type="number" id="dp" placeholder="Jumlah DP dalam rupiah" value="0"/></label>
         <label><i class="fas fa-utensils"></i> Menu:
           <select id="menu">
             <option>Paket A</option><option>Paket B</option><option>Paket C</option>
@@ -768,6 +776,7 @@
     <label><i class="fas fa-user"></i> Nama: <input type="text" id="editNama" placeholder="Nama pemesan"/></label>
     <label><i class="fas fa-clock"></i> Jam Reservasi: <input type="time" id="editJam" /></label>
     <label><i class="fas fa-users"></i> Jumlah Peserta: <input type="number" id="editJumlah" placeholder="Jumlah orang"/></label>
+    <label><i class="fas fa-money-bill-wave"></i> DP (Rupiah): <input type="number" id="editDp" placeholder="Jumlah DP dalam rupiah"/></label>
     <label><i class="fas fa-utensils"></i> Menu:
       <select id="editMenu">
         <option>Paket A</option><option>Paket B</option><option>Paket C</option>
@@ -844,6 +853,7 @@
     const editNamaInput = document.getElementById('editNama');
     const editJamInput = document.getElementById('editJam');
     const editJumlahInput = document.getElementById('editJumlah');
+    const editDpInput = document.getElementById('editDp');
     const editMenuSelect = document.getElementById('editMenu');
     const editTempatSelect = document.getElementById('editTempat');
     const editTambahanTextarea = document.getElementById('editTambahan');
@@ -968,12 +978,14 @@
           const isiMenu = detailMenu[r.menu]?.length
             ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>')
             : "-";
+          const dpInfo = r.dp ? `<div class="dp-info"><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)}</div>` : '';
           const div = document.createElement('div');
           div.className = 'reservation-item';
           div.innerHTML =
             `<div class="reservation-details">
               <b><i class="fas fa-user"></i> ${r.nama}</b><br/>
               <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} orang</span>
+              ${dpInfo}
               <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br />${isiMenu}</div>
               <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
               <hr/>
@@ -1061,11 +1073,16 @@
       document.getElementById('formFields').style.display = this.value === 'fusion437666' ? 'block' : 'none';
     };
 
+    function formatRupiah(amount) {
+      return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
     function simpanReservasi() {
       const key = formPopup.getAttribute('data-tanggal');
       const nama = document.getElementById('nama').value;
       const jam = document.getElementById('jam').value;
       const jumlah = parseInt(document.getElementById('jumlah').value);
+      const dp = parseInt(document.getElementById('dp').value) || 0;
       const menu = document.getElementById('menu').value;
       const tempat = document.getElementById('tempat').value;
       const tambahan = document.getElementById('tambahan').value;
@@ -1085,7 +1102,7 @@
         if (conflict) return alert("Gubug 1 sudah terisi di jam tersebut!");
       }
 
-      existing.push({ nama, jam, jumlah, menu, tempat, tambahan });
+      existing.push({ nama, jam, jumlah, dp, menu, tempat, tambahan });
       dataReservasi[key] = existing;
       localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
 
@@ -1100,6 +1117,7 @@
       document.getElementById('nama').value = '';
       document.getElementById('jam').value = '';
       document.getElementById('jumlah').value = '';
+      document.getElementById('dp').value = '0';
       document.getElementById('tambahan').value = '';
 
       // Remove message after 3 seconds and refresh view
@@ -1135,6 +1153,7 @@
       editNamaInput.value = reservasi.nama;
       editJamInput.value = reservasi.jam;
       editJumlahInput.value = reservasi.jumlah;
+      editDpInput.value = reservasi.dp || 0;
       editMenuSelect.value = reservasi.menu;
       editTempatSelect.value = reservasi.tempat;
       editTambahanTextarea.value = reservasi.tambahan || '';
@@ -1158,6 +1177,7 @@
       const nama = editNamaInput.value;
       const jam = editJamInput.value;
       const jumlah = parseInt(editJumlahInput.value);
+      const dp = parseInt(editDpInput.value) || 0;
       const menu = editMenuSelect.value;
       const tempat = editTempatSelect.value;
       const tambahan = editTambahanTextarea.value;
@@ -1183,7 +1203,7 @@
       }
 
       dataReservasi[tanggalReservasiDiedit][reservasiIndexDiedit] = {
-        nama, jam, jumlah, menu, tempat, tambahan
+        nama, jam, jumlah, dp, menu, tempat, tambahan
       };
 
       localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
@@ -1258,11 +1278,13 @@
           const isi = detailMenu[r.menu]?.length
             ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
             : "    - (tanpa detail menu)";
+          const dpInfo = r.dp ? `    DP: Rp${formatRupiah(r.dp)}\n` : '';
           return (
               `${i + 1}. ${r.nama}\n` +
                  `    Tempat: ${r.tempat}\n` +
                  `    Jam: ${r.jam}\n` +
                  `    Jumlah: ${r.jumlah} orang\n` +
+                 `${dpInfo}` +
                  `    Menu: ${r.menu}\n` +
             `${isi}\n` +
                  `    Catatan: ${r.tambahan || '-'}\n` +
@@ -1308,11 +1330,13 @@
             const isi = detailMenu[r.menu]?.length
               ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
               : "    - (tanpa detail menu)";
+            const dpInfo = r.dp ? `    DP: Rp${formatRupiah(r.dp)}\n` : '';
             message += (
               `*${i + 1}. ${r.nama}*\n` +
                  `    Tempat: ${r.tempat}\n` +
                  `    Jam: ${r.jam}\n` +
                  `    Jumlah: ${r.jumlah} orang\n` +
+                 `${dpInfo}` +
                  `    Menu: ${r.menu}\n` +
               `${isi}\n` +
                  `    Catatan: ${r.tambahan || '-'}\n\n`
@@ -1349,8 +1373,9 @@
             }
 
             list.forEach((r, idx) => {
+              const dpInfo = r.dp ? ` (DP: Rp${formatRupiah(r.dp)})` : '';
               message += (
-                  `- ${r.nama} (${r.tempat}, ${r.jam}, ${r.jumlah} orang)\n` +
+                  `- ${r.nama} (${r.tempat}, ${r.jam}, ${r.jumlah} orang${dpInfo})\n` +
                     `  Menu: ${r.menu}\n`
               );
 
@@ -1464,3 +1489,7 @@
     }
 
     // Initialize calendar
+    buatKalender();
+  </script>
+</body>
+</html>
