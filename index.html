@@ -1095,10 +1095,22 @@
     }
 
     function contactViaWhatsApp(phone, nama, tempat, jam, jumlah, menu, tambahan, dp) {
+      // Format nomor telepon untuk WhatsApp
+      let formattedPhone = phone;
+      if (phone.startsWith('08')) {
+        formattedPhone = '62' + phone.substring(1);
+      } else if (phone.startsWith('+62')) {
+        formattedPhone = phone.substring(1);
+      } else if (phone.startsWith('62')) {
+        // Sudah dalam format yang benar
+      } else {
+        // Format tidak dikenali, gunakan apa adanya
+      }
+      
       const formattedDate = `${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}`;
       const dpInfo = dp ? `DP: Rp${formatRupiah(dp)}\n` : '';
       const message = `Halo ${nama},\n\nDetail Reservasi Dolan Sawah:\n- Tanggal: ${formattedDate}\n- Tempat: ${tempat}\n- Jam: ${jam}\n- Jumlah: ${jumlah} orang\n${dpInfo}- Menu: ${menu}\n- Catatan: ${tambahan}\n\nTerima kasih atas reservasinya!`;
-      const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
       window.open(whatsappLink, '_blank');
     }
 
