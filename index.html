@@ -625,6 +625,17 @@
       color: var(--accent);
     }
 
+    .location-warning {
+      background-color: rgba(231, 111, 81, 0.1);
+      border-left: 3px solid var(--danger);
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      color: var(--danger);
+      font-weight: 500;
+    }
+
     @media (max-width: 768px) {
       .calendar-day {
         min-height: 60px;
@@ -795,10 +806,11 @@
           </select>
         </label>
         <label><i class="fas fa-map-marker-alt"></i> Tempat:
-          <select id="tempat">
+          <select id="tempat" onchange="checkLocationCapacity(this.value)">
             <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
             <option>Gubug 1</option><option>Gubug 2</option><option>Gubug 3</option>
           </select>
+          <div id="locationWarning" class="location-warning" style="display:none;"></div>
         </label>
         <label><i class="fas fa-comment-dots"></i> Request Tambahan:
           <textarea id="tambahan" placeholder="Permintaan khusus atau catatan tambahan"></textarea>
@@ -858,10 +870,11 @@
       </select>
     </label>
     <label><i class="fas fa-map-marker-alt"></i> Tempat:
-      <select id="editTempat">
+      <select id="editTempat" onchange="checkLocationCapacity(this.value, true)">
         <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
         <option>Gubug 1</option><option>Gubug 2</option><option>Gubug 3</option>
       </select>
+      <div id="editLocationWarning" class="location-warning" style="display:none;"></div>
     </label>
     <label><i class="fas fa-comment-dots"></i> Request Tambahan:
       <textarea id="editTambahan" placeholder="Permintaan khusus atau catatan tambahan"></textarea>
@@ -936,6 +949,40 @@
     const globalSearchInput = document.getElementById('globalSearchInput');
     const searchResults = document.getElementById('searchResults');
     const searchResultsContent = document.getElementById('searchResultsContent');
+    const locationWarning = document.getElementById('locationWarning');
+    const editLocationWarning = document.getElementById('editLocationWarning');
+
+    function checkLocationCapacity(location, isEditForm = false) {
+      const warningElement = isEditForm ? editLocationWarning : locationWarning;
+      const jumlahInput = isEditForm ? editJumlahInput : document.getElementById('jumlah');
+      const jumlah = parseInt(jumlahInput.value) || 0;
+      
+      if (!location || !kapasitasTempat[location]) {
+        warningElement.style.display = 'none';
+        return;
+      }
+
+      // Calculate current occupancy for the selected date
+      const currentOccupancy = calculateCurrentOccupancy(location);
+      const totalOccupancy = currentOccupancy + jumlah;
+      const capacity = kapasitasTempat[location];
+      const percentage = Math.round((totalOccupancy / capacity) * 100);
+
+      if (percentage >= 70) {
+        warningElement.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Peringatan: ${location} akan mencapai ${percentage}% kapasitas (${totalOccupancy}/${capacity} orang)`;
+        warningElement.style.display = 'block';
+      } else {
+        warningElement.style.display = 'none';
+      }
+    }
+
+    function calculateCurrentOccupancy(location) {
+      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return 0;
+      
+      return dataReservasi[tanggalDipilih]
+        .filter(reservasi => reservasi.tempat === location)
+        .reduce((sum, reservasi) => sum + parseInt(reservasi.jumlah), 0);
+    }
 
     function validatePhoneNumber(phone) {
       const phoneRegex = /^(?:\+628|08)\d{8,11}$/;
@@ -1010,17 +1057,37 @@
         }
       });
 
-      const totalPeserta = filteredReservations.reduce((sum, r) => sum + Number(r.jumlah), 0);
-      const totalKapasitas = Object.values(kapasitasTempat).reduce((a, b) => a + b, 0);
-      const persen = (totalPeserta / totalKapasitas) * 100;
+      // Calculate capacity warnings for each location
+      const locationWarnings = {};
+      Object.keys(kapasitasTempat).forEach(location => {
+        const currentOccupancy = calculateCurrentOccupancy(location);
+        const capacity = kapasitasTempat[location];
+        const percentage = Math.round((currentOccupancy / capacity) * 100);
+        if (percentage >= 70) {
+          locationWarnings[location] = {
+            percentage,
+            current: currentOccupancy,
+            capacity
+          };
+        }
+      });
 
-      warningBox.style.display = persen > 60 ? 'flex' : 'none';
-      if (persen > 60) {
-        warningBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Kapasitas ${Math.round(persen)}%! Hampir penuh!`;
+      // Show general warning if any location is over 70%
+      warningBox.style.display = Object.keys(locationWarnings).length > 0 ? 'flex' : 'none';
+      if (Object.keys(locationWarnings).length > 0) {
+        let warningText = '<i class="fas fa-exclamation-triangle"></i> Kapasitas hampir penuh:<br>';
+        for (const [location, data] of Object.entries(locationWarnings)) {
+          warningText += `${location}: ${data.percentage}% (${data.current}/${data.capacity})<br>`;
+        }
+        warningBox.innerHTML = warningText;
       }
 
       document.querySelector('.capacity-meter')?.remove();
       document.querySelector('.capacity-info')?.remove();
+
+      const totalPeserta = filteredReservations.reduce((sum, r) => sum + Number(r.jumlah), 0);
+      const totalKapasitas = Object.values(kapasitasTempat).reduce((a, b) => a + b, 0);
+      const persen = (totalPeserta / totalKapasitas) * 100;
 
       if (totalPeserta > 0) {
         const capacityMeter = document.createElement('div');
@@ -1324,6 +1391,24 @@
         if (conflict) return alert("Gubug 1 sudah terisi di jam tersebut!");
       }
 
+      // Check capacity for the selected location
+      const currentOccupancy = calculateCurrentOccupancy(tempat);
+      const totalOccupancy = currentOccupancy + jumlah;
+      const capacity = kapasitasTempat[tempat];
+      const percentage = Math.round((totalOccupancy / capacity) * 100);
+
+      if (percentage > 100) {
+        return alert(`Kapasitas ${tempat} akan melebihi 100% (${totalOccupancy}/${capacity} orang)!`);
+      } else if (percentage >= 90) {
+        if (!confirm(`Peringatan: ${tempat} akan mencapai ${percentage}% kapasitas (${totalOccupancy}/${capacity} orang). Lanjutkan?`)) {
+          return;
+        }
+      } else if (percentage >= 70) {
+        if (!confirm(`Peringatan: ${tempat} akan mencapai ${percentage}% kapasitas (${totalOccupancy}/${capacity} orang). Lanjutkan?`)) {
+          return;
+        }
+      }
+
       existing.push({ nama, nomorHp: nomorHp ? formatPhoneNumber(nomorHp) : '', jam, jumlah, dp, menu, tempat, tambahan });
       dataReservasi[key] = existing;
       localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
@@ -1340,6 +1425,7 @@
       document.getElementById('jumlah').value = '';
       document.getElementById('dp').value = '0';
       document.getElementById('tambahan').value = '';
+      locationWarning.style.display = 'none';
 
       setTimeout(() => {
         successMsg.remove();
@@ -1417,6 +1503,29 @@
         );
         if (conflict && (tempat !== originalTempat || jam !== originalJam)) {
           return alert("Gubug 1 sudah terisi di jam tersebut!");
+        }
+      }
+
+      // Check capacity for the selected location
+      const currentOccupancy = calculateCurrentOccupancy(tempat);
+      const originalReservation = existing[reservasiIndexDiedit];
+      const originalJumlah = originalReservation ? parseInt(originalReservation.jumlah) : 0;
+      
+      // Adjust occupancy calculation by removing the original reservation's count
+      const adjustedOccupancy = currentOccupancy - originalJumlah;
+      const totalOccupancy = adjustedOccupancy + jumlah;
+      const capacity = kapasitasTempat[tempat];
+      const percentage = Math.round((totalOccupancy / capacity) * 100);
+
+      if (percentage > 100) {
+        return alert(`Kapasitas ${tempat} akan melebihi 100% (${totalOccupancy}/${capacity} orang)!`);
+      } else if (percentage >= 90) {
+        if (!confirm(`Peringatan: ${tempat} akan mencapai ${percentage}% kapasitas (${totalOccupancy}/${capacity} orang). Lanjutkan?`)) {
+          return;
+        }
+      } else if (percentage >= 70) {
+        if (!confirm(`Peringatan: ${tempat} akan mencapai ${percentage}% kapasitas (${totalOccupancy}/${capacity} orang). Lanjutkan?`)) {
+          return;
         }
       }
 
