@@ -795,7 +795,7 @@
         <label><i class="fas fa-user"></i> Nama: <input type="text" id="nama" placeholder="Nama pemesan"/></label>
         <label><i class="fas fa-phone"></i> Nomor HP: <input type="tel" id="nomorHp" placeholder="Contoh: +6281234567890"/></label>
         <label><i class="fas fa-clock"></i> Jam Reservasi: <input type="time" id="jam" /></label>
-        <label><i class="fas fa-users"></i> Jumlah Peserta: <input type="number" id="jumlah" placeholder="Jumlah orang"/></label>
+        <label><i class="fas fa-users"></i> Jumlah Peserta: <input type="number" id="jumlah" placeholder="Jumlah orang" oninput="checkLocationCapacity(document.getElementById('tempat').value)"/></label>
         <label><i class="fas fa-money-bill-wave"></i> DP (Rupiah): <input type="number" id="dp" placeholder="Jumlah DP dalam rupiah" value="0"/></label>
         <label><i class="fas fa-utensils"></i> Menu:
           <select id="menu">
@@ -859,7 +859,7 @@
     <label><i class="fas fa-user"></i> Nama: <input type="text" id="editNama" placeholder="Nama pemesan"/></label>
     <label><i class="fas fa-phone"></i> Nomor HP: <input type="tel" id="editNomorHp" placeholder="Contoh: +6281234567890"/></label>
     <label><i class="fas fa-clock"></i> Jam Reservasi: <input type="time" id="editJam" /></label>
-    <label><i class="fas fa-users"></i> Jumlah Peserta: <input type="number" id="editJumlah" placeholder="Jumlah orang"/></label>
+    <label><i class="fas fa-users"></i> Jumlah Peserta: <input type="number" id="editJumlah" placeholder="Jumlah orang" oninput="checkLocationCapacity(document.getElementById('editTempat').value, true)"/></label>
     <label><i class="fas fa-money-bill-wave"></i> DP (Rupiah): <input type="number" id="editDp" placeholder="Jumlah DP dalam rupiah"/></label>
     <label><i class="fas fa-utensils"></i> Menu:
       <select id="editMenu">
@@ -952,18 +952,50 @@
     const locationWarning = document.getElementById('locationWarning');
     const editLocationWarning = document.getElementById('editLocationWarning');
 
+    function calculateCurrentOccupancy(location, jamReservasi = null) {
+      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return 0;
+      
+      const reservations = dataReservasi[tanggalDipilih].filter(reservasi => reservasi.tempat === location);
+      
+      if (!jamReservasi) {
+        // If no specific time is provided, just sum all reservations for the location
+        return reservations.reduce((sum, reservasi) => sum + parseInt(reservasi.jumlah), 0);
+      }
+      
+      // Convert reservation time to minutes for comparison
+      const [jam, menit] = jamReservasi.split(':').map(Number);
+      const waktuReservasiMenit = jam * 60 + menit;
+      
+      // Calculate overlapping reservations (within 3.5 hours before or after)
+      const overlappingReservations = reservations.filter(reservasi => {
+        const [resJam, resMenit] = reservasi.jam.split(':').map(Number);
+        const resWaktuMenit = resJam * 60 + resMenit;
+        return Math.abs(resWaktuMenit - waktuReservasiMenit) < 210; // 3.5 hours = 210 minutes
+      });
+      
+      return overlappingReservations.reduce((sum, reservasi) => sum + parseInt(reservasi.jumlah), 0);
+    }
+
     function checkLocationCapacity(location, isEditForm = false) {
       const warningElement = isEditForm ? editLocationWarning : locationWarning;
       const jumlahInput = isEditForm ? editJumlahInput : document.getElementById('jumlah');
+      const jamInput = isEditForm ? editJamInput : document.getElementById('jam');
+      
       const jumlah = parseInt(jumlahInput.value) || 0;
+      const jam = jamInput.value;
       
       if (!location || !kapasitasTempat[location]) {
         warningElement.style.display = 'none';
         return;
       }
 
-      // Calculate current occupancy for the selected date
-      const currentOccupancy = calculateCurrentOccupancy(location);
+      if (!jam) {
+        warningElement.style.display = 'none';
+        return;
+      }
+
+      // Calculate current occupancy considering the 3.5-hour gap
+      const currentOccupancy = calculateCurrentOccupancy(location, jam);
       const totalOccupancy = currentOccupancy + jumlah;
       const capacity = kapasitasTempat[location];
       const percentage = Math.round((totalOccupancy / capacity) * 100);
@@ -974,14 +1006,6 @@
       } else {
         warningElement.style.display = 'none';
       }
-    }
-
-    function calculateCurrentOccupancy(location) {
-      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return 0;
-      
-      return dataReservasi[tanggalDipilih]
-        .filter(reservasi => reservasi.tempat === location)
-        .reduce((sum, reservasi) => sum + parseInt(reservasi.jumlah), 0);
     }
 
     function validatePhoneNumber(phone) {
@@ -1057,22 +1081,51 @@
         }
       });
 
-      // Calculate capacity warnings for each location
+      // Calculate capacity warnings for each location considering time gaps
       const locationWarnings = {};
       Object.keys(kapasitasTempat).forEach(location => {
-        const currentOccupancy = calculateCurrentOccupancy(location);
+        const reservations = dataReservasi[key]?.filter(r => r.tempat === location) || [];
+        
+        // Group reservations by time slots (with 3.5 hour gap)
+        const timeSlots = [];
+        reservations.forEach(reservasi => {
+          const [jam, menit] = reservasi.jam.split(':').map(Number);
+          const waktuMenit = jam * 60 + menit;
+          let slotFound = false;
+          
+          // Check if this reservation fits into any existing time slot
+          for (const slot of timeSlots) {
+            if (Math.abs(waktuMenit - slot.time) < 210) { // 3.5 hours = 210 minutes
+              slot.count += parseInt(reservasi.jumlah);
+              slotFound = true;
+              break;
+            }
+          }
+          
+          // If no matching slot found, create a new one
+          if (!slotFound) {
+            timeSlots.push({
+              time: waktuMenit,
+              count: parseInt(reservasi.jumlah)
+            });
+          }
+        });
+        
+        // Find the maximum occupancy across all time slots
+        const maxOccupancy = timeSlots.reduce((max, slot) => Math.max(max, slot.count), 0);
         const capacity = kapasitasTempat[location];
-        const percentage = Math.round((currentOccupancy / capacity) * 100);
+        const percentage = Math.round((maxOccupancy / capacity) * 100);
+        
         if (percentage >= 70) {
           locationWarnings[location] = {
             percentage,
-            current: currentOccupancy,
+            current: maxOccupancy,
             capacity
           };
         }
       });
 
-      // Show general warning if any location is over 70%
+      // Show general warning if any location is over 70% capacity for the selected date
       warningBox.style.display = Object.keys(locationWarnings).length > 0 ? 'flex' : 'none';
       if (Object.keys(locationWarnings).length > 0) {
         let warningText = '<i class="fas fa-exclamation-triangle"></i> Kapasitas hampir penuh:<br>';
@@ -1383,16 +1436,9 @@
       }
 
       const existing = dataReservasi[key] || [];
-      if (tempat === "Gubug 1") {
-        const conflict = existing.some(r =>
-          r.tempat === "Gubug 1" &&
-          Math.abs(parseFloat(r.jam.replace(":", ".")) - parseFloat(jam.replace(":", "."))) < 3.5
-        );
-        if (conflict) return alert("Gubug 1 sudah terisi di jam tersebut!");
-      }
-
-      // Check capacity for the selected location
-      const currentOccupancy = calculateCurrentOccupancy(tempat);
+      
+      // Check capacity considering 3.5-hour gap
+      const currentOccupancy = calculateCurrentOccupancy(tempat, jam);
       const totalOccupancy = currentOccupancy + jumlah;
       const capacity = kapasitasTempat[tempat];
       const percentage = Math.round((totalOccupancy / capacity) * 100);
@@ -1492,27 +1538,20 @@
       }
 
       const existing = dataReservasi[tanggalReservasiDiedit];
-      const originalJam = existing[reservasiIndexDiedit]?.jam;
-      const originalTempat = existing[reservasiIndexDiedit]?.tempat;
-
-      if (tempat === "Gubug 1") {
-        const conflict = existing.some((r, idx) =>
-          idx !== reservasiIndexDiedit &&
-          r.tempat === "Gubug 1" &&
-          Math.abs(parseFloat(r.jam.replace(":", ".")) - parseFloat(jam.replace(":", "."))) < 3.5
-        );
-        if (conflict && (tempat !== originalTempat || jam !== originalJam)) {
-          return alert("Gubug 1 sudah terisi di jam tersebut!");
-        }
-      }
-
-      // Check capacity for the selected location
-      const currentOccupancy = calculateCurrentOccupancy(tempat);
       const originalReservation = existing[reservasiIndexDiedit];
+      
+      // Check capacity considering 3.5-hour gap
+      // First remove the original reservation's count from the calculation
+      const originalOccupancy = calculateCurrentOccupancy(tempat, jam);
       const originalJumlah = originalReservation ? parseInt(originalReservation.jumlah) : 0;
       
-      // Adjust occupancy calculation by removing the original reservation's count
-      const adjustedOccupancy = currentOccupancy - originalJumlah;
+      // Calculate adjusted occupancy by removing the original reservation's count
+      let adjustedOccupancy = originalOccupancy;
+      if (originalReservation && originalReservation.tempat === tempat) {
+        // Only subtract if the location is the same
+        adjustedOccupancy = originalOccupancy - originalJumlah;
+      }
+      
       const totalOccupancy = adjustedOccupancy + jumlah;
       const capacity = kapasitasTempat[tempat];
       const percentage = Math.round((totalOccupancy / capacity) * 100);
