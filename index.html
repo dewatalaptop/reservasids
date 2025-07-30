@@ -828,7 +828,7 @@
     </div>
 
     <div class="action-buttons">
-      <button onclick="showCustomerMenu()"><i class="fas fa-address-book"></i> Menu Customer</button>
+      <button onclick="showCustomerMenu()"><i class="fas fa-address-book"></i> Data Customer</button>
       <button onclick="printData()"><i class="fas fa-print"></i> Print</button>
       
       <div class="sort-options-container">
@@ -1579,7 +1579,7 @@
     
     // ===== FUNGSI BARU UNTUK MENU CUSTOMER =====
     function showCustomerMenu() {
-        const pass = prompt("Masukkan password admin untuk mengakses menu customer:");
+        const pass = prompt("Masukkan password admin untuk mengakses data customer:");
         if (pass !== 'fusion437666') {
             if (pass) alert("Password salah!");
             return;
