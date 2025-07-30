@@ -1279,7 +1279,7 @@
       
         const formattedDate = `${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}`;
         const dpInfo = dp ? `DP: Rp${formatRupiah(dp)}\n` : '';
-        const message = `Halo ${nama},\n\nDetail Reservasi Dolan Sawah:\n- Tanggal: ${formattedDate}\n- Tempat: ${tempat}\n- Jam: ${jam}\n- Jumlah: ${jumlah} orang\n${dpInfo}- Menu: ${menu}\n- Catatan: ${tambahan}\n\nTerima kasih atas reservasinya!`;
+        const message = `Salam Bapak/Ibu ${nama},\n\nDetail Reservasi Dolan Sawah:\n- Tanggal: ${formattedDate}\n- Tempat: ${tempat}\n- Jam: ${jam}\n- Jumlah: ${jumlah} orang\n${dpInfo}- Menu: ${menu}\n- Catatan: ${tambahan}\n\nTerima kasih atas reservasinya 🙏`;
         const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
         window.open(whatsappLink, '_blank');
     }
