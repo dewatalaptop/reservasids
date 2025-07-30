@@ -946,7 +946,7 @@
     let currentYear = new Date().getFullYear();
     let reservasiIndexDiedit = null;
     let tanggalReservasiDiedit = null;
-    let filteredReservations = []; // For search results
+    let filteredReservations = [];
 
     const calendarEl = document.getElementById('calendar');
     const warningBox = document.getElementById('warningBox');
@@ -982,19 +982,16 @@
       const reservations = dataReservasi[tanggalDipilih].filter(reservasi => reservasi.tempat === location);
       
       if (!jamReservasi) {
-        // If no specific time is provided, just sum all reservations for the location
         return reservations.reduce((sum, reservasi) => sum + parseInt(reservasi.jumlah), 0);
       }
       
-      // Convert reservation time to minutes for comparison
       const [jam, menit] = jamReservasi.split(':').map(Number);
       const waktuReservasiMenit = jam * 60 + menit;
       
-      // Calculate overlapping reservations (within 3.5 hours before or after)
       const overlappingReservations = reservations.filter(reservasi => {
         const [resJam, resMenit] = reservasi.jam.split(':').map(Number);
         const resWaktuMenit = resJam * 60 + resMenit;
-        return Math.abs(resWaktuMenit - waktuReservasiMenit) < 210; // 3.5 hours = 210 minutes
+        return Math.abs(resWaktuMenit - waktuReservasiMenit) < 210;
       });
       
       return overlappingReservations.reduce((sum, reservasi) => sum + parseInt(reservasi.jumlah), 0);
@@ -1008,17 +1005,11 @@
       const jumlah = parseInt(jumlahInput.value) || 0;
       const jam = jamInput.value;
       
-      if (!location || !kapasitasTempat[location]) {
+      if (!location || !kapasitasTempat[location] || !jam) {
         warningElement.style.display = 'none';
         return;
       }
 
-      if (!jam) {
-        warningElement.style.display = 'none';
-        return;
-      }
-
-      // Calculate current occupancy considering the 3.5-hour gap
       const currentOccupancy = calculateCurrentOccupancy(location, jam);
       const totalOccupancy = currentOccupancy + jumlah;
       const capacity = kapasitasTempat[location];
@@ -1105,51 +1096,33 @@
         }
       });
 
-      // Calculate capacity warnings for each location considering time gaps
       const locationWarnings = {};
       Object.keys(kapasitasTempat).forEach(location => {
         const reservations = dataReservasi[key]?.filter(r => r.tempat === location) || [];
-        
-        // Group reservations by time slots (with 3.5 hour gap)
         const timeSlots = [];
         reservations.forEach(reservasi => {
           const [jam, menit] = reservasi.jam.split(':').map(Number);
           const waktuMenit = jam * 60 + menit;
           let slotFound = false;
-          
-          // Check if this reservation fits into any existing time slot
           for (const slot of timeSlots) {
-            if (Math.abs(waktuMenit - slot.time) < 210) { // 3.5 hours = 210 minutes
+            if (Math.abs(waktuMenit - slot.time) < 210) {
               slot.count += parseInt(reservasi.jumlah);
               slotFound = true;
               break;
             }
           }
-          
-          // If no matching slot found, create a new one
           if (!slotFound) {
-            timeSlots.push({
-              time: waktuMenit,
-              count: parseInt(reservasi.jumlah)
-            });
+            timeSlots.push({ time: waktuMenit, count: parseInt(reservasi.jumlah) });
           }
         });
-        
-        // Find the maximum occupancy across all time slots
         const maxOccupancy = timeSlots.reduce((max, slot) => Math.max(max, slot.count), 0);
         const capacity = kapasitasTempat[location];
         const percentage = Math.round((maxOccupancy / capacity) * 100);
-        
         if (percentage >= 70) {
-          locationWarnings[location] = {
-            percentage,
-            current: maxOccupancy,
-            capacity
-          };
+          locationWarnings[location] = { percentage, current: maxOccupancy, capacity };
         }
       });
 
-      // Show general warning if any location is over 70% capacity for the selected date
       warningBox.style.display = Object.keys(locationWarnings).length > 0 ? 'flex' : 'none';
       if (Object.keys(locationWarnings).length > 0) {
         let warningText = '<i class="fas fa-exclamation-triangle"></i> Kapasitas hampir penuh:<br>';
@@ -1161,7 +1134,7 @@
 
       document.querySelector('.capacity-meter')?.remove();
       document.querySelector('.capacity-info')?.remove();
-
+      
       const totalPeserta = filteredReservations.reduce((sum, r) => sum + Number(r.jumlah), 0);
       const totalKapasitas = Object.values(kapasitasTempat).reduce((a, b) => a + b, 0);
       const persen = (totalPeserta / totalKapasitas) * 100;
@@ -1242,17 +1215,15 @@
       if (typeof text !== 'string') return text;
       return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-
-    // PERUBAHAN DI SINI: Fungsi menerima index, bukan semua data mentah
+    
+    // --- KODE BARU DIMULAI DI SINI ---
     function contactViaWhatsApp(index) {
-        // Ambil data reservasi lengkap dari array menggunakan index-nya
         const reservasi = filteredReservations[index];
         if (!reservasi || !reservasi.nomorHp) {
             console.error("Data reservasi atau nomor HP tidak ditemukan untuk index:", index);
-            return; 
+            return;
         }
 
-        // Sekarang gunakan data dari objek 'reservasi'
         const phone = reservasi.nomorHp;
         const nama = reservasi.nama;
         const tempat = reservasi.tempat;
@@ -1261,30 +1232,114 @@
         const menu = reservasi.menu;
         const tambahan = reservasi.tambahan || '-';
         const dp = reservasi.dp || 0;
-      
-        // Sisa kode di dalam fungsi ini tetap sama
-        let formattedPhone = phone;
-      
-        formattedPhone = formattedPhone.replace(/\D/g, '');
-      
+
+        let formattedPhone = phone.replace(/\D/g, '');
         if (formattedPhone.startsWith('0')) {
             formattedPhone = '62' + formattedPhone.substring(1);
-        } else if (formattedPhone.startsWith('62')) {
-            // Already in correct format
-        } else if (formattedPhone.startsWith('8')) {
-            formattedPhone = '62' + formattedPhone;
         } else if (!formattedPhone.startsWith('62')) {
             formattedPhone = '62' + formattedPhone;
         }
-      
+
         const formattedDate = `${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}`;
-        const dpInfo = dp ? `DP: Rp${formatRupiah(dp)}\n` : '';
-        const message = `Salam Bapak/Ibu ${nama},\n\nDetail Reservasi Dolan Sawah:\n- Tanggal: ${formattedDate}\n- Tempat: ${tempat}\n- Jam: ${jam}\n- Jumlah: ${jumlah} orang\n${dpInfo}- Menu: ${menu}\n- Catatan: ${tambahan}\n\nTerima kasih atas reservasinya 🙏`;
+        const dpInfo = dp ? `💰 *DP:* Rp${formatRupiah(dp)}\n` : '';
+
+        // Pesan dengan format baru dan link Google Maps
+        const message = `Salam Bapak/Ibu *${nama}*,\n\nIni adalah konfirmasi reservasi Anda di Dolan Sawah. Mohon periksa kembali detail di bawah ini:\n\n` +
+                        `🗓️ *Tanggal:* ${formattedDate}\n` +
+                        `📍 *Tempat:* ${tempat}\n` +
+                        `⏰ *Jam:* ${jam}\n` +
+                        `👥 *Jumlah:* ${jumlah} orang\n` +
+                        dpInfo +
+                        `🍽️ *Menu:* ${menu}\n` +
+                        `📝 *Catatan:* ${tambahan}\n\n` +
+                        `🗺️ *Lokasi Google Maps:*\nhttps://g.co/kgs/MED5p8M\n\n` +
+                        `Terima kasih atas reservasinya dan kami tunggu kedatangannya! 🙏`;
+
         const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
         window.open(whatsappLink, '_blank');
     }
 
-    // Global search function
+    function shareViaWhatsApp(scope) {
+        const getSortBy = () => prompt("Urutkan data berdasarkan (jam/tempat):", "jam") || "jam";
+        let message = `*✨ Reservasi Dolan Sawah ✨*\n`;
+        const separator = `\n---------------------------------------\n\n`;
+
+        if (scope === 'day') {
+            if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
+                return alert("Silakan pilih tanggal terlebih dahulu.");
+            }
+
+            const [month, day] = tanggalDipilih.split('-');
+            const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
+            const sortBy = getSortBy();
+            let list = [...filteredReservations];
+
+            if (sortBy === 'jam') list.sort((a, b) => a.jam.localeCompare(b.jam));
+            else if (sortBy === 'tempat') list.sort((a, b) => a.tempat.localeCompare(b.tempat));
+
+            message += `*🗓️ Tanggal: ${formattedDate}*\n_(Diurutkan berdasarkan ${sortBy})_\n${separator}`;
+
+            if (list.length === 0) {
+                message += "Belum ada reservasi untuk tanggal ini.\n";
+            } else {
+                list.forEach((r, i) => {
+                    const isi = detailMenu[r.menu]?.length ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n') : "    - (Tanpa detail menu)";
+                    const dpInfo = r.dp ? `💰 *DP:* Rp${formatRupiah(r.dp)}\n` : '';
+                    const phoneInfo = r.nomorHp ? `📞 *HP:* ${r.nomorHp}\n` : '';
+
+                    message += `*${i + 1}. ${r.nama}*\n` +
+                               `📍 *Tempat:* ${r.tempat}\n` +
+                               `⏰ *Jam:* ${r.jam}\n` +
+                               `👥 *Jumlah:* ${r.jumlah} orang\n` +
+                               phoneInfo +
+                               dpInfo +
+                               `🍽️ *Menu:* ${r.menu}\n${isi}\n` +
+                               `📝 *Catatan:* ${r.tambahan || '-'}\n${separator}`;
+                });
+            }
+        } else { // scope 'month'
+            message += `* Laporan Bulan: ${monthNames[currentMonth]} ${currentYear}*\n`;
+            const sortBy = getSortBy();
+            message += `_(Diurutkan per hari berdasarkan ${sortBy})_\n${separator}`;
+
+            let hasReservations = false;
+            const monthStr = String(currentMonth + 1).padStart(2, '0');
+
+            for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i++) {
+                const dayStr = String(i).padStart(2, '0');
+                const dateKey = `${monthStr}-${dayStr}`;
+
+                if (dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
+                    hasReservations = true;
+                    const formattedDate = `${i} ${monthNames[currentMonth]}`;
+                    message += `*🗓️ === ${formattedDate} ===*\n\n`;
+
+                    let list = [...dataReservasi[dateKey]];
+                    if (sortBy === 'jam') list.sort((a, b) => a.jam.localeCompare(b.jam));
+                    else if (sortBy === 'tempat') list.sort((a, b) => a.tempat.localeCompare(b.tempat));
+
+                    list.forEach(r => {
+                        const dpInfo = r.dp ? ` (DP: Rp${formatRupiah(r.dp)})` : '';
+                        const phoneInfo = r.nomorHp ? ` | 📞 ${r.nomorHp}` : '';
+                        message += `*• ${r.nama}*\n` +
+                                   `  📍 ${r.tempat} | ⏰ ${r.jam} | 👥 ${r.jumlah} org${dpInfo}${phoneInfo}\n` +
+                                   `  🍽️ _Menu: ${r.menu}_\n`;
+                        if (r.tambahan) {
+                            message += `  📝 _Catatan: ${r.tambahan}_\n`;
+                        }
+                        message += '\n';
+                    });
+                    message += `-----------------\n\n`;
+                }
+            }
+            if (!hasReservations) message += "Belum ada reservasi untuk bulan ini.\n";
+        }
+
+        const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappLink, '_blank');
+    }
+    // --- KODE BARU BERAKHIR DI SINI ---
+
     function performGlobalSearch(query) {
       if (!query) {
         searchResults.style.display = 'none';
@@ -1294,7 +1349,6 @@
       const results = [];
       const queryLower = query.toLowerCase();
 
-      // Search through all reservations
       for (const dateKey in dataReservasi) {
         if (dataReservasi.hasOwnProperty(dateKey)) {
           const [month, day] = dateKey.split('-');
@@ -1382,26 +1436,31 @@
     function navigateToDate(dateKey) {
       const [month, day] = dateKey.split('-');
       currentMonth = parseInt(month) - 1;
-      currentYear = new Date().getFullYear(); // You might want to adjust this based on your data
+      currentYear = new Date().getFullYear();
       buatKalender();
       pilihTanggal(parseInt(day));
       searchResults.style.display = 'none';
     }
 
-    // Event listener for global search
     globalSearchInput.addEventListener('input', function() {
       performGlobalSearch(this.value);
     });
 
-    searchInput.addEventListener('input', function() {
-      const query = this.value.toLowerCase();
-      filteredReservations = dataReservasi[tanggalDipilih]?.filter(r =>
-        r.nama.toLowerCase().includes(query) ||
-        r.tempat.toLowerCase().includes(query) ||
-        r.menu.toLowerCase().includes(query)
-      ) || [];
-      updateReservationList(filteredReservations);
+    document.addEventListener('DOMContentLoaded', () => {
+        // We need to use event delegation for the dynamically created search input
+        document.body.addEventListener('input', function(event) {
+            if (event.target.id === 'searchInput') {
+                const query = event.target.value.toLowerCase();
+                filteredReservations = dataReservasi[tanggalDipilih]?.filter(r =>
+                    r.nama.toLowerCase().includes(query) ||
+                    r.tempat.toLowerCase().includes(query) ||
+                    r.menu.toLowerCase().includes(query)
+                ) || [];
+                updateReservationList(filteredReservations);
+            }
+        });
     });
+
 
     function previousMonth() {
       currentMonth--;
@@ -1487,20 +1546,14 @@
 
       const existing = dataReservasi[key] || [];
       
-      // Check capacity considering 3.5-hour gap
       const currentOccupancy = calculateCurrentOccupancy(tempat, jam);
       const totalOccupancy = currentOccupancy + jumlah;
       const capacity = kapasitasTempat[tempat];
-      const percentage = Math.round((totalOccupancy / capacity) * 100);
 
-      if (percentage > 100) {
+      if (totalOccupancy > capacity) {
         return alert(`Kapasitas ${tempat} akan melebihi 100% (${totalOccupancy}/${capacity} orang)!`);
-      } else if (percentage >= 90) {
-        if (!confirm(`Peringatan: ${tempat} akan mencapai ${percentage}% kapasitas (${totalOccupancy}/${capacity} orang). Lanjutkan?`)) {
-          return;
-        }
-      } else if (percentage >= 70) {
-        if (!confirm(`Peringatan: ${tempat} akan mencapai ${percentage}% kapasitas (${totalOccupancy}/${capacity} orang). Lanjutkan?`)) {
+      } else if (totalOccupancy / capacity >= 0.7) {
+        if (!confirm(`Peringatan: Kapasitas ${tempat} akan mencapai atau melebihi 70%. Lanjutkan?`)) {
           return;
         }
       }
@@ -1528,7 +1581,7 @@
         const day = parseInt(key.split("-")[1]);
         pilihTanggal(day);
         buatKalender();
-      }, 3000);
+      }, 2000);
     }
 
     function hapusReservasi(tgl, idx) {
@@ -1537,6 +1590,7 @@
 
       if (confirm("Apakah Anda yakin ingin menghapus reservasi ini?")) {
         dataReservasi[tgl].splice(idx, 1);
+        if(dataReservasi[tgl].length === 0) delete dataReservasi[tgl];
         localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
         const day = parseInt(tgl.split("-")[1]);
         pilihTanggal(day);
@@ -1566,9 +1620,7 @@
     }
 
     function simpanPerubahanReservasi() {
-      if (!tanggalReservasiDiedit || reservasiIndexDiedit === null) {
-        return alert("Terjadi kesalahan dalam mengidentifikasi reservasi yang akan diubah.");
-      }
+      if (!tanggalReservasiDiedit || reservasiIndexDiedit === null) return;
 
       const nama = editNamaInput.value;
       const nomorHp = editNomorHpInput.value;
@@ -1582,40 +1634,8 @@
       if (!nama || !jam || isNaN(jumlah) || !menu || !tempat) {
         return alert('Harap isi semua field yang diperlukan!');
       }
-
       if (nomorHp && !validatePhoneNumber(nomorHp)) {
-        return alert('Nomor HP tidak valid! Gunakan format +628xxxxxxxxxx atau 08xxxxxxxxxx.');
-      }
-
-      const existing = dataReservasi[tanggalReservasiDiedit];
-      const originalReservation = existing[reservasiIndexDiedit];
-      
-      // Check capacity considering 3.5-hour gap
-      // First remove the original reservation's count from the calculation
-      const originalOccupancy = calculateCurrentOccupancy(tempat, jam);
-      const originalJumlah = originalReservation ? parseInt(originalReservation.jumlah) : 0;
-      
-      // Calculate adjusted occupancy by removing the original reservation's count
-      let adjustedOccupancy = originalOccupancy;
-      if (originalReservation && originalReservation.tempat === tempat) {
-        // Only subtract if the location is the same
-        adjustedOccupancy = originalOccupancy - originalJumlah;
-      }
-      
-      const totalOccupancy = adjustedOccupancy + jumlah;
-      const capacity = kapasitasTempat[tempat];
-      const percentage = Math.round((totalOccupancy / capacity) * 100);
-
-      if (percentage > 100) {
-        return alert(`Kapasitas ${tempat} akan melebihi 100% (${totalOccupancy}/${capacity} orang)!`);
-      } else if (percentage >= 90) {
-        if (!confirm(`Peringatan: ${tempat} akan mencapai ${percentage}% kapasitas (${totalOccupancy}/${capacity} orang). Lanjutkan?`)) {
-          return;
-        }
-      } else if (percentage >= 70) {
-        if (!confirm(`Peringatan: ${tempat} akan mencapai ${percentage}% kapasitas (${totalOccupancy}/${capacity} orang). Lanjutkan?`)) {
-          return;
-        }
+        return alert('Nomor HP tidak valid!');
       }
 
       dataReservasi[tanggalReservasiDiedit][reservasiIndexDiedit] = {
@@ -1630,39 +1650,33 @@
     }
 
     function sortReservations(sortBy) {
-      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
-        alert("Silakan pilih tanggal terlebih dahulu.");
-        return;
-      }
-
-      filteredReservations = [...dataReservasi[tanggalDipilih]];
+      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
+      
+      let listToSort = dataReservasi[tanggalDipilih];
+      
       if (sortBy === 'jam') {
-        filteredReservations.sort((a, b) => {
-          const timeA = a.jam.replace(':', '');
-          const timeB = b.jam.replace(':', '');
-          return timeA.localeCompare(timeB);
-        });
+        listToSort.sort((a, b) => a.jam.localeCompare(b.jam));
       } else if (sortBy === 'tempat') {
-        filteredReservations.sort((a, b) => a.tempat.localeCompare(b.tempat));
+        listToSort.sort((a, b) => a.tempat.localeCompare(b.tempat));
       }
-
-      dataReservasi[tanggalDipilih] = filteredReservations;
+      
       localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
-      updateReservationList(filteredReservations);
+      const day = parseInt(tanggalDipilih.split("-")[1]);
+      pilihTanggal(day);
       sortOptions.style.display = 'none';
     }
 
     function printData() {
-      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
-        alert("Silakan pilih tanggal terlebih dahulu.");
+      if (!tanggalDipilih || !filteredReservations.length) {
+        alert("Pilih tanggal yang memiliki reservasi untuk diprint.");
         return;
       }
       window.print();
     }
 
     function shareViaEmail() {
-      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
-        return alert("Silakan pilih tanggal terlebih dahulu.");
+      if (!tanggalDipilih || !filteredReservations.length) {
+        return alert("Pilih tanggal yang memiliki reservasi untuk dibagikan.");
       }
 
       const [month, day] = tanggalDipilih.split('-');
@@ -1670,153 +1684,27 @@
       const sortBy = prompt("Urutkan data berdasarkan (jam/tempat):", "jam");
       let list = [...filteredReservations];
 
-      if (sortBy === 'jam') {
-        list.sort((a, b) => {
-          const timeA = a.jam.replace(':', '');
-          const timeB = b.jam.replace(':', '');
-          return timeA.localeCompare(timeB);
-        });
-      } else if (sortBy === 'tempat') {
-        list.sort((a, b) => a.tempat.localeCompare(b.tempat));
-      }
+      if (sortBy === 'jam') list.sort((a, b) => a.jam.localeCompare(b.jam));
+      else if (sortBy === 'tempat') list.sort((a, b) => a.tempat.localeCompare(b.tempat));
 
-      const summary = `Detail Reservasi Dolan Sawah - ${formattedDate} (Diurutkan berdasarkan ${sortBy}):\n\n` +
+      const summary = `Detail Reservasi Dolan Sawah - ${formattedDate}:\n\n` +
         list.map((r, i) => {
-          const isi = detailMenu[r.menu]?.length
-            ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
-            : "    - (tanpa detail menu)";
-          const dpInfo = r.dp ? `    DP: Rp${formatRupiah(r.dp)}\n` : '';
-          const phoneInfo = r.nomorHp ? `    Nomor HP: ${r.nomorHp}\n` : '';
-          return (
-              `${i + 1}. ${r.nama}\n` +
-                 `    Tempat: ${r.tempat}\n` +
-                 `    Jam: ${r.jam}\n` +
-                 `    Jumlah: ${r.jumlah} orang\n` +
-                 `${phoneInfo}` +
-                 `${dpInfo}` +
-                 `    Menu: ${r.menu}\n` +
-            `${isi}\n` +
-                 `    Catatan: ${r.tambahan || '-'}\n` +
-                 `    -----------------------------\n`
-          );
-        }).join('\n');
+          const isi = detailMenu[r.menu]?.length ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n') : "";
+          return `${i + 1}. ${r.nama}\n` +
+                 `   Tempat: ${r.tempat}, Jam: ${r.jam}, Jumlah: ${r.jumlah} org\n` +
+                 `   Menu: ${r.menu}\n${isi}\n` +
+                 `   Catatan: ${r.tambahan || '-'}\n` +
+                 `   ------------------\n`;
+        }).join('');
 
-      const emailLink = `mailto:?subject=Reservasi ${formattedDate} Dolan Sawah&body=${encodeURIComponent(summary)}`;
-      window.location.href = emailLink;
-    }
-
-    function shareViaWhatsApp(scope) {
-      let message = `*Reservasi Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n\n`;
-
-      if (scope === 'day') {
-        if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
-          return alert("Silakan pilih tanggal terlebih dahulu.");
-        }
-
-        const [month, day] = tanggalDipilih.split('-');
-        const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
-        const sortBy = prompt("Urutkan data berdasarkan (jam/tempat):", "jam");
-        let list = [...filteredReservations];
-
-        if (sortBy === 'jam') {
-          list.sort((a, b) => {
-            const timeA = a.jam.replace(':', '');
-            const timeB = b.jam.replace(':', '');
-            return timeA.localeCompare(timeB);
-          });
-        } else if (sortBy === 'tempat') {
-          list.sort((a, b) => a.tempat.localeCompare(b.tempat));
-        }
-
-        message += `*Tanggal: ${formattedDate} (Diurutkan berdasarkan ${sortBy})*\n\n`;
-
-        if (list.length === 0) {
-          message += "Belum ada reservasi untuk tanggal ini\n";
-        } else {
-          list.forEach((r, i) => {
-            const isi = detailMenu[r.menu]?.length
-              ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n')
-              : "    - (tanpa detail menu)";
-            const dpInfo = r.dp ? `    DP: Rp${formatRupiah(r.dp)}\n` : '';
-            const phoneInfo = r.nomorHp ? `    Nomor HP: ${r.nomorHp}\n` : '';
-            message += (
-              `*${i + 1}. ${r.nama}*\n` +
-                 `    Tempat: ${r.tempat}\n` +
-                 `    Jam: ${r.jam}\n` +
-                 `    Jumlah: ${r.jumlah} orang\n` +
-                 `${phoneInfo}` +
-                 `${dpInfo}` +
-                 `    Menu: ${r.menu}\n` +
-              `${isi}\n` +
-                 `    Catatan: ${r.tambahan || '-'}\n\n`
-            );
-          });
-        }
-      } else {
-        let hasReservations = false;
-        const monthStr = String(currentMonth + 1).padStart(2, '0');
-        const sortBy = prompt("Urutkan data berdasarkan (jam/tempat):", "jam");
-
-        for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i++) {
-          const dayStr = String(i).padStart(2, '0');
-          const dateKey = `${monthStr}-${dayStr}`;
-
-          if (dataReservasi[dateKey] && dataReservasi[dateKey].length > 0) {
-            hasReservations = true;
-            const formattedDate = `${i} ${monthNames[currentMonth]} ${currentYear}`;
-            message += `*${formattedDate}*\n`;
-
-            let list = [...dataReservasi[dateKey]];
-            if (sortBy === 'jam') {
-              list.sort((a, b) => {
-                const timeA = a.jam.replace(':', '');
-                const timeB = b.jam.replace(':', '');
-                return timeA.localeCompare(timeB);
-              });
-            } else if (sortBy === 'tempat') {
-              list.sort((a, b) => a.tempat.localeCompare(b.tempat));
-            }
-
-            list.forEach((r, idx) => {
-              const dpInfo = r.dp ? ` (DP: Rp${formatRupiah(r.dp)})` : '';
-              const phoneInfo = r.nomorHp ? `, Nomor HP: ${r.nomorHp}` : '';
-              message += (
-                  `- ${r.nama} (${r.tempat}, ${r.jam}, ${r.jumlah} orang${phoneInfo}${dpInfo})\n` +
-                    `  Menu: ${r.menu}\n`
-              );
-              if (r.tambahan) {
-                message += `  Catatan: ${r.tambahan}\n`;
-              }
-              message += '\n';
-            });
-          }
-        }
-
-        if (!hasReservations) {
-          message += "Belum ada reservasi untuk bulan ini\n";
-        }
-      }
-
-      const whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      window.open(whatsappLink, '_blank');
+      window.location.href = `mailto:?subject=Reservasi ${formattedDate} Dolan Sawah&body=${encodeURIComponent(summary)}`;
     }
 
     function showExportData() {
       dataTransferDiv.style.display = 'block';
       dataTransferTitle.textContent = 'Export Data';
-      dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Generate Kode';
-      dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
-
-      const exportData = {
-        version: '1.0',
-        data: dataReservasi,
-        timestamp: new Date().toISOString()
-      };
-
-      const jsonString = JSON.stringify(exportData);
-      const compressedData = btoa(unescape(encodeURIComponent(jsonString)));
-
-      dataTransferCode.value = compressedData;
+      dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Generate & Salin Kode';
+      dataTransferCode.value = btoa(JSON.stringify(dataReservasi));
       dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
       hideEditForm();
     }
@@ -1825,7 +1713,6 @@
       dataTransferDiv.style.display = 'block';
       dataTransferTitle.textContent = 'Import Data';
       dataTransferButton.innerHTML = '<i class="fas fa-check-circle"></i> Import Data';
-      dataTransferCode.placeholder = 'Paste kode data di sini...';
       dataTransferCode.value = '';
       dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
       hideEditForm();
@@ -1842,48 +1729,26 @@
 
     function processDataTransfer() {
       const code = dataTransferCode.value.trim();
+      if (!code) return alert('Kode tidak boleh kosong!');
 
-      if (!code) {
-        alert('Silakan masukkan kode data terlebih dahulu!');
-        return;
-      }
-
-      try {
-        if (dataTransferButton.innerHTML.includes('Generate')) {
-          navigator.clipboard.writeText(code).then(() => {
-            alert('Kode berhasil disalin ke clipboard!');
-          }).catch(err => {
-            alert('Gagal menyalin ke clipboard: ' + err);
-          });
-        } else {
-          if (!confirm('Import data akan menimpa semua data yang ada. Lanjutkan?')) {
-            return;
-          }
-
-          const jsonString = decodeURIComponent(escape(atob(code)));
-          const importData = JSON.parse(jsonString);
-
-          if (!importData.data || !importData.version) {
-            throw new Error('Format data tidak valid');
-          }
-
-          dataReservasi = importData.data;
+      if (dataTransferButton.innerHTML.includes('Generate')) {
+        navigator.clipboard.writeText(code).then(() => alert('Kode berhasil disalin!'), () => alert('Gagal menyalin.'));
+      } else {
+        if (!confirm('Import data akan menimpa semua data yang ada. Lanjutkan?')) return;
+        try {
+          dataReservasi = JSON.parse(atob(code));
           localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
           buatKalender();
-          if (tanggalDipilih) {
-            const day = parseInt(tanggalDipilih.split("-")[1]);
-            pilihTanggal(day);
-          }
-
+          summaryEl.style.display = 'none';
+          formPopup.style.display = 'none';
           alert('Data berhasil diimport!');
           hideDataTransfer();
+        } catch (e) {
+          alert('Error: Kode data tidak valid.');
         }
-      } catch (error) {
-        alert('Error memproses data: ' + error.message);
-        console.error(error);
       }
     }
-
+    
     function tutupEditForm() {
       editFormPopup.style.display = 'none';
       overlay.style.display = 'none';
@@ -1893,3 +1758,4 @@
   </script>
 </body>
 </html>
+#
