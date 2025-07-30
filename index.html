@@ -1228,7 +1228,7 @@
               <hr/>
             </div>
             <div class="data-actions">
-              ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.nomorHp}', '${escapeHtml(r.nama)}', '${escapeHtml(r.tempat)}', '${r.jam}', '${r.jumlah}', '${escapeHtml(r.menu)}', '${escapeHtml(r.tambahan || '-')}', '${r.dp || 0}')"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
+              ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp(${idx})"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
               <button onclick="editReservasi('${tanggalDipilih}', ${idx})"><i class="fas fa-edit"></i> Edit</button>
               <button class="danger" onclick="hapusReservasi('${tanggalDipilih}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>
             </div>`;
@@ -1239,35 +1239,49 @@
     }
 
     function escapeHtml(text) {
+      if (typeof text !== 'string') return text;
       return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
-    function contactViaWhatsApp(phone, nama, tempat, jam, jumlah, menu, tambahan, dp) {
-      // Format nomor telepon untuk WhatsApp
-      let formattedPhone = phone;
+    // PERUBAHAN DI SINI: Fungsi menerima index, bukan semua data mentah
+    function contactViaWhatsApp(index) {
+        // Ambil data reservasi lengkap dari array menggunakan index-nya
+        const reservasi = filteredReservations[index];
+        if (!reservasi || !reservasi.nomorHp) {
+            console.error("Data reservasi atau nomor HP tidak ditemukan untuk index:", index);
+            return; 
+        }
+
+        // Sekarang gunakan data dari objek 'reservasi'
+        const phone = reservasi.nomorHp;
+        const nama = reservasi.nama;
+        const tempat = reservasi.tempat;
+        const jam = reservasi.jam;
+        const jumlah = reservasi.jumlah;
+        const menu = reservasi.menu;
+        const tambahan = reservasi.tambahan || '-';
+        const dp = reservasi.dp || 0;
       
-      // Remove any non-digit characters first
-      formattedPhone = formattedPhone.replace(/\D/g, '');
+        // Sisa kode di dalam fungsi ini tetap sama
+        let formattedPhone = phone;
       
-      // Handle various phone number formats
-      if (formattedPhone.startsWith('0')) {
-        // Convert 08... to 628...
-        formattedPhone = '62' + formattedPhone.substring(1);
-      } else if (formattedPhone.startsWith('62')) {
-        // Already in correct format
-      } else if (formattedPhone.startsWith('8')) {
-        // Convert 8... to 628...
-        formattedPhone = '62' + formattedPhone;
-      } else if (!formattedPhone.startsWith('62')) {
-        // If it doesn't start with 62, add it
-        formattedPhone = '62' + formattedPhone;
-      }
+        formattedPhone = formattedPhone.replace(/\D/g, '');
       
-      const formattedDate = `${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}`;
-      const dpInfo = dp ? `DP: Rp${formatRupiah(dp)}\n` : '';
-      const message = `Halo ${nama},\n\nDetail Reservasi Dolan Sawah:\n- Tanggal: ${formattedDate}\n- Tempat: ${tempat}\n- Jam: ${jam}\n- Jumlah: ${jumlah} orang\n${dpInfo}- Menu: ${menu}\n- Catatan: ${tambahan}\n\nTerima kasih atas reservasinya!`;
-      const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappLink, '_blank');
+        if (formattedPhone.startsWith('0')) {
+            formattedPhone = '62' + formattedPhone.substring(1);
+        } else if (formattedPhone.startsWith('62')) {
+            // Already in correct format
+        } else if (formattedPhone.startsWith('8')) {
+            formattedPhone = '62' + formattedPhone;
+        } else if (!formattedPhone.startsWith('62')) {
+            formattedPhone = '62' + formattedPhone;
+        }
+      
+        const formattedDate = `${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}`;
+        const dpInfo = dp ? `DP: Rp${formatRupiah(dp)}\n` : '';
+        const message = `Halo ${nama},\n\nDetail Reservasi Dolan Sawah:\n- Tanggal: ${formattedDate}\n- Tempat: ${tempat}\n- Jam: ${jam}\n- Jumlah: ${jumlah} orang\n${dpInfo}- Menu: ${menu}\n- Catatan: ${tambahan}\n\nTerima kasih atas reservasinya!`;
+        const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappLink, '_blank');
     }
 
     // Global search function
@@ -1352,7 +1366,7 @@
                 <hr/>
               </div>
               <div class="data-actions">
-                ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.nomorHp}', '${escapeHtml(r.nama)}', '${escapeHtml(r.tempat)}', '${r.jam}', '${r.jumlah}', '${escapeHtml(r.menu)}', '${escapeHtml(r.tambahan || '-')}', '${r.dp || 0}')"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
+                 ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp(${idx})"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
                 <button onclick="editReservasi('${dateKey}', ${idx})"><i class="fas fa-edit"></i> Edit</button>
                 <button class="danger" onclick="hapusReservasi('${dateKey}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>
               </div>`;
