@@ -1615,23 +1615,18 @@
       window.location.href = emailLink;
     }
 
-    // ===== START: FUNGSI YANG DIPERBAIKI =====
     function showExportData() {
       dataTransferDiv.style.display = 'block';
       dataTransferTitle.textContent = 'Export Data';
       dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Salin Kode';
       dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
       try {
-        // Membuat objek pembungkus sesuai format yang diharapkan website kedua
         const dataToExport = {
-          version: "1.1.0", // Sesuaikan versi jika perlu
+          version: "1.1.0",
           data: dataReservasi 
         };
         
-        // Mengubah objek pembungkus ini menjadi JSON
         const jsonString = JSON.stringify(dataToExport);
-        
-        // Menggunakan btoa untuk encoding base64
         const compressedData = btoa(unescape(encodeURIComponent(jsonString)));
         dataTransferCode.value = compressedData;
 
@@ -1641,7 +1636,6 @@
       }
       dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
     }
-    // ===== END: FUNGSI YANG DIPERBAIKI =====
 
     function showImportData() {
       dataTransferDiv.style.display = 'block';
@@ -1652,45 +1646,49 @@
       dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
     }
     
+    // ===== START: FUNGSI YANG DIPERBAIKI =====
     function processDataTransfer() {
-      const code = dataTransferCode.value.trim();
-      if (!code) {
-        return alert('Kotak kode tidak boleh kosong!');
-      }
-
-      if (dataTransferButton.innerHTML.includes('Salin Kode')) {
-        navigator.clipboard.writeText(code).then(() => {
-          alert('Kode export berhasil disalin ke clipboard!');
-        }).catch(err => {
-          console.error('Gagal menyalin:', err);
-          alert('Gagal menyalin kode. Silakan salin secara manual.');
-        });
-        return;
-      }
-      
-      if (confirm('PENTING: Ini akan menimpa SEMUA data reservasi yang ada saat ini. Anda yakin?')) {
-        try {
-          const jsonString = decodeURIComponent(escape(atob(code)));
-          const importedData = JSON.parse(jsonString);
-
-          if (typeof importedData !== 'object' || importedData === null) {
-            throw new Error("Format data tidak valid.");
-          }
-
-          dataReservasi = importedData;
-          localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
-
-          buatKalender();
-          summaryEl.style.display = 'none';
-          formPopup.style.display = 'none';
-          alert('Data berhasil diimpor!');
-          hideDataTransfer();
-        } catch (error) {
-          alert('Gagal mengimpor data. Pastikan kode yang Anda masukkan benar.\n\nError: ' + error.message);
-          console.error(error);
+        const code = dataTransferCode.value.trim();
+        if (!code) {
+            return alert('Kotak kode tidak boleh kosong!');
         }
-      }
+
+        if (dataTransferButton.innerHTML.includes('Salin Kode')) {
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Kode export berhasil disalin ke clipboard!');
+            }).catch(err => {
+                console.error('Gagal menyalin:', err);
+                alert('Gagal menyalin kode. Silakan salin secara manual.');
+            });
+            return;
+        }
+
+        if (confirm('PENTING: Ini akan menimpa SEMUA data reservasi yang ada saat ini. Anda yakin?')) {
+            try {
+                const jsonString = decodeURIComponent(escape(atob(code)));
+                const importedObject = JSON.parse(jsonString);
+
+                // Periksa apakah objek yang diimpor memiliki struktur yang benar
+                if (importedObject && typeof importedObject.data === 'object') {
+                    // Tetapkan objek 'data' bagian dalam dengan benar
+                    dataReservasi = importedObject.data;
+                    localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+
+                    buatKalender();
+                    summaryEl.style.display = 'none';
+                    formPopup.style.display = 'none';
+                    alert('Data berhasil diimpor!');
+                    hideDataTransfer();
+                } else {
+                    throw new Error("Format data tidak valid atau tidak kompatibel.");
+                }
+            } catch (error) {
+                alert('Gagal mengimpor data. Pastikan kode yang Anda masukkan benar.\n\nError: ' + error.message);
+                console.error(error);
+            }
+        }
     }
+    // ===== END: FUNGSI YANG DIPERBAIKI =====
 
     function hideDataTransfer() { dataTransferDiv.style.display = 'none'; }
     function hideEditForm() { editFormPopup.style.display = 'none'; overlay.style.display = 'none'; }
