@@ -1568,13 +1568,127 @@
       sortOptions.style.display = 'none';
     }
 
-    function printData() { window.print(); }
-    function shareViaEmail() { /* ... fungsi email tetap sama ... */ }
-    function showExportData() { /* ... fungsi export tetap sama ... */ }
-    function showImportData() { /* ... fungsi import tetap sama ... */ }
+    function printData() { 
+      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) {
+        alert("Silakan pilih tanggal terlebih dahulu.");
+        return;
+      }
+      window.print(); 
+    }
+
+    // ===== START: FUNGSI YANG DIPERBARUI =====
+    function shareViaEmail() {
+      if (!tanggalDipilih || !dataReservasi[tanggalDipilih] || dataReservasi[tanggalDipilih].length === 0) {
+        return alert("Silakan pilih tanggal yang memiliki reservasi terlebih dahulu.");
+      }
+
+      const [month, day] = tanggalDipilih.split('-');
+      const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
+      const sortBy = prompt("Urutkan data berdasarkan (jam/tempat):", "jam");
+      let list = [...dataReservasi[tanggalDipilih]];
+
+      if (sortBy === 'jam') {
+        list.sort((a, b) => a.jam.localeCompare(b.jam));
+      } else if (sortBy === 'tempat') {
+        list.sort((a, b) => a.tempat.localeCompare(b.tempat));
+      }
+
+      const summary = `Detail Reservasi Dolan Sawah - ${formattedDate} (Diurutkan berdasarkan ${sortBy}):\n\n` +
+        list.map((r, i) => {
+          const isi = detailMenu[r.menu]?.length ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n') : "    - (tanpa detail menu)";
+          const dpInfo = r.dp ? `    DP: Rp${formatRupiah(r.dp)}\n` : '';
+          const phoneInfo = r.nomorHp ? `    Nomor HP: ${r.nomorHp}\n` : '';
+          return (
+              `${i + 1}. ${r.nama}\n` +
+                 `    Tempat: ${r.tempat}\n` +
+                 `    Jam: ${r.jam}\n` +
+                 `    Jumlah: ${r.jumlah} orang\n` +
+                 `${phoneInfo}` +
+                 `${dpInfo}` +
+                 `    Menu: ${r.menu}\n` +
+            `${isi}\n` +
+                 `    Catatan: ${r.tambahan || '-'}\n` +
+                 `    -----------------------------\n`
+          );
+        }).join('\n');
+
+      const emailLink = `mailto:?subject=Reservasi ${formattedDate} Dolan Sawah&body=${encodeURIComponent(summary)}`;
+      window.location.href = emailLink;
+    }
+
+    function showExportData() {
+      dataTransferDiv.style.display = 'block';
+      dataTransferTitle.textContent = 'Export Data';
+      dataTransferButton.innerHTML = '<i class="fas fa-download"></i> Salin Kode';
+      dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
+      try {
+        const jsonString = JSON.stringify(dataReservasi);
+        // Menggunakan btoa untuk encoding base64, aman untuk transfer
+        const compressedData = btoa(unescape(encodeURIComponent(jsonString)));
+        dataTransferCode.value = compressedData;
+      } catch (e) {
+        dataTransferCode.value = "Gagal membuat kode export.";
+        console.error("Export error:", e);
+      }
+      dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showImportData() {
+      dataTransferDiv.style.display = 'block';
+      dataTransferTitle.textContent = 'Import Data';
+      dataTransferButton.innerHTML = '<i class="fas fa-check-circle"></i> Import Data';
+      dataTransferCode.placeholder = 'Paste kode data dari file export di sini...';
+      dataTransferCode.value = '';
+      dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function processDataTransfer() {
+      const code = dataTransferCode.value.trim();
+      if (!code) {
+        return alert('Kotak kode tidak boleh kosong!');
+      }
+
+      // Logic untuk Export (menyalin kode ke clipboard)
+      if (dataTransferButton.innerHTML.includes('Salin Kode')) {
+        navigator.clipboard.writeText(code).then(() => {
+          alert('Kode export berhasil disalin ke clipboard!');
+        }).catch(err => {
+          console.error('Gagal menyalin:', err);
+          alert('Gagal menyalin kode. Silakan salin secara manual.');
+        });
+        return;
+      }
+      
+      // Logic untuk Import
+      if (confirm('PENTING: Ini akan menimpa SEMUA data reservasi yang ada saat ini. Anda yakin?')) {
+        try {
+          const jsonString = decodeURIComponent(escape(atob(code)));
+          const importedData = JSON.parse(jsonString);
+
+          // Validasi sederhana
+          if (typeof importedData !== 'object' || importedData === null) {
+            throw new Error("Format data tidak valid.");
+          }
+
+          dataReservasi = importedData;
+          localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+
+          // Reset tampilan
+          buatKalender();
+          summaryEl.style.display = 'none';
+          formPopup.style.display = 'none';
+          alert('Data berhasil diimpor!');
+          hideDataTransfer();
+        } catch (error) {
+          alert('Gagal mengimpor data. Pastikan kode yang Anda masukkan benar.\n\nError: ' + error.message);
+          console.error(error);
+        }
+      }
+    }
+    // ===== END: FUNGSI YANG DIPERBARUI =====
+
     function hideDataTransfer() { dataTransferDiv.style.display = 'none'; }
     function hideEditForm() { editFormPopup.style.display = 'none'; overlay.style.display = 'none'; }
-    function processDataTransfer() { /* ... fungsi transfer tetap sama ... */ }
     function tutupEditForm() { editFormPopup.style.display = 'none'; overlay.style.display = 'none'; }
     
     // ===== FUNGSI BARU UNTUK MENU CUSTOMER =====
