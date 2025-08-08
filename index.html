@@ -698,7 +698,7 @@
 
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 1.2.0 (with dynamic menus)</small>
+    <small>Version 1.3.0 (with data integrity fix)</small>
   </header>
 
   <div class="container">
@@ -962,6 +962,7 @@
         
         menuSelects.forEach(select => {
             if (!select) return;
+            const currentValue = select.value;
             select.innerHTML = '';
             sortedMenuNames.forEach(menuName => {
                 const option = document.createElement('option');
@@ -969,6 +970,7 @@
                 option.textContent = menuName;
                 select.appendChild(option);
             });
+            select.value = currentValue;
         });
     }
 
@@ -1044,12 +1046,12 @@
         document.getElementById('editingMenuName').value = name;
         document.getElementById('editingMenuDetails').value = detailMenu[name].join(', ');
         editMenuPopup.style.display = 'block';
-        menuManagementPopup.style.display = 'none'; // Hide the main management popup
+        menuManagementPopup.style.display = 'none';
     }
 
     function closeEditMenuPopup() {
         editMenuPopup.style.display = 'none';
-        menuManagementPopup.style.display = 'block'; // Show the main management popup again
+        menuManagementPopup.style.display = 'block';
     }
     
     function saveEditedMenu() {
@@ -1062,7 +1064,6 @@
             return;
         }
         
-        // If the name is changed, check for conflicts and update the key
         if (originalName !== newName) {
             if (detailMenu.hasOwnProperty(newName)) {
                 alert('Nama menu sudah digunakan oleh menu lain!');
@@ -1272,7 +1273,7 @@
       whatsappOptions.style.display = 'none';
       sortOptions.style.display = 'none';
       hideEditForm();
-      searchInput.value = '';
+      document.getElementById('searchInput').value = '';
       formPopup.scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -1287,9 +1288,13 @@
         </p>`;
       } else {
         reservations.forEach((r, idx) => {
-          const isiMenu = detailMenu[r.menu]?.length
-            ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>')
+          // *** DATA INTEGRITY FIX ***
+          // Prioritaskan menuDetails yang tersimpan. Jika tidak ada (untuk data lama), gunakan lookup global.
+          const menuItems = r.menuDetails || detailMenu[r.menu] || [];
+          const isiMenu = menuItems.length
+            ? menuItems.map(item => `• ${item}`).join('<br/>')
             : "-";
+          
           const dpInfo = r.dp ? `<div class="dp-info"><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)}</div>` : '';
           const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> Nomor HP: ${r.nomorHp}</div>` : '';
           const div = document.createElement('div');
@@ -1379,7 +1384,9 @@
                 message += "Belum ada reservasi untuk tanggal ini.\n";
             } else {
                 list.forEach((r, i) => {
-                    const isi = detailMenu[r.menu]?.length ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n') : "    - (Tanpa detail menu)";
+                    // *** DATA INTEGRITY FIX ***
+                    const menuItems = r.menuDetails || detailMenu[r.menu] || [];
+                    const isi = menuItems.length ? menuItems.map(x => `    - ${x}`).join('\n') : "    - (Tanpa detail menu)";
                     const dpInfo = r.dp ? `💰 *DP:* Rp${formatRupiah(r.dp)}\n` : '';
                     const phoneInfo = r.nomorHp ? `📞 *HP:* ${r.nomorHp}\n` : '';
 
@@ -1445,8 +1452,9 @@
       for (const dateKey in dataReservasi) {
         if (dataReservasi.hasOwnProperty(dateKey)) {
           const [month, day] = dateKey.split('-');
-          const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
-          dataReservasi[dateKey].forEach(reservation => {
+          const year = new Date().getFullYear(); // Assume current year for simplicity in search
+          const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${year}`;
+          dataReservasi[dateKey].forEach((reservation, index) => {
             if (
               reservation.nama.toLowerCase().includes(queryLower) ||
               reservation.tempat.toLowerCase().includes(queryLower) ||
@@ -1455,7 +1463,7 @@
               reservation.nomorHp?.includes(query) ||
               formattedDate.toLowerCase().includes(queryLower)
             ) {
-              results.push({ ...reservation, date: formattedDate, dateKey });
+              results.push({ ...reservation, date: formattedDate, dateKey, originalIndex: index });
             }
           });
         }
@@ -1475,12 +1483,17 @@
         }, {});
         for (const dateKey in groupedByDate) {
           const [month, day] = dateKey.split('-');
-          const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${currentYear}`;
+          const year = new Date().getFullYear(); // Assume current year
+          const formattedDate = `${parseInt(day)} ${monthNames[parseInt(month)-1]} ${year}`;
           const dateHeader = document.createElement('h4');
           dateHeader.innerHTML = `<i class="far fa-calendar-alt"></i> ${formattedDate} <button onclick="navigateToDate('${dateKey}')" style="margin-left: 10px; padding: 2px 8px; font-size: 0.8rem;"><i class="fas fa-external-link-alt"></i> Buka</button>`;
           searchResultsContent.appendChild(dateHeader);
-          groupedByDate[dateKey].forEach((r, idx) => {
-            const isiMenu = detailMenu[r.menu]?.length ? detailMenu[r.menu].map(item => `• ${item}`).join('<br/>') : "-";
+          
+          groupedByDate[dateKey].forEach((r) => {
+            // *** DATA INTEGRITY FIX ***
+            const menuItems = r.menuDetails || detailMenu[r.menu] || [];
+            const isiMenu = menuItems.length ? menuItems.map(item => `• ${item}`).join('<br/>') : "-";
+            
             const dpInfo = r.dp ? `<div class="dp-info"><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)}</div>` : '';
             const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> Nomor HP: ${r.nomorHp}</div>` : '';
             const div = document.createElement('div');
@@ -1494,9 +1507,8 @@
                 <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div><hr/>
               </div>
               <div class="data-actions">
-                 ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp(${idx})"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
-                <button onclick="editReservasi('${dateKey}', ${idx})"><i class="fas fa-edit"></i> Edit</button>
-                <button class="danger" onclick="hapusReservasi('${dateKey}', ${idx})"><i class="fas fa-trash-alt"></i> Hapus</button>
+                <button onclick="editReservasi('${dateKey}', ${r.originalIndex})"><i class="fas fa-edit"></i> Edit</button>
+                <button class="danger" onclick="hapusReservasi('${dateKey}', ${r.originalIndex})"><i class="fas fa-trash-alt"></i> Hapus</button>
               </div>`;
             searchResultsContent.appendChild(div);
           });
@@ -1568,7 +1580,8 @@
     };
 
     function formatRupiah(amount) {
-      return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        if (typeof amount !== 'number') return amount;
+        return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
     function simpanReservasi() {
@@ -1592,7 +1605,12 @@
 
       if (totalOccupancy > capacity) return alert(`Kapasitas ${tempat} akan melebihi!`);
 
-      existing.push({ nama, nomorHp: nomorHp ? formatPhoneNumber(nomorHp) : '', jam, jumlah, dp, menu, tempat, tambahan });
+      // *** DATA INTEGRITY FIX ***
+      // Ambil salinan/snapshot dari detail menu saat ini
+      const menuDetailsSnapshot = detailMenu[menu] || [];
+      // Simpan reservasi beserta snapshot detail menunya
+      existing.push({ nama, nomorHp: nomorHp ? formatPhoneNumber(nomorHp) : '', jam, jumlah, dp, menu, tempat, tambahan, menuDetails: menuDetailsSnapshot });
+      
       dataReservasi[key] = existing;
       localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
 
@@ -1615,18 +1633,32 @@
         dataReservasi[tgl].splice(idx, 1);
         if (dataReservasi[tgl].length === 0) delete dataReservasi[tgl];
         localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
-        const day = parseInt(tgl.split("-")[1]);
-        pilihTanggal(day);
+        
+        // Refresh view
+        if (tanggalDipilih === tgl) {
+            const day = parseInt(tgl.split("-")[1]);
+            pilihTanggal(day);
+        }
         buatKalender();
+        if (searchResults.style.display === 'block') {
+            performGlobalSearch(globalSearchInput.value);
+        }
       }
     }
 
     function editReservasi(tgl, index) {
       const pass = prompt("Masukkan password admin untuk mengedit:");
       if (pass !== ADMIN_PASS) return alert("Password salah!");
+      
+      const reservasi = dataReservasi[tgl] && dataReservasi[tgl][index];
+      if (!reservasi) {
+          alert("Error: Reservasi tidak ditemukan!");
+          return;
+      }
+
       tanggalReservasiDiedit = tgl;
       reservasiIndexDiedit = index;
-      const reservasi = dataReservasi[tgl][index];
+      
       editNamaInput.value = reservasi.nama;
       editNomorHpInput.value = reservasi.nomorHp || '';
       editJamInput.value = reservasi.jam;
@@ -1653,12 +1685,20 @@
       if (!nama || !jam || isNaN(jumlah) || !menu || !tempat) return alert('Harap isi semua field!');
       if (nomorHp && !validatePhoneNumber(nomorHp)) return alert('Nomor HP tidak valid!');
 
-      dataReservasi[tanggalReservasiDiedit][reservasiIndexDiedit] = { nama, nomorHp: nomorHp ? formatPhoneNumber(nomorHp) : '', jam, jumlah, dp, menu, tempat, tambahan };
+      // *** DATA INTEGRITY FIX ***
+      const menuDetailsSnapshot = detailMenu[menu] || [];
+      const updatedReservasi = { nama, nomorHp: nomorHp ? formatPhoneNumber(nomorHp) : '', jam, jumlah, dp, menu, tempat, tambahan, menuDetails: menuDetailsSnapshot };
+      
+      dataReservasi[tanggalReservasiDiedit][reservasiIndexDiedit] = updatedReservasi;
       localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+      
       tutupEditForm();
       const day = parseInt(tanggalReservasiDiedit.split("-")[1]);
       pilihTanggal(day);
       buatKalender();
+      if (searchResults.style.display === 'block') {
+        performGlobalSearch(globalSearchInput.value);
+      }
     }
 
     function sortReservations(sortBy) {
@@ -1697,7 +1737,9 @@
 
       const summary = `Detail Reservasi Dolan Sawah - ${formattedDate} (Diurutkan berdasarkan ${sortBy}):\n\n` +
         list.map((r, i) => {
-          const isi = detailMenu[r.menu]?.length ? detailMenu[r.menu].map(x => `    - ${x}`).join('\n') : "    - (tanpa detail menu)";
+          // *** DATA INTEGRITY FIX ***
+          const menuItems = r.menuDetails || detailMenu[r.menu] || [];
+          const isi = menuItems.length ? menuItems.map(x => `    - ${x}`).join('\n') : "    - (tanpa detail menu)";
           const dpInfo = r.dp ? `    DP: Rp${formatRupiah(r.dp)}\n` : '';
           const phoneInfo = r.nomorHp ? `    Nomor HP: ${r.nomorHp}\n` : '';
           return (
@@ -1725,7 +1767,7 @@
       dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
       try {
         const dataToExport = {
-          version: "1.2.0",
+          version: "1.3.0",
           reservations: dataReservasi,
           menus: detailMenu
         };
@@ -1771,11 +1813,13 @@
                 const jsonString = decodeURIComponent(escape(atob(code)));
                 const importedObject = JSON.parse(jsonString);
 
-                if (importedObject && typeof importedObject.reservations === 'object' && typeof importedObject.menus === 'object') {
+                if (importedObject && typeof importedObject.reservations === 'object') {
                     dataReservasi = importedObject.reservations;
-                    detailMenu = importedObject.menus;
+                    // Also import menus if they exist in the import file, otherwise keep current ones
+                    detailMenu = (typeof importedObject.menus === 'object') ? importedObject.menus : detailMenu;
+                    
                     localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
-                    saveMenus(); // This will save menus and repopulate dropdowns
+                    saveMenus();
 
                     buatKalender();
                     summaryEl.style.display = 'none';
@@ -1807,9 +1851,10 @@
         for (const dateKey in dataReservasi) {
             dataReservasi[dateKey].forEach(res => {
                 if (res.nama && res.nomorHp) {
-                    if (!customers.has(res.nama.toLowerCase())) {
-                        customers.set(res.nama.toLowerCase(), {
-                            name: res.nama,
+                    const cleanName = res.nama.trim().toLowerCase();
+                    if (!customers.has(cleanName)) {
+                        customers.set(cleanName, {
+                            name: res.nama.trim(),
                             phone: res.nomorHp
                         });
                     }
