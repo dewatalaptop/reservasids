@@ -225,7 +225,7 @@
       100% { transform: scale(1); }
     }
 
-    .form-popup, .summary, .edit-form-popup {
+    .form-popup, .summary, .edit-form-popup, .menu-management-popup {
       margin-top: 25px;
       background-color: white;
       padding: 20px;
@@ -234,7 +234,7 @@
       border-top: 4px solid var(--primary);
     }
 
-    .form-popup h3, .summary h3, .edit-form-popup h3 {
+    .form-popup h3, .summary h3, .edit-form-popup h3, .menu-management-popup h3 {
       color: var(--primary-dark);
       margin-bottom: 15px;
       font-size: 1.4rem;
@@ -243,7 +243,7 @@
       gap: 10px;
     }
 
-    .form-popup h3 i, .summary h3 i, .edit-form-popup h3 i {
+    .form-popup h3 i, .summary h3 i, .edit-form-popup h3 i, .menu-management-popup h3 i {
       color: var(--accent);
     }
 
@@ -532,8 +532,8 @@
     .data-transfer button {
       margin-right: 10px;
     }
-
-    .edit-form-popup {
+    
+    .edit-form-popup, .menu-management-popup, #editMenuPopup {
       display: none;
       position: fixed;
       top: 50%;
@@ -544,11 +544,11 @@
       max-width: 500px;
     }
 
-    .edit-form-popup label {
+    .edit-form-popup label, .menu-management-popup label, #editMenuPopup label {
       margin-bottom: 8px;
     }
 
-    .edit-form-popup button {
+    .edit-form-popup button, .menu-management-popup button, #editMenuPopup button {
       margin-right: 10px;
     }
 
@@ -570,7 +570,7 @@
       font-weight: 500;
     }
 
-    /* New styles for search */
+    /* Styles for search */
     .search-container {
       position: relative;
       margin: 0 auto 20px;
@@ -636,102 +636,61 @@
       font-weight: 500;
     }
 
+    /* Menu Management Styles */
+    #menu-list-container {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 10px;
+      margin-bottom: 20px;
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      background-color: var(--light);
+    }
+    .menu-item-name {
+      font-weight: 500;
+    }
+    .menu-item-actions button {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      margin-top: 0;
+      margin-left: 5px;
+    }
+    #add-menu-form {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+
     @media (max-width: 768px) {
-      .calendar-day {
-        min-height: 60px;
-        padding: 5px;
-      }
-
-      .container {
-        padding: 15px;
-      }
-
-      .month-year {
-        font-size: 1.2rem;
-      }
-
-      .action-buttons {
-        flex-direction: row;
-        gap: 8px;
-      }
-
-      .action-buttons button {
-        width: auto;
-        flex-grow: 1;
-        font-size: 0.9rem;
-        padding: 8px 12px;
-      }
-
-      .data-actions {
-        flex-direction: row;
-        gap: 8px;
-      }
-
-      .data-actions button {
-        width: auto;
-        flex-grow: 1;
-        font-size: 0.9rem;
-        padding: 8px 12px;
-      }
-
-      .reservation-item {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .data-actions {
-        margin-top: 10px;
-      }
-
-      .whatsapp-options, .sort-options {
-        position: relative;
-        width: 100%;
-        margin-top: 10px;
-      }
+      .calendar-day { min-height: 60px; padding: 5px; }
+      .container { padding: 15px; }
+      .month-year { font-size: 1.2rem; }
+      .action-buttons { flex-direction: row; gap: 8px; }
+      .action-buttons button { width: auto; flex-grow: 1; font-size: 0.9rem; padding: 8px 12px; }
+      .data-actions { flex-direction: row; gap: 8px; }
+      .data-actions button { width: auto; flex-grow: 1; font-size: 0.9rem; padding: 8px 12px; }
+      .reservation-item { flex-direction: column; align-items: flex-start; }
+      .data-actions { margin-top: 10px; }
+      .whatsapp-options, .sort-options { position: relative; width: 100%; margin-top: 10px; }
     }
 
     @media (max-width: 480px) {
-      .calendar-header {
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      header h2 {
-        font-size: 1.8rem;
-      }
-
-      .calendar-day {
-        min-height: 50px;
-        font-size: 0.8rem;
-      }
-
-      .day-number {
-        margin-bottom: 2px;
-      }
-
-      .reservation-count {
-        width: 18px;
-        height: 18px;
-        font-size: 0.6rem;
-        top: -8px;
-        right: -6px;
-      }
-
-      .action-buttons {
-        flex-direction: column;
-      }
-
-      .action-buttons button {
-        width: 100%;
-      }
-
-      .data-actions {
-        flex-direction: column;
-      }
-
-      .data-actions button {
-        width: 100%;
-      }
+      .calendar-header { flex-direction: column; gap: 10px; }
+      header h2 { font-size: 1.8rem; }
+      .calendar-day { min-height: 50px; font-size: 0.8rem; }
+      .day-number { margin-bottom: 2px; }
+      .reservation-count { width: 18px; height: 18px; font-size: 0.6rem; top: -8px; right: -6px; }
+      .action-buttons { flex-direction: column; }
+      .action-buttons button { width: 100%; }
+      .data-actions { flex-direction: column; }
+      .data-actions button { width: 100%; }
     }
   </style>
 </head>
@@ -739,7 +698,7 @@
 
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 1.1.0 (with customer database)</small>
+    <small>Version 1.2.0 (with dynamic menus)</small>
   </header>
 
   <div class="container">
@@ -799,19 +758,7 @@
         <label><i class="fas fa-money-bill-wave"></i> DP (Rupiah): <input type="number" id="dp" placeholder="Jumlah DP dalam rupiah" value="0"/></label>
         <label><i class="fas fa-utensils"></i> Menu:
           <select id="menu">
-            <option>Paket A</option><option>Paket B</option><option>Paket C</option>
-            <option>Paket D</option><option>Paket E</option><option>Paket F</option>
-            <option>Paket G</option><option>Paket H</option><option>Paket I</option><option>Paket J</option>
-            <option>OTS</option><option>Paket Rantang</option>
-            <option>Paket Kembulan 1</option>
-            <option>Paket Kembulan 2</option>
-            <option>Paket Kembulan 3</option>
-            <option>Paket Kembulan 4</option>
-            <option>Paket Kembulan 5</option>
-            <option>Paket Kembulan 6</option>
-            <option>Paket Grill 2 orang</option>
-            <option>Paket Grill 4 orang</option>
-          </select>
+            </select>
         </label>
         <label><i class="fas fa-map-marker-alt"></i> Tempat:
           <select id="tempat" onchange="checkLocationCapacity(this.value)">
@@ -829,8 +776,8 @@
 
     <div class="action-buttons">
       <button onclick="showCustomerMenu()"><i class="fas fa-address-book"></i> Data Customer</button>
+      <button onclick="showMenuManagement()"><i class="fas fa-book-open"></i> Kelola Menu</button>
       <button onclick="printData()"><i class="fas fa-print"></i> Print</button>
-      
       <div class="sort-options-container">
         <button class="secondary" onclick="toggleSortOptions(event)"><i class="fas fa-sort"></i> Urutkan Data</button>
         <div class="sort-options" id="sortOptions">
@@ -839,9 +786,7 @@
           <button onclick="sortReservations('tempat')"><i class="fas fa-map-marker-alt"></i> Tempat Reservasi</button>
         </div>
       </div>
-      
       <button class="secondary" onclick="shareViaEmail()"><i class="fas fa-envelope"></i> Bagikan via Email</button>
-      
       <div class="whatsapp-options-container">
         <button class="whatsapp" onclick="toggleWhatsAppOptions(event)"><i class="fab fa-whatsapp"></i> Bagikan via WhatsApp</button>
         <div class="whatsapp-options" id="whatsappOptions">
@@ -850,7 +795,6 @@
           <button class="whatsapp" onclick="shareViaWhatsApp('month')"><i class="fab fa-whatsapp"></i> Bagikan Seluruh Bulan</button>
         </div>
       </div>
-      
       <button onclick="showExportData()"><i class="fas fa-file-export"></i> Export Data</button>
       <button onclick="showImportData()"><i class="fas fa-file-import"></i> Import Data</button>
     </div>
@@ -872,19 +816,7 @@
     <label><i class="fas fa-money-bill-wave"></i> DP (Rupiah): <input type="number" id="editDp" placeholder="Jumlah DP dalam rupiah"/></label>
     <label><i class="fas fa-utensils"></i> Menu:
       <select id="editMenu">
-        <option>Paket A</option><option>Paket B</option><option>Paket C</option>
-        <option>Paket D</option><option>Paket E</option><option>Paket F</option>
-        <option>Paket G</option><option>Paket H</option><option>Paket I</option><option>Paket J</option>
-        <option>OTS</option><option>Paket Rantang</option>
-        <option>Paket Kembulan 1</option>
-        <option>Paket Kembulan 2</option>
-        <option>Paket Kembulan 3</option>
-        <option>Paket Kembulan 4</option>
-        <option>Paket Kembulan 5</option>
-        <option>Paket Kembulan 6</option>
-        <option>Paket Grill 2 orang</option>
-        <option>Paket Grill 4 orang</option>
-      </select>
+        </select>
     </label>
     <label><i class="fas fa-map-marker-alt"></i> Tempat:
       <select id="editTempat" onchange="checkLocationCapacity(this.value, true)">
@@ -902,6 +834,32 @@
     </div>
   </div>
 
+  <div class="menu-management-popup" id="menuManagementPopup">
+    <h3><i class="fas fa-book-open"></i> Kelola Menu</h3>
+    <div id="menu-list-container">
+      </div>
+    <div id="add-menu-form">
+        <h4><i class="fas fa-plus-circle"></i> Tambah Menu Baru</h4>
+        <label>Nama Menu: <input type="text" id="newMenuName" placeholder="Contoh: Paket Spesial"></label>
+        <label>Detail Menu (pisahkan dengan koma): <textarea id="newMenuDetails" placeholder="Contoh: Nasi, Ayam Bakar, Lalapan, Sambal"></textarea></label>
+        <button onclick="addNewMenu()"><i class="fas fa-plus"></i> Tambah Menu</button>
+    </div>
+    <div class="data-actions" style="margin-top:20px;">
+        <button class="danger" onclick="closeMenuManagement()"><i class="fas fa-times-circle"></i> Tutup</button>
+    </div>
+  </div>
+  
+  <div class="menu-management-popup" id="editMenuPopup">
+      <h3><i class="fas fa-edit"></i> Edit Menu</h3>
+      <input type="hidden" id="originalMenuName">
+      <label>Nama Menu: <input type="text" id="editingMenuName"></label>
+      <label>Detail Menu (pisahkan dengan koma): <textarea id="editingMenuDetails"></textarea></label>
+      <div class="data-actions">
+        <button onclick="saveEditedMenu()"><i class="fas fa-save"></i> Simpan Perubahan</button>
+        <button class="danger" onclick="closeEditMenuPopup()"><i class="fas fa-times-circle"></i> Batal</button>
+      </div>
+  </div>
+
   <div class="overlay" id="overlay"></div>
 
   <footer>
@@ -914,7 +872,7 @@
       "Gubug 1": 40, "Gubug 2": 15, "Gubug 3": 110,
     };
 
-    const detailMenu = {
+    const defaultMenus = {
       "Paket A": ["Nasi putih", "Ayam kremes", "Sambel", "Lalapan", "Teh", "Es"],
       "Paket B": ["Nasi putih", "Daging kelem", "Bakmi", "Teh", "Es"],
       "Paket C": ["Nasi putih", "Ayam geprek", "Sop Sosis jamur", "Semangka", "Teh", "Es"],
@@ -927,7 +885,6 @@
       "Paket J": ["Nasi", "Sambel goreng ati", "Bihun goreng", "Daging kelem", "Acar kuning", "Kerupuk udang", "Sop Sosis jamur", "Sosis solo", "Pie buah", "Teh", "Softdrink", "Air mineral cup"],
       "OTS": [],
       "Paket Rantang": [],
-      "Paket Custom": ["Menu ada di catatan"],
       "Paket Kembulan 1": ["Nasi putih 5", "Ayam bakar/Nila bakar 5", "Lalapan 5", "Sambel 5", "Gudangan 5", "Teh 5"],
       "Paket Kembulan 2": ["Nasi putih 5", "Ayam kremes/daging kelem 5", "Lalapan 5", "Sambel 5", "Telur krispi 5", "Air mineral cup 5"],
       "Paket Kembulan 3": ["Nasi putih 10", "Ayam bakar 5", "Lalapan 5", "Sambel 10", "Teh 10", "Nila bakar 5", "Gudangan 5"],
@@ -940,8 +897,10 @@
 
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const ADMIN_PASS = 'fusion437666';
 
     let dataReservasi = JSON.parse(localStorage.getItem('reservasiDolan')) || {};
+    let detailMenu = {};
     let tanggalDipilih = '';
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
@@ -949,6 +908,7 @@
     let tanggalReservasiDiedit = null;
     let filteredReservations = [];
 
+    // All getElementById calls
     const calendarEl = document.getElementById('calendar');
     const warningBox = document.getElementById('warningBox');
     const summaryEl = document.getElementById('summary');
@@ -976,6 +936,149 @@
     const searchResultsContent = document.getElementById('searchResultsContent');
     const locationWarning = document.getElementById('locationWarning');
     const editLocationWarning = document.getElementById('editLocationWarning');
+    const menuManagementPopup = document.getElementById('menuManagementPopup');
+    const editMenuPopup = document.getElementById('editMenuPopup');
+
+    // --- MENU MANAGEMENT FUNCTIONS ---
+    function loadMenus() {
+        const storedMenus = localStorage.getItem('dolanSawahMenus');
+        if (storedMenus) {
+            detailMenu = JSON.parse(storedMenus);
+        } else {
+            detailMenu = { ...defaultMenus };
+            saveMenus();
+        }
+        populateMenuDropdowns();
+    }
+
+    function saveMenus() {
+        localStorage.setItem('dolanSawahMenus', JSON.stringify(detailMenu));
+        populateMenuDropdowns();
+    }
+    
+    function populateMenuDropdowns() {
+        const menuSelects = [document.getElementById('menu'), document.getElementById('editMenu')];
+        const sortedMenuNames = Object.keys(detailMenu).sort((a, b) => a.localeCompare(b));
+        
+        menuSelects.forEach(select => {
+            if (!select) return;
+            select.innerHTML = '';
+            sortedMenuNames.forEach(menuName => {
+                const option = document.createElement('option');
+                option.value = menuName;
+                option.textContent = menuName;
+                select.appendChild(option);
+            });
+        });
+    }
+
+    function showMenuManagement() {
+        const pass = prompt("Masukkan password admin:");
+        if (pass !== ADMIN_PASS) {
+            if (pass) alert("Password salah!");
+            return;
+        }
+        renderMenuList();
+        menuManagementPopup.style.display = 'block';
+        overlay.style.display = 'block';
+    }
+
+    function closeMenuManagement() {
+        menuManagementPopup.style.display = 'none';
+        overlay.style.display = 'none';
+    }
+    
+    function renderMenuList() {
+        const container = document.getElementById('menu-list-container');
+        container.innerHTML = '';
+        const sortedMenuNames = Object.keys(detailMenu).sort((a, b) => a.localeCompare(b));
+
+        sortedMenuNames.forEach(name => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'menu-item';
+            itemDiv.innerHTML = `
+                <span class="menu-item-name">${name}</span>
+                <div class="menu-item-actions">
+                    <button onclick="openEditMenuPopup('${name}')"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="danger" onclick="deleteMenu('${name}')"><i class="fas fa-trash-alt"></i> Hapus</button>
+                </div>
+            `;
+            container.appendChild(itemDiv);
+        });
+    }
+
+    function addNewMenu() {
+        const nameInput = document.getElementById('newMenuName');
+        const detailsInput = document.getElementById('newMenuDetails');
+        const name = nameInput.value.trim();
+        const details = detailsInput.value.split(',').map(item => item.trim()).filter(item => item);
+
+        if (!name) {
+            alert('Nama menu tidak boleh kosong!');
+            return;
+        }
+        if (detailMenu.hasOwnProperty(name)) {
+            alert('Menu dengan nama ini sudah ada!');
+            return;
+        }
+
+        detailMenu[name] = details;
+        saveMenus();
+        renderMenuList();
+        nameInput.value = '';
+        detailsInput.value = '';
+        alert(`Menu "${name}" berhasil ditambahkan.`);
+    }
+
+    function deleteMenu(name) {
+        if (confirm(`Apakah Anda yakin ingin menghapus menu "${name}"? Tindakan ini tidak dapat diurungkan.`)) {
+            delete detailMenu[name];
+            saveMenus();
+            renderMenuList();
+            alert(`Menu "${name}" berhasil dihapus.`);
+        }
+    }
+    
+    function openEditMenuPopup(name) {
+        document.getElementById('originalMenuName').value = name;
+        document.getElementById('editingMenuName').value = name;
+        document.getElementById('editingMenuDetails').value = detailMenu[name].join(', ');
+        editMenuPopup.style.display = 'block';
+        menuManagementPopup.style.display = 'none'; // Hide the main management popup
+    }
+
+    function closeEditMenuPopup() {
+        editMenuPopup.style.display = 'none';
+        menuManagementPopup.style.display = 'block'; // Show the main management popup again
+    }
+    
+    function saveEditedMenu() {
+        const originalName = document.getElementById('originalMenuName').value;
+        const newName = document.getElementById('editingMenuName').value.trim();
+        const newDetails = document.getElementById('editingMenuDetails').value.split(',').map(item => item.trim()).filter(item => item);
+
+        if (!newName) {
+            alert('Nama menu tidak boleh kosong!');
+            return;
+        }
+        
+        // If the name is changed, check for conflicts and update the key
+        if (originalName !== newName) {
+            if (detailMenu.hasOwnProperty(newName)) {
+                alert('Nama menu sudah digunakan oleh menu lain!');
+                return;
+            }
+            delete detailMenu[originalName];
+        }
+
+        detailMenu[newName] = newDetails;
+        saveMenus();
+        alert(`Menu "${newName}" berhasil diperbarui.`);
+        closeEditMenuPopup();
+        renderMenuList();
+    }
+
+    // --- END OF MENU MANAGEMENT FUNCTIONS ---
 
     function calculateCurrentOccupancy(location, jamReservasi = null) {
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return 0;
@@ -1461,7 +1564,7 @@
     });
 
     document.getElementById('adminPass').oninput = function() {
-      document.getElementById('formFields').style.display = this.value === 'fusion437666' ? 'block' : 'none';
+      document.getElementById('formFields').style.display = this.value === ADMIN_PASS ? 'block' : 'none';
     };
 
     function formatRupiah(amount) {
@@ -1507,7 +1610,7 @@
 
     function hapusReservasi(tgl, idx) {
       const pass = prompt("Masukkan password admin:");
-      if (pass !== 'fusion437666') return alert("Password salah!");
+      if (pass !== ADMIN_PASS) return alert("Password salah!");
       if (confirm("Yakin ingin menghapus reservasi ini?")) {
         dataReservasi[tgl].splice(idx, 1);
         if (dataReservasi[tgl].length === 0) delete dataReservasi[tgl];
@@ -1520,7 +1623,7 @@
 
     function editReservasi(tgl, index) {
       const pass = prompt("Masukkan password admin untuk mengedit:");
-      if (pass !== 'fusion437666') return alert("Password salah!");
+      if (pass !== ADMIN_PASS) return alert("Password salah!");
       tanggalReservasiDiedit = tgl;
       reservasiIndexDiedit = index;
       const reservasi = dataReservasi[tgl][index];
@@ -1622,8 +1725,9 @@
       dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
       try {
         const dataToExport = {
-          version: "1.1.0",
-          data: dataReservasi 
+          version: "1.2.0",
+          reservations: dataReservasi,
+          menus: detailMenu
         };
         
         const jsonString = JSON.stringify(dataToExport);
@@ -1646,7 +1750,6 @@
       dataTransferDiv.scrollIntoView({ behavior: 'smooth' });
     }
     
-    // ===== START: FUNGSI YANG DIPERBAIKI =====
     function processDataTransfer() {
         const code = dataTransferCode.value.trim();
         if (!code) {
@@ -1663,16 +1766,16 @@
             return;
         }
 
-        if (confirm('PENTING: Ini akan menimpa SEMUA data reservasi yang ada saat ini. Anda yakin?')) {
+        if (confirm('PENTING: Ini akan menimpa SEMUA data reservasi dan data menu yang ada saat ini. Anda yakin?')) {
             try {
                 const jsonString = decodeURIComponent(escape(atob(code)));
                 const importedObject = JSON.parse(jsonString);
 
-                // Periksa apakah objek yang diimpor memiliki struktur yang benar
-                if (importedObject && typeof importedObject.data === 'object') {
-                    // Tetapkan objek 'data' bagian dalam dengan benar
-                    dataReservasi = importedObject.data;
+                if (importedObject && typeof importedObject.reservations === 'object' && typeof importedObject.menus === 'object') {
+                    dataReservasi = importedObject.reservations;
+                    detailMenu = importedObject.menus;
                     localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
+                    saveMenus(); // This will save menus and repopulate dropdowns
 
                     buatKalender();
                     summaryEl.style.display = 'none';
@@ -1688,7 +1791,6 @@
             }
         }
     }
-    // ===== END: FUNGSI YANG DIPERBAIKI =====
 
     function hideDataTransfer() { dataTransferDiv.style.display = 'none'; }
     function hideEditForm() { editFormPopup.style.display = 'none'; overlay.style.display = 'none'; }
@@ -1696,7 +1798,7 @@
     
     function showCustomerMenu() {
         const pass = prompt("Masukkan password admin untuk mengakses data customer:");
-        if (pass !== 'fusion437666') {
+        if (pass !== ADMIN_PASS) {
             if (pass) alert("Password salah!");
             return;
         }
@@ -1767,6 +1869,8 @@
         newWindow.document.close();
     }
 
+    // Initial page load setup
+    loadMenus();
     buatKalender();
   </script>
 </body>
