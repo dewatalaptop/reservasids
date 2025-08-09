@@ -698,7 +698,7 @@
 
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 1.3.0 (with data integrity fix)</small>
+    <small>Version 1.3.1 (export fix)</small>
   </header>
 
   <div class="container">
@@ -1288,8 +1288,6 @@
         </p>`;
       } else {
         reservations.forEach((r, idx) => {
-          // *** DATA INTEGRITY FIX ***
-          // Prioritaskan menuDetails yang tersimpan. Jika tidak ada (untuk data lama), gunakan lookup global.
           const menuItems = r.menuDetails || detailMenu[r.menu] || [];
           const isiMenu = menuItems.length
             ? menuItems.map(item => `• ${item}`).join('<br/>')
@@ -1384,7 +1382,6 @@
                 message += "Belum ada reservasi untuk tanggal ini.\n";
             } else {
                 list.forEach((r, i) => {
-                    // *** DATA INTEGRITY FIX ***
                     const menuItems = r.menuDetails || detailMenu[r.menu] || [];
                     const isi = menuItems.length ? menuItems.map(x => `    - ${x}`).join('\n') : "    - (Tanpa detail menu)";
                     const dpInfo = r.dp ? `💰 *DP:* Rp${formatRupiah(r.dp)}\n` : '';
@@ -1490,7 +1487,6 @@
           searchResultsContent.appendChild(dateHeader);
           
           groupedByDate[dateKey].forEach((r) => {
-            // *** DATA INTEGRITY FIX ***
             const menuItems = r.menuDetails || detailMenu[r.menu] || [];
             const isiMenu = menuItems.length ? menuItems.map(item => `• ${item}`).join('<br/>') : "-";
             
@@ -1605,10 +1601,7 @@
 
       if (totalOccupancy > capacity) return alert(`Kapasitas ${tempat} akan melebihi!`);
 
-      // *** DATA INTEGRITY FIX ***
-      // Ambil salinan/snapshot dari detail menu saat ini
       const menuDetailsSnapshot = detailMenu[menu] || [];
-      // Simpan reservasi beserta snapshot detail menunya
       existing.push({ nama, nomorHp: nomorHp ? formatPhoneNumber(nomorHp) : '', jam, jumlah, dp, menu, tempat, tambahan, menuDetails: menuDetailsSnapshot });
       
       dataReservasi[key] = existing;
@@ -1634,7 +1627,6 @@
         if (dataReservasi[tgl].length === 0) delete dataReservasi[tgl];
         localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
         
-        // Refresh view
         if (tanggalDipilih === tgl) {
             const day = parseInt(tgl.split("-")[1]);
             pilihTanggal(day);
@@ -1685,7 +1677,6 @@
       if (!nama || !jam || isNaN(jumlah) || !menu || !tempat) return alert('Harap isi semua field!');
       if (nomorHp && !validatePhoneNumber(nomorHp)) return alert('Nomor HP tidak valid!');
 
-      // *** DATA INTEGRITY FIX ***
       const menuDetailsSnapshot = detailMenu[menu] || [];
       const updatedReservasi = { nama, nomorHp: nomorHp ? formatPhoneNumber(nomorHp) : '', jam, jumlah, dp, menu, tempat, tambahan, menuDetails: menuDetailsSnapshot };
       
@@ -1737,7 +1728,6 @@
 
       const summary = `Detail Reservasi Dolan Sawah - ${formattedDate} (Diurutkan berdasarkan ${sortBy}):\n\n` +
         list.map((r, i) => {
-          // *** DATA INTEGRITY FIX ***
           const menuItems = r.menuDetails || detailMenu[r.menu] || [];
           const isi = menuItems.length ? menuItems.map(x => `    - ${x}`).join('\n') : "    - (tanpa detail menu)";
           const dpInfo = r.dp ? `    DP: Rp${formatRupiah(r.dp)}\n` : '';
@@ -1767,8 +1757,8 @@
       dataTransferCode.placeholder = 'Kode data akan muncul di sini...';
       try {
         const dataToExport = {
-          version: "1.3.0",
-          reservations: dataReservasi,
+          version: "1.3.1",
+          data: dataReservasi, // PERBAIKAN: Mengubah 'reservations' menjadi 'data' agar sesuai dengan sistem baru
           menus: detailMenu
         };
         
@@ -1813,9 +1803,8 @@
                 const jsonString = decodeURIComponent(escape(atob(code)));
                 const importedObject = JSON.parse(jsonString);
 
-                if (importedObject && typeof importedObject.reservations === 'object') {
-                    dataReservasi = importedObject.reservations;
-                    // Also import menus if they exist in the import file, otherwise keep current ones
+                if (importedObject && typeof importedObject.data === 'object') {
+                    dataReservasi = importedObject.data;
                     detailMenu = (typeof importedObject.menus === 'object') ? importedObject.menus : detailMenu;
                     
                     localStorage.setItem('reservasiDolan', JSON.stringify(dataReservasi));
@@ -1827,7 +1816,7 @@
                     alert('Data berhasil diimpor!');
                     hideDataTransfer();
                 } else {
-                    throw new Error("Format data tidak valid atau tidak kompatibel.");
+                    throw new Error("Format data tidak valid atau tidak kompatibel. Pastikan Anda export dari sistem terbaru.");
                 }
             } catch (error) {
                 alert('Gagal mengimpor data. Pastikan kode yang Anda masukkan benar.\n\nError: ' + error.message);
