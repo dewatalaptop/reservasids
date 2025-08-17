@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF--8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sistem Reservasi Dolan Sawah (Firebase)</title>
 
@@ -136,12 +136,10 @@
     <small>Version 3.1 (Anti-Cache)</small>
   </header>
   
-  <!-- Loading Indicator -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
   </div>
   
-  <!-- Toast Notification -->
   <div class="toast" id="toast"></div>
   
   <div id="login-container">
@@ -874,51 +872,92 @@
         return;
       }
       
-      const message = `Halo ${res.nama},\n\nMengenai reservasi Anda di Dolan Sawah pada:\nTanggal: ${res.date}\nJam: ${res.jam}\nTempat: ${res.tempat}\n\nAda yang bisa kami bantu?`;
+      const menuItems = res.menuDetails || detailMenu[res.menu] || [];
+      const menuList = menuItems.length 
+        ? menuItems.map(item => `  • ${item}`).join('\n') 
+        : '  - _Detail tidak tersedia_ -';
+        
+      const dpInfo = res.dp ? `💰 *DP:* Rp ${formatRupiah(res.dp)} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
+    
+      const message = `Halo Kak *${res.nama}* 👋,
+    
+Kami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:
+    
+🗓️ *Tanggal:* ${res.date}
+⏰ *Jam:* ${res.jam}
+📍 *Tempat:* ${res.tempat}
+👥 *Jumlah:* ${res.jumlah} orang
+    
+📝 *Pesanan Menu: ${res.menu}*
+${menuList}
+    
+${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊
+    
+Terima kasih,
+*Tim Dolan Sawah*`;
+          
       const phone = res.nomorHp.replace(/^0/, '62');
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     }
     
     function shareViaWhatsApp(scope) {
-      let message = `*Laporan Reservasi Dolan Sawah*\n\n`;
+      let message = '';
       
       if (scope === 'day' && tanggalDipilih) {
-        const day = tanggalDipilih.split('-')[1];
-        message += `*Tanggal:* ${day} ${monthNames[currentMonth]} ${currentYear}\n\n`;
+        const day = parseInt(tanggalDipilih.split('-')[1]);
+        const reservations = dataReservasi[tanggalDipilih] ? [...dataReservasi[tanggalDipilih]].sort((a,b) => a.jam.localeCompare(b.jam)) : [];
         
-        const reservations = dataReservasi[tanggalDipilih] || [];
+        message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n`;
+        message += `*Tanggal:* ${day} ${monthNames[currentMonth]} ${currentYear}\n`;
+        message += `=========================\n\n`;
+        
         if (reservations.length === 0) {
-          message += 'Tidak ada reservasi hari ini';
+          message += `_Tidak ada reservasi untuk tanggal ini._`;
         } else {
           reservations.forEach((res, index) => {
             message += `*${index + 1}. ${res.nama}*\n`;
-            message += `Jam: ${res.jam}\n`;
-            message += `Tempat: ${res.tempat}\n`;
-            message += `Jumlah: ${res.jumlah} orang\n`;
-            message += `Menu: ${res.menu}\n`;
-            if (res.dp) message += `DP: Rp${formatRupiah(res.dp)}\n`;
-            message += `\n`;
+            message += `⏰ Jam: *${res.jam}*\n`;
+            message += `📍 Tempat: *${res.tempat}*\n`;
+            message += `👥 Jumlah: *${res.jumlah} orang*\n`;
+            message += `🍽️ Menu: *${res.menu}*\n`;
+            if (res.dp) {
+              message += `💰 DP: *Rp ${formatRupiah(res.dp)}*\n`;
+            }
+            if (res.tambahan) {
+              message += `📝 Tambahan: *${res.tambahan}*\n`;
+            }
+            message += `-------------------------\n\n`;
           });
         }
       } else if (scope === 'month') {
-        message += `*Bulan:* ${monthNames[currentMonth]} ${currentYear}\n\n`;
+        message = `*🗓️ REKAP RESERVASI BULANAN 🗓️*\n`;
+        message += `*Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n`;
+        message += `=========================\n\n`;
         
+        const sortedDates = Object.keys(dataReservasi).sort((a, b) => a.localeCompare(b));
         let totalReservations = 0;
-        for (const date in dataReservasi) {
-          const day = date.split('-')[1];
-          const reservations = dataReservasi[date];
-          totalReservations += reservations.length;
-          
-          message += `*${day} ${monthNames[currentMonth]}*\n`;
-          reservations.forEach((res, index) => {
-            message += `${index + 1}. ${res.nama} (${res.jam}, ${res.tempat})\n`;
+        
+        if (sortedDates.length > 0) {
+          sortedDates.forEach(dateKey => {
+            const day = parseInt(dateKey.split('-')[1]);
+            const reservations = dataReservasi[dateKey] ? [...dataReservasi[dateKey]].sort((a,b) => a.jam.localeCompare(b.jam)) : [];
+            if (reservations.length > 0) {
+              totalReservations += reservations.length;
+              message += `*📆 Tanggal: ${day} ${monthNames[currentMonth]}*\n`;
+              reservations.forEach(res => {
+                message += `- ${res.jam} | *${res.nama}* | ${res.tempat} | ${res.jumlah} org\n`;
+              });
+              message += `-------------------------\n`;
+            }
           });
-          message += `\n`;
         }
         
         if (totalReservations === 0) {
-          message += 'Tidak ada reservasi bulan ini';
+          message += `_Tidak ada reservasi untuk bulan ini._`;
         }
+      } else {
+        showToast("Pilih tanggal terlebih dahulu untuk laporan harian.", "error");
+        return;
       }
       
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
