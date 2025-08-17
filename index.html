@@ -472,7 +472,7 @@
             if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return alert("Pilih tanggal terlebih dahulu.");
             const day = parseInt(tanggalDipilih.split('-')[1]);
             const formattedDate = `${day} ${monthNames[currentMonth]} ${currentYear}`;
-            message += `*🗓️ Laporan Harian: ${formattedDate}*\n${separator}`;
+            message += `*🗓️ Diurutkan berdasarkan jam: ${formattedDate}*\n${separator}`;
             const list = [...dataReservasi[tanggalDipilih]].sort((a,b) => a.jam.localeCompare(b.jam));
 
             if (list.length === 0) {
