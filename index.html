@@ -98,7 +98,7 @@
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 2.9 (Definitive Edition)</small>
+    <small>Version 3.0 (Stable)</small>
   </header>
   <div id="login-container">
     <h3><i class="fas fa-lock"></i> Login Admin</h3>
@@ -210,21 +210,14 @@
     function handleLogout() { if (confirm("Yakin ingin logout?")) auth.signOut(); }
     function initializeApp() { loadMenus(); loadReservationsForCurrentMonth(); }
     
-    // --- PERBAIKAN FUNGSI PEMUATAN DATA MENU ---
     async function loadMenus() {
         try {
-            // PERBAIKAN: Menggunakan query yang lebih sederhana dan pasti berhasil
             const snapshot = await db.collection('menus').get();
             detailMenu = {};
             snapshot.forEach(doc => detailMenu[doc.id] = doc.data().details);
-            // Setelah detailMenu terisi, langsung panggil populate untuk form utama
             populateMenuDropdowns(document.getElementById('menu'));
-        } catch (e) {
-            console.error("Gagal memuat menu:", e);
-            alert("KRITIS: Gagal memuat daftar menu dari server. Beberapa fitur mungkin tidak berfungsi.");
-        }
+        } catch (e) { console.error("Gagal memuat menu:", e); alert("KRITIS: Gagal memuat daftar menu dari server."); }
     }
-
     function loadReservationsForCurrentMonth() {
         if (unsubscribeReservations) unsubscribeReservations();
         const monthStr = String(currentMonth + 1).padStart(2, '0');
@@ -264,8 +257,7 @@
         buatKalender();
         updateReservationList(dataReservasi[tanggalDipilih] || []);
         summaryEl.querySelector('h3').innerHTML = `<i class="far fa-calendar-alt"></i> Reservasi ${day} ${monthNames[currentMonth]}`;
-        summaryEl.style.display = 'block';
-        document.getElementById('formPopup').style.display = 'block';
+        summaryEl.style.display = 'block'; document.getElementById('formPopup').style.display = 'block';
         if (shouldScroll) summaryEl.scrollIntoView({ behavior: 'smooth' });
     }
     function updateReservationList(reservations) {
@@ -296,11 +288,11 @@
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         if (!data.nama || !data.jam || !data.jumlah) return alert('Nama, Jam, dan Jumlah Peserta wajib diisi!');
-        try { await db.collection('reservations').add(data); alert("Reservasi berhasil disimpan!"); form.reset(); } 
+        try { await db.collection('reservations').add(data); alert("Reservasi disimpan!"); form.reset(); } 
         catch (e) { alert("Gagal menyimpan: " + e.message); }
     }
     async function hapusReservasi(id) {
-        if (confirm("Yakin ingin menghapus reservasi ini?")) {
+        if (confirm("Yakin ingin menghapus?")) {
             try { await db.collection('reservations').doc(id).delete(); } catch (e) { alert("Gagal menghapus: " + e.message); }
         }
     }
@@ -318,11 +310,7 @@
             <label>Tempat: <select id="editTempat"><option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option><option>Gubug 1</option><option>Gubug 2</option><option>Gubug 3</option></select></label>
             <label>Tambahan: <textarea id="editTambahan">${res.tambahan || ''}</textarea></label>
             <div class="data-actions"><button onclick="simpanPerubahanReservasi()"><i class="fas fa-save"></i> Simpan</button><button class="danger" onclick="tutupEditForm()">Batal</button></div>`;
-        
-        // --- PERBAIKAN PENTING ---
-        // Panggil populate dropdown SETELAH form dibuat, dan berikan elemennya langsung.
         populateMenuDropdowns(form.querySelector('#editMenu'), res.menu);
-        
         form.querySelector('#editTempat').value = res.tempat;
         form.style.display = 'block'; overlay.style.display = 'block';
     }
@@ -342,14 +330,13 @@
     }
     function tutupEditForm() { document.getElementById('editFormPopup').style.display = 'none'; overlay.style.display = 'none'; }
     
-    // --- FITUR LENGKAP KELOLA MENU ---
     function showMenuManagement() {
         const popup = document.getElementById('menuManagementPopup');
         popup.innerHTML = `<h3><i class="fas fa-book-open"></i> Kelola Menu</h3><div id="menu-list-container"></div>
             <div id="add-menu-form"><h4><i class="fas fa-plus-circle"></i> Tambah Menu</h4>
             <label>Nama Menu: <input type="text" id="newMenuName" placeholder="Contoh: Paket Spesial"></label>
             <label>Detail Menu (pisahkan koma): <textarea id="newMenuDetails" placeholder="Nasi, Ayam Bakar"></textarea></label>
-            <button onclick="addNewMenu()"><i class="fas fa-plus"></i> Tambah</button></div>
+            <button onclick="addNewMenu()">Tambah Menu</button></div>
             <div class="data-actions"><button class="danger" onclick="closeMenuManagement()">Tutup</button></div>`;
         renderMenuList();
         popup.style.display = 'block'; overlay.style.display = 'block';
@@ -400,7 +387,6 @@
     }
     function closeMenuManagement() { document.getElementById('menuManagementPopup').style.display = 'none'; overlay.style.display = 'none'; }
 
-    // --- FUNGSI UTILITAS & FITUR TAMBAHAN ---
     function formatRupiah(amount) { return (amount || 0).toLocaleString('id-ID'); }
     function findReservationById(id) {
         for (const key in dataReservasi) { const found = dataReservasi[key].find(r => r.id === id); if (found) return found; } return null;
@@ -431,9 +417,26 @@
     function previousMonth() { currentMonth--; if(currentMonth < 0){currentMonth=11; currentYear--;} tanggalDipilih=''; summaryEl.style.display='none'; document.getElementById('formPopup').style.display='none'; loadReservationsForCurrentMonth(); }
     function nextMonth() { currentMonth++; if(currentMonth > 11){currentMonth=0; currentYear++;} tanggalDipilih=''; summaryEl.style.display='none'; document.getElementById('formPopup').style.display='none'; loadReservationsForCurrentMonth(); }
     function printData() { window.print(); }
-    function toggleSortOptions(e){ e.stopPropagation(); document.getElementById('sortOptions').style.display = 'block'; }
-    function toggleWhatsAppOptions(e){ e.stopPropagation(); document.getElementById('whatsappOptions').style.display = 'block'; }
-    document.addEventListener('click', () => { document.querySelectorAll('.sort-options, .whatsapp-options').forEach(el => el.style.display = 'none'); });
+
+    /* --- PERBAIKAN: Logika Tombol Menu Bawah --- */
+    function toggleSortOptions(event) {
+        event.stopPropagation();
+        const sortOptions = document.getElementById('sortOptions');
+        const whatsappOptions = document.getElementById('whatsappOptions');
+        whatsappOptions.style.display = 'none';
+        sortOptions.style.display = sortOptions.style.display === 'block' ? 'none' : 'block';
+    }
+    function toggleWhatsAppOptions(event) {
+        event.stopPropagation();
+        const sortOptions = document.getElementById('sortOptions');
+        const whatsappOptions = document.getElementById('whatsappOptions');
+        sortOptions.style.display = 'none';
+        whatsappOptions.style.display = whatsappOptions.style.display === 'block' ? 'none' : 'block';
+    }
+    document.addEventListener('click', () => { 
+        document.querySelectorAll('.sort-options, .whatsapp-options').forEach(el => el.style.display = 'none'); 
+    });
+    
     function populateMenuDropdowns(selectElement, selectedValue) {
         if (!selectElement) return;
         const sortedMenuNames = Object.keys(detailMenu).sort();
