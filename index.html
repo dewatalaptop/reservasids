@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF--8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sistem Reservasi Dolan Sawah (Firebase)</title>
 
@@ -240,6 +240,7 @@
   
   <div id="editFormPopup" class="edit-form-popup"></div>
   <div id="menuManagementPopup" class="menu-management-popup"></div>
+  <div id="customerListPopup" class="edit-form-popup"></div>
   <div class="overlay" id="overlay"></div>
   
   <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan</p></footer>
@@ -864,6 +865,81 @@
       if (selectedValue) selectElement.value = selectedValue;
     }
     
+    // Customer List Functions
+    async function showCustomerMenu() {
+      const loader = showLoader();
+      try {
+        // Ambil semua reservasi, diurutkan dari yang terbaru
+        const snapshot = await db.collection('reservations').orderBy('createdAt', 'desc').get();
+        const customers = new Map(); // Gunakan Map agar setiap customer unik berdasarkan nomor HP
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          // Hanya tambahkan customer yang punya nomor HP dan belum ada di daftar
+          if (data.nomorHp && !customers.has(data.nomorHp)) {
+            customers.set(data.nomorHp, data.nama);
+          }
+        });
+
+        const popup = document.getElementById('customerListPopup');
+        if (customers.size === 0) {
+          popup.innerHTML = `
+            <h3><i class="fas fa-address-book"></i> Daftar Customer</h3>
+            <p style="text-align:center; padding: 20px 0;">Belum ada data customer dengan nomor HP.</p>
+            <div class="data-actions">
+                <button class="danger" onclick="closeCustomerMenu()">Tutup</button>
+            </div>`;
+        } else {
+          // Urutkan daftar customer berdasarkan nama (abjad)
+          const sortedCustomers = [...customers.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+
+          let customerListHTML = sortedCustomers.map(([phone, name]) => `
+            <div class="menu-item">
+              <span class="menu-item-name"><i class="fas fa-user"></i> ${name} <br/><small style="color:#777;">${phone}</small></span>
+              <div class="menu-item-actions">
+                <button class="whatsapp" onclick="openWhatsApp('${phone}', '${name}')" title="Hubungi via WhatsApp">
+                    <i class="fab fa-whatsapp"></i> Hubungi
+                </button>
+              </div>
+            </div>`
+          ).join('');
+
+          popup.innerHTML = `
+            <h3><i class="fas fa-address-book"></i> Daftar Customer (${customers.size})</h3>
+            <div id="menu-list-container" style="max-height: 50vh;">
+                ${customerListHTML}
+            </div>
+            <div class="data-actions" style="margin-top:20px;">
+                <button class="danger" onclick="closeCustomerMenu()">Tutup</button>
+            </div>`;
+        }
+
+        popup.style.display = 'block';
+        overlay.style.display = 'block';
+
+      } catch (e) {
+        console.error("Gagal memuat data customer:", e);
+        showToast("Gagal memuat data customer", "error");
+      } finally {
+        loader.hide();
+      }
+    }
+
+    function closeCustomerMenu() {
+      document.getElementById('customerListPopup').style.display = 'none';
+      overlay.style.display = 'none';
+    }
+
+    function openWhatsApp(phone, name) {
+        if (!phone) {
+            showToast("Nomor HP tidak tersedia", "error");
+            return;
+        }
+        const formattedPhone = phone.replace(/^0/, '62');
+        const message = `Halo Kak *${name}*, kami dari Dolan Sawah ingin menyapa. Terima kasih telah menjadi pelanggan kami! 😊`;
+        window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
+    }
+    
     // WhatsApp Integration
     function contactViaWhatsApp(id) {
       const res = findReservationById(id);
@@ -1115,6 +1191,7 @@ Terima kasih,
       overlay.addEventListener('click', () => {
         document.getElementById('editFormPopup').style.display = 'none';
         document.getElementById('menuManagementPopup').style.display = 'none';
+        document.getElementById('customerListPopup').style.display = 'none';
         overlay.style.display = 'none';
       });
       
