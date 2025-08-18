@@ -857,6 +857,7 @@
       if (sortedMenuNames.length === 0) {
         selectElement.add(new Option('Tidak Ada Pilihan', ''));
       } else {
+        selectElement.add(new Option('Pilih Menu...', ''));
         sortedMenuNames.forEach(name => 
           selectElement.add(new Option(name, name))
         );
@@ -869,13 +870,11 @@
     async function showCustomerMenu() {
       const loader = showLoader();
       try {
-        // Ambil semua reservasi, diurutkan dari yang terbaru
         const snapshot = await db.collection('reservations').orderBy('createdAt', 'desc').get();
-        const customers = new Map(); // Gunakan Map agar setiap customer unik berdasarkan nomor HP
+        const customers = new Map(); 
 
         snapshot.forEach(doc => {
           const data = doc.data();
-          // Hanya tambahkan customer yang punya nomor HP dan belum ada di daftar
           if (data.nomorHp && !customers.has(data.nomorHp)) {
             customers.set(data.nomorHp, data.nama);
           }
@@ -890,7 +889,6 @@
                 <button class="danger" onclick="closeCustomerMenu()">Tutup</button>
             </div>`;
         } else {
-          // Urutkan daftar customer berdasarkan nama (abjad)
           const sortedCustomers = [...customers.entries()].sort((a, b) => a[1].localeCompare(b[1]));
 
           let customerListHTML = sortedCustomers.map(([phone, name]) => `
@@ -996,6 +994,16 @@ Terima kasih,
             message += `📍 Tempat: *${res.tempat}*\n`;
             message += `👥 Jumlah: *${res.jumlah} orang*\n`;
             message += `🍽️ Menu: *${res.menu}*\n`;
+            
+            // --- PERBAIKAN DIMULAI DI SINI ---
+            const menuItems = res.menuDetails || detailMenu[res.menu] || [];
+            if (menuItems.length > 0) {
+              menuItems.forEach(item => {
+                message += `  - _${item}_\n`;
+              });
+            }
+            // --- PERBAIKAN SELESAI ---
+
             if (res.dp) {
               message += `💰 DP: *Rp ${formatRupiah(res.dp)}*\n`;
             }
@@ -1063,6 +1071,17 @@ Terima kasih,
         body += `   Tempat: ${res.tempat}\n`;
         body += `   Jumlah: ${res.jumlah} orang\n`;
         body += `   Menu: ${res.menu}\n`;
+
+        // --- PERBAIKAN DIMULAI DI SINI ---
+        const menuItems = res.menuDetails || detailMenu[res.menu] || [];
+        if (menuItems.length > 0) {
+            body += `   Detail Menu:\n`;
+            menuItems.forEach(item => {
+                body += `     • ${item}\n`;
+            });
+        }
+        // --- PERBAIKAN SELESAI ---
+
         if (res.dp) body += `   DP: Rp${formatRupiah(res.dp)}\n`;
         if (res.tambahan) body += `   Catatan: ${res.tambahan}\n`;
         body += `\n`;
