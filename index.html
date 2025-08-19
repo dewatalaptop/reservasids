@@ -995,14 +995,12 @@ Terima kasih,
             message += `👥 Jumlah: *${res.jumlah} orang*\n`;
             message += `🍽️ Menu: *${res.menu}*\n`;
             
-            // --- PERBAIKAN DIMULAI DI SINI ---
             const menuItems = res.menuDetails || detailMenu[res.menu] || [];
             if (menuItems.length > 0) {
               menuItems.forEach(item => {
                 message += `  - _${item}_\n`;
               });
             }
-            // --- PERBAIKAN SELESAI ---
 
             if (res.dp) {
               message += `💰 DP: *Rp ${formatRupiah(res.dp)}*\n`;
@@ -1072,7 +1070,6 @@ Terima kasih,
         body += `   Jumlah: ${res.jumlah} orang\n`;
         body += `   Menu: ${res.menu}\n`;
 
-        // --- PERBAIKAN DIMULAI DI SINI ---
         const menuItems = res.menuDetails || detailMenu[res.menu] || [];
         if (menuItems.length > 0) {
             body += `   Detail Menu:\n`;
@@ -1080,7 +1077,6 @@ Terima kasih,
                 body += `     • ${item}\n`;
             });
         }
-        // --- PERBAIKAN SELESAI ---
 
         if (res.dp) body += `   DP: Rp${formatRupiah(res.dp)}\n`;
         if (res.tambahan) body += `   Catatan: ${res.tambahan}\n`;
@@ -1137,27 +1133,49 @@ Terima kasih,
       }); 
     });
     
-    // Data Export/Import
+    // ============================================
+    // === BAGIAN YANG DIMODIFIKASI UNTUK IMPOR ===
+    // ============================================
+    
     function showExportData() {
-      const exportData = {
-        month: currentMonth,
-        year: currentYear,
-        reservations: dataReservasi,
-        menus: detailMenu
+      // 1. Siapkan data dengan format yang dibutuhkan oleh website kedua
+      const exportPayload = {
+        version: "3.1-export-compatible", // Tambahkan versi untuk identifikasi
+        data: dataReservasi // 'dataReservasi' sudah memiliki format "MM-DD": [...]
       };
       
-      document.getElementById('dataTransferCode').value = JSON.stringify(exportData, null, 2);
+      // 2. Ubah objek menjadi string JSON
+      const jsonString = JSON.stringify(exportPayload);
+      
+      // 3. Enkripsi string JSON ke Base64 agar cocok dengan fungsi impor (atob)
+      // Menggunakan unescape dan encodeURIComponent agar aman untuk karakter spesial
+      const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
+      
+      // 4. Tampilkan kode yang sudah dienkripsi di textarea
+      document.getElementById('dataTransferCode').value = encodedData;
       document.getElementById('exportMonthName').textContent = monthNames[currentMonth];
       document.getElementById('dataTransfer').style.display = 'block';
+      showToast("Kode ekspor (format baru) telah dibuat.");
     }
     
     function copyExportCode() {
       const code = document.getElementById('dataTransferCode');
       code.select();
-      document.execCommand('copy');
-      showToast("Kode berhasil disalin!");
+      code.setSelectionRange(0, 99999); // Kompatibilitas untuk mobile
+
+      // Gunakan API Clipboard modern untuk menyalin
+      navigator.clipboard.writeText(code.value).then(() => {
+          showToast("Kode ekspor berhasil disalin!");
+      }).catch(err => {
+          console.error('Gagal menyalin: ', err);
+          showToast("Gagal menyalin kode", "error");
+      });
     }
     
+    // ============================================
+    // === AKHIR BAGIAN YANG DIMODIFIKASI       ===
+    // ============================================
+
     function hideDataTransfer() { 
       document.getElementById('dataTransfer').style.display = 'none'; 
     }
