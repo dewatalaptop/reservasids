@@ -128,20 +128,23 @@
     }
     .toast.error { background-color: var(--danger); }
     .toast.success { background-color: var(--success); }
+    .toast.info { background-color: var(--primary); } /* [BARU] Toast untuk info */
     .invalid { border-color: var(--danger) !important; }
     .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; }
     @media (max-width: 480px) { .action-buttons, .data-actions { flex-direction: column; } .action-buttons button, .data-actions button { width: 100%; } }
 
-    /* Gaya untuk fungsi Print */
+    /* Gaya untuk fungsi Print (disesuaikan untuk halaman detail) */
     @media print {
       body * { visibility: hidden; }
-      header, footer, .action-buttons, #formPopup, #logout-button, .calendar-header, .calendar-weekdays, .calendar-days, .data-transfer { display: none !important; }
-      .container { display: block !important; box-shadow: none; padding: 0; margin: 0; max-width: 100%; }
-      #summary, #summary * { visibility: visible; }
-      #summary { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; margin-top: 0; }
-      .reservation-item { box-shadow: none; border: 1px solid #ccc; }
-      .data-actions, .search-container { display: none !important; }
-      button { display: none !important; }
+      header, footer, #main-container, .reservation-view-header button, #detailSearchInput { display: none !important; }
+      #reservation-view-container, #reservation-view-container *, #reservation-view-title, #reservation-detail-list, #reservation-detail-list * {
+        visibility: visible;
+      }
+      #reservation-view-container {
+        position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; margin-top: 0; padding: 0;
+      }
+      .reservation-item { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+      .data-actions button { display: none !important; }
     }
   </style>
 </head>
@@ -176,15 +179,6 @@
     
     <div class="calendar-weekdays"><div>Min</div> <div>Sen</div> <div>Sel</div> <div>Rab</div> <div>Kam</div> <div>Jum</div> <div>Sab</div></div>
     <div class="calendar-days" id="calendar"></div>
-    
-    <div id="summary" class="summary" style="display:none;">
-      <h3><i class="far fa-calendar-alt"></i> Reservasi</h3>
-      <div class="search-container">
-        <i class="fas fa-search"></i>
-        <input type="text" id="searchInput" oninput="filterReservations(this.value)" placeholder="Cari di tanggal yang dipilih...">
-      </div>
-      <div id="reservation-list-container"></div>
-    </div>
     
     <div id="formPopup" class="form-popup" style="display:none;">
       <h3><i class="fas fa-calendar-plus"></i> Input Reservasi</h3>
@@ -241,6 +235,21 @@
   <div id="menuManagementPopup" class="menu-management-popup"></div>
   <div id="customerListPopup" class="edit-form-popup"></div>
   <div class="overlay" id="overlay"></div>
+
+  <div id="reservation-view-container" style="display: none; background-color: #f5f5f5; padding: 20px;">
+    <div class="reservation-view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--primary);">
+        <h2 id="reservation-view-title" style="color: var(--primary-dark); font-size: 1.8rem;"></h2>
+        <button onclick="kembaliKeKalender()"><i class="fas fa-arrow-left"></i> Kembali ke Kalender</button>
+    </div>
+    
+    <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input type="text" id="detailSearchInput" oninput="filterReservations(this.value)" placeholder="Cari nama, tempat, atau menu...">
+    </div>
+
+    <div id="reservation-detail-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
+        </div>
+  </div>
   
   <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan </p></footer>
 
@@ -278,7 +287,7 @@
     const logoutButton = document.getElementById('logout-button');
     const monthYearEl = document.getElementById('monthYear');
     const calendarEl = document.getElementById('calendar');
-    const summaryEl = document.getElementById('summary');
+    const summaryEl = document.getElementById('summary'); // Mungkin sudah tidak ada, tapi kita biarkan untuk keamanan
     const overlay = document.getElementById('overlay');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const toast = document.getElementById('toast');
@@ -455,27 +464,63 @@
       }
     }
     
-    function pilihTanggal(day, shouldScroll = true) {
-      tanggalDipilih = `${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      buatKalender();
-      updateReservationList(dataReservasi[tanggalDipilih] || []);
-      summaryEl.querySelector('h3').innerHTML = `<i class="far fa-calendar-alt"></i> Reservasi ${day} ${monthNames[currentMonth]}`;
-      summaryEl.style.display = 'block'; 
-      document.getElementById('formPopup').style.display = 'block';
-      if (shouldScroll) summaryEl.scrollIntoView({ behavior: 'smooth' });
+    // ## [FUNGSI YANG DIPERBARUI] ##
+    function pilihTanggal(day) {
+      const dateKey = `${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const reservations = dataReservasi[dateKey] || [];
+      
+      tanggalDipilih = dateKey;
+      buatKalender(); // Selalu re-render kalender untuk highlight tanggal yang dipilih
+
+      // Jika tidak ada reservasi pada tanggal itu, cukup tampilkan form input dan pesan
+      if (reservations.length === 0) {
+        document.getElementById('formPopup').style.display = 'block'; 
+        showToast("Tidak ada reservasi pada tanggal ini. Silakan input baru.", "info");
+        return; // Hentikan eksekusi fungsi
+      }
+      
+      // Jika ada reservasi, lanjutkan ke halaman detail
+      const viewContainer = document.getElementById('reservation-view-container');
+      const viewTitle = document.getElementById('reservation-view-title');
+      const mainContainer = document.getElementById('main-container');
+      const detailSearchInput = document.getElementById('detailSearchInput');
+
+      viewTitle.innerHTML = `<i class="far fa-calendar-check"></i> Reservasi untuk ${day} ${monthNames[currentMonth]} ${currentYear}`;
+      detailSearchInput.value = ''; 
+      
+      updateReservationList(reservations);
+      
+      mainContainer.style.display = 'none';
+      viewContainer.style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+
+    // ## [FUNGSI BARU] ##
+    function kembaliKeKalender() {
+      const viewContainer = document.getElementById('reservation-view-container');
+      const mainContainer = document.getElementById('main-container');
+
+      viewContainer.style.display = 'none';
+      mainContainer.style.display = 'block';
+      
+      resetCalendarView();
     }
     
+    // ## [FUNGSI YANG DIPERBARUI] ##
     function updateReservationList(reservations) {
-      const container = document.getElementById('reservation-list-container');
+      const container = document.getElementById('reservation-detail-list'); // Target container baru
+      
       if (!reservations || reservations.length === 0) {
-        container.innerHTML = `<p style="text-align:center;padding:20px 0;">Belum ada reservasi.</p>`; return;
+        container.innerHTML = `<p style="text-align:center; padding:20px 0; grid-column: 1 / -1;">Tidak ada reservasi yang cocok dengan pencarian.</p>`; 
+        return;
       }
+      
       container.innerHTML = reservations.map(r => {
         const isiMenu = (detailMenu[r.menu] || r.menuDetails || []).map(item => `• ${item}`).join('<br/>') || "-";
         const dpInfo = r.dp ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)}</div>` : '';
         const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> ${r.nomorHp}</div>` : '';
         return `
-          <div class="reservation-item">
+          <div class="reservation-item" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
             <div class="reservation-details">
               <b><i class="fas fa-user"></i> ${r.nama}</b><br/>
               <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} org</span>
@@ -492,6 +537,7 @@
       }).join('');
     }
     
+    // ## [FUNGSI YANG DIPERBARUI] ##
     function filterReservations(query) {
       if (!tanggalDipilih) return;
       const q = query.toLowerCase();
@@ -503,7 +549,10 @@
     
     async function simpanReservasi() {
       const formData = validateAndGetFormData('reservation-form');
-      if (!formData) return;
+      if (!formData || !tanggalDipilih) {
+        if(!tanggalDipilih) showToast("Pilih tanggal terlebih dahulu!", "error");
+        return;
+      };
       const data = {
         ...formData,
         date: `${currentYear}-${tanggalDipilih}`,
@@ -822,7 +871,7 @@
     function sortReservations(sortBy) {
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
       const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => a[sortBy].localeCompare(b[sortBy]));
-      updateReservationList(sorted);
+      updateReservationList(sorted); // Akan mengupdate di halaman detail
       document.getElementById('sortOptions').style.display = 'none';
       showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
     }
@@ -874,8 +923,9 @@
     
     function resetCalendarView() {
       tanggalDipilih = '';
-      summaryEl.style.display = 'none';
+      if(summaryEl) summaryEl.style.display = 'none'; // Jaga-jaga jika elemen masih ada
       document.getElementById('formPopup').style.display = 'none';
+      buatKalender(); // Re-render untuk menghapus highlight
     }
     
     function forceSync() {
@@ -893,6 +943,10 @@
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
           tutupEditForm(); closeMenuManagement(); closeCustomerMenu();
+          // [BARU] Tombol Esc juga bisa kembali ke kalender
+          if (document.getElementById('reservation-view-container').style.display === 'block') {
+            kembaliKeKalender();
+          }
         }
       });
       document.addEventListener('click', () => { 
