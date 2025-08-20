@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah (Firebase)</title>
+  <title>Sistem Reservasi Dolan Sawah (Firebase) - Versi Perbaikan</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -60,89 +60,28 @@
     .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 10px; color: var(--primary-dark); }
     .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
 
-    /* === MODIFIKASI DIMULAI DI SINI === */
-
     .calendar-day {
-      min-height: 90px; /* Sedikit lebih tinggi */
-      padding: 5px;
-      background-color: white;
-      border-radius: 8px; /* Sudut lebih bulat */
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      position: relative; /* Kunci agar posisi absolut berfungsi */
-      border: 2px solid transparent; /* Border transparan untuk "today" */
-      transition: all 0.2s ease-in-out;
-      cursor: pointer;
+      min-height: 90px; padding: 5px; background-color: white; border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); position: relative;
+      border: 2px solid transparent; transition: all 0.2s ease-in-out; cursor: pointer;
     }
-    .calendar-day:not(.selected):hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
+    .calendar-day:not(.selected):hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     .day-number {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: var(--dark);
-      position: absolute; /* Diposisikan di pojok */
-      top: 6px;
-      right: 8px;
-      transition: all 0.3s ease;
-      width: 28px; /* Menyamakan ukuran dengan penanda 'today' */
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-weight: 600; font-size: 0.9rem; color: var(--dark); position: absolute;
+      top: 6px; right: 8px; transition: all 0.3s ease; width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
     }
-
     .reservation-count {
-      position: absolute;
-      bottom: 8px; /* Pindah ke bawah */
-      left: 8px;   /* Di sisi kiri */
-      background-color: rgba(42, 157, 143, 0.15); /* Latar belakang lebih soft */
-      color: var(--primary-dark);
-      width: auto; /* Lebar otomatis */
-      min-width: 22px;
-      height: 22px;
-      padding: 0 8px; /* Padding horizontal untuk bentuk pil */
-      border-radius: 12px; /* Bentuk pil */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 600;
+      position: absolute; bottom: 8px; left: 8px; background-color: rgba(42, 157, 143, 0.15);
+      color: var(--primary-dark); width: auto; min-width: 22px; height: 22px; padding: 0 8px;
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 600;
     }
-
-    .has-reservation {
-      /* Tidak perlu style khusus di sini karena .reservation-count sudah cukup */
-      border-left: none; /* Dihapus agar tidak double */
-      background-color: white; /* Direset */
-    }
-
-    /* Penanda untuk Tanggal Hari Ini (Today) */
-    .calendar-day.today {
-      border-color: var(--accent);
-      background-color: #fffaf0;
-    }
-    .today .day-number {
-      background-color: var(--accent);
-      color: white;
-      border-radius: 50%; /* Lingkaran sempurna */
-    }
-
-    .selected {
-      background-color: var(--primary) !important; /* Pakai !important untuk menimpa 'today' */
-      border-color: var(--primary-dark) !important;
-      color: white;
-    }
-    .selected .day-number {
-      color: white;
-      background-color: transparent; /* Hilangkan background jika dipilih */
-    }
-    .selected .reservation-count {
-      background-color: white;
-      color: var(--primary);
-    }
-    
-    /* === MODIFIKASI SELESAI === */
+    .calendar-day.today { border-color: var(--accent); background-color: #fffaf0; }
+    .today .day-number { background-color: var(--accent); color: white; border-radius: 50%; }
+    .selected { background-color: var(--primary) !important; border-color: var(--primary-dark) !important; color: white; }
+    .selected .day-number { color: white; background-color: transparent; }
+    .selected .reservation-count { background-color: white; color: var(--primary); }
 
     .form-popup, .summary, .edit-form-popup, .menu-management-popup { margin-top: 25px; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); border-top: 4px solid var(--primary); }
     button { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
@@ -170,52 +109,49 @@
     .search-container { position: relative; margin: 0 auto 20px; max-width: 600px; width: 100%; }
     .search-container input { padding-left: 35px; border-radius: 30px; border: 2px solid var(--primary); }
     .search-container i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary); }
-    #menu-list-container { max-height: 300px; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; }
+    #menu-list-container, #customer-list { max-height: 300px; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; }
     .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
     .menu-item-actions button { padding: 5px 10px; font-size: 0.8rem; margin-top: 0; margin-left: 5px; }
     #add-menu-form { margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--primary); }
     .loading-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-      background-color: rgba(0,0,0,0.5); z-index: 2000; 
-      display: flex; justify-content: center; align-items: center;
-      display: none;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 2000; 
+      display: flex; justify-content: center; align-items: center; display: none;
     }
     .spinner {
-      width: 50px; height: 50px; border: 5px solid #f3f3f3;
-      border-top: 5px solid var(--primary); border-radius: 50%;
+      width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .toast {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background-color: var(--dark); color: white; padding: 12px 24px;
-      border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      z-index: 1001; display: none;
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--dark); color: white; padding: 12px 24px;
+      border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1001; display: none;
     }
     .toast.error { background-color: var(--danger); }
     .toast.success { background-color: var(--success); }
     .invalid { border-color: var(--danger) !important; }
     .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; }
-    
-    @media (max-width: 480px) { 
-      .action-buttons, .data-actions { flex-direction: column; } 
-      .action-buttons button, .data-actions button { width: 100%; } 
+    @media (max-width: 480px) { .action-buttons, .data-actions { flex-direction: column; } .action-buttons button, .data-actions button { width: 100%; } }
+
+    /* Gaya untuk fungsi Print */
+    @media print {
+      body * { visibility: hidden; }
+      header, footer, .action-buttons, #formPopup, #logout-button, .calendar-header, .calendar-weekdays, .calendar-days, .data-transfer { display: none !important; }
+      .container { display: block !important; box-shadow: none; padding: 0; margin: 0; max-width: 100%; }
+      #summary, #summary * { visibility: visible; }
+      #summary { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; margin-top: 0; }
+      .reservation-item { box-shadow: none; border: 1px solid #ccc; }
+      .data-actions, .search-container { display: none !important; }
+      button { display: none !important; }
     }
   </style>
 </head>
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 3.1 (Anti-Cache)</small>
+    <small>Version 3.2 (Perbaikan Bug)</small>
   </header>
   
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-  </div>
-  
+  <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
   <div class="toast" id="toast"></div>
   
   <div id="login-container">
@@ -233,14 +169,12 @@
       <div class="month-year" id="monthYear"></div>
       <div class="calendar-nav">
         <button onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
+        <button class="secondary" onclick="goToToday()"><i class="fas fa-calendar-day"></i> Hari Ini</button>
         <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
       </div>
     </div>
     
-    <div class="calendar-weekdays">
-      <div>Min</div> <div>Sen</div> <div>Sel</div> <div>Rab</div> <div>Kam</div> <div>Jum</div> <div>Sab</div>
-    </div>
-    
+    <div class="calendar-weekdays"><div>Min</div> <div>Sen</div> <div>Sel</div> <div>Rab</div> <div>Kam</div> <div>Jum</div> <div>Sab</div></div>
     <div class="calendar-days" id="calendar"></div>
     
     <div id="summary" class="summary" style="display:none;">
@@ -255,27 +189,16 @@
     <div id="formPopup" class="form-popup" style="display:none;">
       <h3><i class="fas fa-calendar-plus"></i> Input Reservasi</h3>
       <form id="reservation-form">
-        <label>Nama: <input type="text" id="nama" required />
-          <span class="error-message" id="nama-error"></span>
-        </label>
-        <label>Nomor HP: <input type="tel" id="nomorHp" pattern="[0-9]{10,13}" />
-          <span class="error-message" id="nomorHp-error"></span>
-        </label>
-        <label>Jam Reservasi: <input type="time" id="jam" required />
-          <span class="error-message" id="jam-error"></span>
-        </label>
-        <label>Jumlah Peserta: <input type="number" id="jumlah" min="1" required />
-          <span class="error-message" id="jumlah-error"></span>
-        </label>
+        <label>Nama: <input type="text" id="nama" required /><span class="error-message" id="nama-error"></span></label>
+        <label>Nomor HP: <input type="tel" id="nomorHp" placeholder="Cth: 0812-3456-7890" /><span class="error-message" id="nomorHp-error"></span></label>
+        <label>Jam Reservasi: <input type="time" id="jam" required /><span class="error-message" id="jam-error"></span></label>
+        <label>Jumlah Peserta: <input type="number" id="jumlah" min="1" required /><span class="error-message" id="jumlah-error"></span></label>
         <label>DP (Rupiah): <input type="number" id="dp" value="0" min="0" /></label>
-        <label>Menu: <select id="menu" required>
-          <span class="error-message" id="menu-error"></span>
-        </select></label>
+        <label>Menu: <select id="menu" required><span class="error-message" id="menu-error"></span></select></label>
         <label>Tempat: <select id="tempat" required>
-          <option value="">Pilih Tempat</option>
-          <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
+          <option value="">Pilih Tempat</option><option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
           <option>Gubug 1</option><option>Gubug 2</option><option>Gubug 3</option>
-        </select></label>
+        </select><span class="error-message" id="tempat-error"></span></label>
         <label>Request Tambahan: <textarea id="tambahan"></textarea></label>
         <button type="button" onclick="simpanReservasi()"> Simpan Reservasi</button>
       </form>
@@ -319,7 +242,7 @@
   <div id="customerListPopup" class="edit-form-popup"></div>
   <div class="overlay" id="overlay"></div>
   
-  <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan</p></footer>
+  <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan (Diperbaiki oleh AI)</p></footer>
 
 <script>
     // Firebase Configuration
@@ -337,13 +260,11 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     
-    // Enable offline persistence
     db.enablePersistence().catch(err => {
       console.warn("Firebase persistence error: ", err.code);
       showToast("Mode offline tidak tersedia", "error");
     });
 
-    // Constants and Variables
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     let dataReservasi = {};
     let detailMenu = {};
@@ -352,7 +273,6 @@
     let currentYear = new Date().getFullYear();
     let unsubscribeReservations = null;
     
-    // DOM Elements
     const mainContainer = document.getElementById('main-container');
     const loginContainer = document.getElementById('login-container');
     const logoutButton = document.getElementById('logout-button');
@@ -363,7 +283,6 @@
     const loadingOverlay = document.getElementById('loadingOverlay');
     const toast = document.getElementById('toast');
 
-    // Authentication State Listener
     auth.onAuthStateChanged(user => {
         if (user) {
             loginContainer.style.display = 'none'; 
@@ -377,116 +296,109 @@
         }
     });
 
-    // Utility Functions
-    function showLoader() {
-      loadingOverlay.style.display = 'flex';
-      return {
-        hide: () => loadingOverlay.style.display = 'none'
-      };
-    }
+    function showLoader() { loadingOverlay.style.display = 'flex'; }
+    function hideLoader() { loadingOverlay.style.display = 'none'; }
     
     function showToast(message, type = 'success') {
       toast.textContent = message;
       toast.className = `toast ${type}`;
       toast.style.display = 'block';
-      
-      setTimeout(() => {
-        toast.style.display = 'none';
-      }, 3000);
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
     }
     
-    function formatRupiah(amount) { 
-      return (amount || 0).toLocaleString('id-ID'); 
-    }
+    function formatRupiah(amount) { return (amount || 0).toLocaleString('id-ID'); }
     
+    function cleanPhoneNumber(phone) { return phone.replace(/[^0-9]/g, ''); }
+
     function isValidPhone(phone) {
-      return /^[0-9]{10,13}$/.test(phone);
+      const cleanedPhone = cleanPhoneNumber(phone);
+      return /^[0-9]{10,13}$/.test(cleanedPhone);
     }
     
-    function validateForm() {
-      let isValid = true;
-      const form = document.getElementById('reservation-form');
-      
-      // Reset errors
-      document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-      document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
-      
-      // Validate nama
-      if (!form.nama.value.trim()) {
-        document.getElementById('nama-error').textContent = 'Nama wajib diisi';
-        form.nama.classList.add('invalid');
-        isValid = false;
-      }
-      
-      // Validate nomor HP if provided
-      if (form.nomorHp.value && !isValidPhone(form.nomorHp.value)) {
-        document.getElementById('nomorHp-error').textContent = 'Nomor HP harus 10-13 digit angka';
-        form.nomorHp.classList.add('invalid');
-        isValid = false;
-      }
-      
-      // Validate jam
-      if (!form.jam.value) {
-        document.getElementById('jam-error').textContent = 'Jam wajib diisi';
-        form.jam.classList.add('invalid');
-        isValid = false;
-      }
-      
-      // Validate jumlah
-      if (!form.jumlah.value || parseInt(form.jumlah.value) < 1) {
-        document.getElementById('jumlah-error').textContent = 'Jumlah minimal 1';
-        form.jumlah.classList.add('invalid');
-        isValid = false;
-      }
-      
-      // Validate menu
-      if (!form.menu.value) {
-        document.getElementById('menu-error').textContent = 'Menu wajib dipilih';
-        form.menu.classList.add('invalid');
-        isValid = false;
-      }
-      
-      // Validate tempat
-      if (!form.tempat.value) {
-        document.getElementById('tempat-error').textContent = 'Tempat wajib dipilih';
-        form.tempat.classList.add('invalid');
-        isValid = false;
-      }
-      
-      return isValid;
+    function validateAndGetFormData(formId) {
+        let isValid = true;
+        const form = document.getElementById(formId);
+        const errorMessages = form.querySelectorAll('.error-message');
+        const inputs = form.querySelectorAll('input, select, textarea');
+
+        errorMessages.forEach(el => el.textContent = '');
+        inputs.forEach(el => el.classList.remove('invalid'));
+
+        const data = {};
+        const elements = form.elements;
+
+        if (!elements.nama.value.trim()) {
+            document.getElementById('nama-error').textContent = 'Nama wajib diisi';
+            elements.nama.classList.add('invalid');
+            isValid = false;
+        }
+
+        if (elements.nomorHp.value && !isValidPhone(elements.nomorHp.value)) {
+            document.getElementById('nomorHp-error').textContent = 'Nomor HP harus 10-13 digit angka';
+            elements.nomorHp.classList.add('invalid');
+            isValid = false;
+        }
+
+        if (!elements.jam.value) {
+            document.getElementById('jam-error').textContent = 'Jam wajib diisi';
+            elements.jam.classList.add('invalid');
+            isValid = false;
+        }
+
+        if (!elements.jumlah.value || parseInt(elements.jumlah.value) < 1) {
+            document.getElementById('jumlah-error').textContent = 'Jumlah minimal 1';
+            elements.jumlah.classList.add('invalid');
+            isValid = false;
+        }
+        
+        if (!elements.menu.value) {
+            (document.getElementById('menu-error') || {}).textContent = 'Menu wajib dipilih';
+            elements.menu.classList.add('invalid');
+            isValid = false;
+        }
+
+        if (!elements.tempat.value) {
+            document.getElementById('tempat-error').textContent = 'Tempat wajib dipilih';
+            elements.tempat.classList.add('invalid');
+            isValid = false;
+        }
+
+        if (!isValid) return null;
+
+        return {
+            nama: elements.nama.value,
+            nomorHp: cleanPhoneNumber(elements.nomorHp.value),
+            jam: elements.jam.value,
+            jumlah: parseInt(elements.jumlah.value),
+            dp: parseInt(elements.dp.value) || 0,
+            menu: elements.menu.value,
+            tempat: elements.tempat.value,
+            tambahan: elements.tambahan.value,
+        };
     }
 
-    // Authentication Functions
     async function handleLogin() {
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
+      const errorEl = document.getElementById('login-error');
       
       if (!email || !password) {
-        document.getElementById('login-error').textContent = 'Email dan password wajib diisi';
-        document.getElementById('login-error').style.display = 'block';
+        errorEl.textContent = 'Email dan password wajib diisi';
+        errorEl.style.display = 'block';
         return;
       }
       
-      const loader = showLoader();
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-      } catch (err) {
-        document.getElementById('login-error').textContent = 'Email atau password salah';
-        document.getElementById('login-error').style.display = 'block';
-      } finally {
-        loader.hide();
-      }
+      showLoader();
+      try { await auth.signInWithEmailAndPassword(email, password); } 
+      catch (err) {
+        errorEl.textContent = 'Email atau password salah';
+        errorEl.style.display = 'block';
+      } finally { hideLoader(); }
     }
     
-    function handleLogout() { 
-      if (confirm("Yakin ingin logout?")) auth.signOut(); 
-    }
+    function handleLogout() { if (confirm("Yakin ingin logout?")) auth.signOut(); }
 
-    // Core Application Functions
-    function initializeApp() { 
-      loadMenus(); 
-      loadReservationsForCurrentMonth(); 
-    }
+    function initializeApp() { loadMenus(); loadReservationsForCurrentMonth(); }
     
     async function loadMenus() {
       try {
@@ -494,10 +406,7 @@
         detailMenu = {};
         snapshot.forEach(doc => detailMenu[doc.id] = doc.data().details);
         populateMenuDropdowns(document.getElementById('menu'));
-      } catch (e) { 
-        console.error("Gagal memuat menu:", e); 
-        showToast("Gagal memuat daftar menu", "error");
-      }
+      } catch (e) { showToast("Gagal memuat daftar menu", "error"); }
     }
     
     function loadReservationsForCurrentMonth() {
@@ -507,12 +416,10 @@
       const startDate = `${currentYear}-${monthStr}-01`;
       const endDate = `${currentYear}-${monthStr}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`;
       
-      const loader = showLoader();
+      showLoader();
       unsubscribeReservations = db.collection('reservations')
-        .where('date', '>=', startDate)
-        .where('date', '<=', endDate)
-        .onSnapshot(
-          snapshot => {
+        .where('date', '>=', startDate).where('date', '<=', endDate)
+        .onSnapshot( snapshot => {
             dataReservasi = {};
             snapshot.forEach(doc => {
               const r = { id: doc.id, ...doc.data() };
@@ -522,44 +429,29 @@
             });
             buatKalender();
             if (tanggalDipilih) pilihTanggal(parseInt(tanggalDipilih.split('-')[1]), false);
-            loader.hide();
+            hideLoader();
           }, 
-          err => {
-            console.error("Error listener: ", err);
-            showToast("Gagal memuat data reservasi", "error");
-            loader.hide();
-          }
+          err => { showToast("Gagal memuat data reservasi", "error"); hideLoader(); }
         );
     }
     
     function buatKalender() {
       calendarEl.innerHTML = ''; 
       monthYearEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-      
       const firstDay = new Date(currentYear, currentMonth, 1).getDay();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      
-      // Empty days for previous month
-      for (let i = 0; i < firstDay; i++) {
-        calendarEl.insertAdjacentHTML('beforeend', `<div class="calendar-day empty-day"></div>`);
-      }
-      
-      // Current month days
+      for (let i = 0; i < firstDay; i++) { calendarEl.insertAdjacentHTML('beforeend', `<div></div>`); }
       for (let i = 1; i <= daysInMonth; i++) {
         const dateKey = `${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         const isToday = new Date().toDateString() === new Date(currentYear, currentMonth, i).toDateString() ? 'today' : '';
         const isSelected = dateKey === tanggalDipilih ? 'selected' : '';
         const hasRes = dataReservasi[dateKey] && dataReservasi[dateKey].length > 0;
         const countHTML = hasRes ? `<div class="reservation-count">${dataReservasi[dateKey].length}</div>` : '';
-        
-        const dayHTML = `
-          <div class="calendar-day ${isToday} ${isSelected} ${hasRes ? 'has-reservation' : ''}" 
-               onclick="pilihTanggal(${i})">
+        calendarEl.insertAdjacentHTML('beforeend', `
+          <div class="calendar-day ${isToday} ${isSelected}" onclick="pilihTanggal(${i})">
             <div class="day-number">${i}</div>
             ${countHTML}
-          </div>`;
-          
-        calendarEl.insertAdjacentHTML('beforeend', dayHTML);
+          </div>`);
       }
     }
     
@@ -567,60 +459,34 @@
       tanggalDipilih = `${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       buatKalender();
       updateReservationList(dataReservasi[tanggalDipilih] || []);
-      
-      summaryEl.querySelector('h3').innerHTML = `
-        <i class="far fa-calendar-alt"></i> Reservasi ${day} ${monthNames[currentMonth]}
-      `;
-      
+      summaryEl.querySelector('h3').innerHTML = `<i class="far fa-calendar-alt"></i> Reservasi ${day} ${monthNames[currentMonth]}`;
       summaryEl.style.display = 'block'; 
       document.getElementById('formPopup').style.display = 'block';
-      
       if (shouldScroll) summaryEl.scrollIntoView({ behavior: 'smooth' });
     }
     
     function updateReservationList(reservations) {
       const container = document.getElementById('reservation-list-container');
-      
       if (!reservations || reservations.length === 0) {
-        container.innerHTML = `<p style="text-align:center;padding:20px 0;">Belum ada reservasi.</p>`;
-        return;
+        container.innerHTML = `<p style="text-align:center;padding:20px 0;">Belum ada reservasi.</p>`; return;
       }
-      
       container.innerHTML = reservations.map(r => {
-        const menuItems = detailMenu[r.menu] || r.menuDetails || [];
-        const isiMenu = menuItems.length ? menuItems.map(item => `• ${item}`).join('<br/>') : "-";
+        const isiMenu = (detailMenu[r.menu] || r.menuDetails || []).map(item => `• ${item}`).join('<br/>') || "-";
         const dpInfo = r.dp ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)}</div>` : '';
         const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> ${r.nomorHp}</div>` : '';
-        
         return `
           <div class="reservation-item">
             <div class="reservation-details">
               <b><i class="fas fa-user"></i> ${r.nama}</b><br/>
-              <span>
-                <i class="fas fa-map-marker-alt"></i> ${r.tempat} • 
-                <i class="far fa-clock"></i> ${r.jam} • 
-                <i class="fas fa-users"></i> ${r.jumlah} org
-              </span>
-              ${dpInfo}
-              ${phoneInfo}
-              <div class="menu-detail">
-                <b><i class="fas fa-utensils"></i> ${r.menu}:</b><br />${isiMenu}
-              </div>
-              <div>
-                <i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}
-              </div>
+              <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} org</span>
+              ${dpInfo} ${phoneInfo}
+              <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${r.menu}:</b><br />${isiMenu}</div>
+              <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
             </div>
             <div class="data-actions">
-              ${r.nomorHp ? `
-                <button class="whatsapp" onclick="contactViaWhatsApp('${r.id}')">
-                  <i class="fab fa-whatsapp"></i> Hubungi
-                </button>` : ''}
-              <button onclick="editReservasi('${r.id}')">
-                <i class="fas fa-edit"></i> Edit
-              </button>
-              <button class="danger" onclick="hapusReservasi('${r.id}')">
-                <i class="fas fa-trash-alt"></i> Hapus
-              </button>
+              ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.id}')"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
+              <button onclick="editReservasi('${r.id}')"><i class="fas fa-edit"></i> Edit</button>
+              <button class="danger" onclick="hapusReservasi('${r.id}')"><i class="fas fa-trash-alt"></i> Hapus</button>
             </div>
           </div>`;
       }).join('');
@@ -630,292 +496,184 @@
       if (!tanggalDipilih) return;
       const q = query.toLowerCase();
       const filtered = (dataReservasi[tanggalDipilih] || []).filter(r => 
-        r.nama.toLowerCase().includes(q) || 
-        r.tempat.toLowerCase().includes(q) || 
-        r.menu.toLowerCase().includes(q)
+        r.nama.toLowerCase().includes(q) || r.tempat.toLowerCase().includes(q) || r.menu.toLowerCase().includes(q)
       );
       updateReservationList(filtered);
     }
     
-    // Reservation CRUD Operations
     async function simpanReservasi() {
-      if (!validateForm()) return;
-      
-      const form = document.getElementById('reservation-form');
+      const formData = validateAndGetFormData('reservation-form');
+      if (!formData) return;
       const data = {
-        nama: form.nama.value,
-        nomorHp: form.nomorHp.value,
-        jam: form.jam.value,
-        jumlah: parseInt(form.jumlah.value),
-        dp: parseInt(form.dp.value) || 0,
-        menu: form.menu.value,
-        tempat: form.tempat.value,
-        tambahan: form.tambahan.value,
+        ...formData,
         date: `${currentYear}-${tanggalDipilih}`,
-        menuDetails: detailMenu[form.menu.value] || [],
+        menuDetails: detailMenu[formData.menu] || [],
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
-      
-      const loader = showLoader();
+      showLoader();
       try {
         await db.collection('reservations').add(data);
         showToast("Reservasi berhasil disimpan!");
-        form.reset();
-      } catch (e) {
-        console.error("Gagal menyimpan reservasi:", e);
-        showToast("Gagal menyimpan reservasi", "error");
-      } finally {
-        loader.hide();
-      }
+        document.getElementById('reservation-form').reset();
+      } catch (e) { showToast("Gagal menyimpan reservasi", "error"); } 
+      finally { hideLoader(); }
     }
     
     async function hapusReservasi(id) {
       if (!confirm("Yakin ingin menghapus reservasi ini?")) return;
-      
-      const loader = showLoader();
-      try {
-        await db.collection('reservations').doc(id).delete();
-        showToast("Reservasi berhasil dihapus");
-      } catch (e) {
-        console.error("Gagal menghapus reservasi:", e);
-        showToast("Gagal menghapus reservasi", "error");
-      } finally {
-        loader.hide();
-      }
+      showLoader();
+      try { await db.collection('reservations').doc(id).delete(); showToast("Reservasi berhasil dihapus"); } 
+      catch (e) { showToast("Gagal menghapus reservasi", "error"); } 
+      finally { hideLoader(); }
     }
     
     function editReservasi(id) {
       const res = findReservationById(id); 
-      if (!res) {
-        showToast("Reservasi tidak ditemukan", "error");
-        return;
-      }
+      if (!res) { showToast("Reservasi tidak ditemukan", "error"); return; }
       
       const form = document.getElementById('editFormPopup');
       form.innerHTML = `
-        <h3><i class="fas fa-edit"></i> Edit Reservasi</h3>
-        <input type="hidden" id="editReservationId" value="${id}" />
-        
-        <label>Nama: <input type="text" id="editNama" value="${res.nama}" required /></label>
-        
-        <label>Nomor HP: <input type="tel" id="editNomorHp" value="${res.nomorHp || ''}" 
-               pattern="[0-9]{10,13}" /></label>
-        
-        <label>Jam: <input type="time" id="editJam" value="${res.jam}" required /></label>
-        
-        <label>Jumlah: <input type="number" id="editJumlah" value="${res.jumlah}" 
-               min="1" required /></label>
-        
-        <label>DP: <input type="number" id="editDp" value="${res.dp || 0}" min="0" /></label>
-        
-        <label>Menu: <select id="editMenu" required></select></label>
-        
-        <label>Tempat: <select id="editTempat" required>
-          <option value="">Pilih Tempat</option>
-          <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
-          <option>Gubug 1</option><option>Gubug 2</option><option>Gubug 3</option>
-        </select></label>
-        
-        <label>Tambahan: <textarea id="editTambahan">${res.tambahan || ''}</textarea></label>
-        
-        <div class="data-actions">
-          <button onclick="simpanPerubahanReservasi()">
-            <i class="fas fa-save"></i> Simpan
-          </button>
-          <button class="danger" onclick="tutupEditForm()">Batal</button>
-        </div>`;
+        <form id="edit-reservation-form">
+          <h3><i class="fas fa-edit"></i> Edit Reservasi</h3>
+          <input type="hidden" id="editReservationId" value="${id}" />
+          <label>Nama: <input type="text" id="nama" value="${res.nama}" required /><span class="error-message" id="nama-error"></span></label>
+          <label>Nomor HP: <input type="tel" id="nomorHp" value="${res.nomorHp || ''}" /><span class="error-message" id="nomorHp-error"></span></label>
+          <label>Jam: <input type="time" id="jam" value="${res.jam}" required /><span class="error-message" id="jam-error"></span></label>
+          <label>Jumlah: <input type="number" id="jumlah" value="${res.jumlah}" min="1" required /><span class="error-message" id="jumlah-error"></span></label>
+          <label>DP: <input type="number" id="dp" value="${res.dp || 0}" min="0" /></label>
+          <label>Menu: <select id="menu" required></select><span class="error-message" id="menu-error"></span></label>
+          <label>Tempat: <select id="tempat" required>
+            <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
+            <option>Gubug 1</option><option>Gubug 2</option><option>Gubug 3</option>
+          </select><span class="error-message" id="tempat-error"></span></label>
+          <label>Tambahan: <textarea id="tambahan">${res.tambahan || ''}</textarea></label>
+          <div class="data-actions">
+            <button type="button" onclick="simpanPerubahanReservasi()"><i class="fas fa-save"></i> Simpan</button>
+            <button type="button" class="danger" onclick="tutupEditForm()">Batal</button>
+          </div>
+        </form>`;
       
-      populateMenuDropdowns(form.querySelector('#editMenu'), res.menu);
-      form.querySelector('#editTempat').value = res.tempat;
+      populateMenuDropdowns(form.querySelector('#menu'), res.menu);
+      form.querySelector('#tempat').value = res.tempat;
       form.style.display = 'block'; 
       overlay.style.display = 'block';
     }
     
     async function simpanPerubahanReservasi() {
-      const form = document.getElementById('editFormPopup');
-      const id = form.querySelector('#editReservationId').value;
-      const menu = form.querySelector('#editMenu').value;
-      
-      const data = {
-        nama: form.querySelector('#editNama').value,
-        nomorHp: form.querySelector('#editNomorHp').value,
-        jam: form.querySelector('#editJam').value,
-        jumlah: parseInt(form.querySelector('#editJumlah').value),
-        dp: parseInt(form.querySelector('#editDp').value) || 0,
-        menu: menu,
-        tempat: form.querySelector('#editTempat').value,
-        tambahan: form.querySelector('#editTambahan').value,
-        menuDetails: detailMenu[menu] || []
-      };
-      
-      const loader = showLoader();
+      const id = document.getElementById('editReservationId').value;
+      const formData = validateAndGetFormData('edit-reservation-form');
+      if (!formData) return;
+      const data = { ...formData, menuDetails: detailMenu[formData.menu] || [] };
+      showLoader();
       try {
         await db.collection('reservations').doc(id).update(data);
         showToast("Perubahan berhasil disimpan");
         tutupEditForm();
-      } catch (e) {
-        console.error("Gagal menyimpan perubahan:", e);
-        showToast("Gagal menyimpan perubahan", "error");
-      } finally {
-        loader.hide();
-      }
+      } catch (e) { showToast("Gagal menyimpan perubahan", "error"); } 
+      finally { hideLoader(); }
     }
     
-    function tutupEditForm() { 
-      document.getElementById('editFormPopup').style.display = 'none'; 
-      overlay.style.display = 'none'; 
-    }
+    function tutupEditForm() { document.getElementById('editFormPopup').style.display = 'none'; overlay.style.display = 'none'; }
     
-    // Menu Management
+    function isMenuInUse(menuName) {
+        const allReservations = Object.values(dataReservasi).flat();
+        return allReservations.some(res => res.menu === menuName);
+    }
+
     function showMenuManagement() {
       const popup = document.getElementById('menuManagementPopup');
       popup.innerHTML = `
-        <h3><i class="fas fa-book-open"></i> Kelola Menu</h3>
-        <div id="menu-list-container"></div>
-        
+        <h3><i class="fas fa-book-open"></i> Kelola Menu</h3><div id="menu-list-container"></div>
         <div id="add-menu-form">
           <h4><i class="fas fa-plus-circle"></i> Tambah Menu</h4>
           <label>Nama Menu: <input type="text" id="newMenuName" placeholder="Contoh: Paket Spesial"></label>
-          <label>Detail Menu (pisahkan koma): 
-            <textarea id="newMenuDetails" placeholder="Nasi, Ayam Bakar"></textarea>
-          </label>
+          <label>Detail Menu (pisahkan koma): <textarea id="newMenuDetails" placeholder="Nasi, Ayam Bakar"></textarea></label>
           <button onclick="addNewMenu()">Tambah Menu</button>
         </div>
-        
-        <div class="data-actions">
-          <button class="danger" onclick="closeMenuManagement()">Tutup</button>
-        </div>`;
-      
+        <div class="data-actions"><button class="danger" onclick="closeMenuManagement()">Tutup</button></div>`;
       renderMenuList();
-      popup.style.display = 'block'; 
-      overlay.style.display = 'block';
+      popup.style.display = 'block'; overlay.style.display = 'block';
     }
     
     function renderMenuList() {
-      const container = document.getElementById('menu-list-container'); 
-      if (!container) return;
-      
+      const container = document.getElementById('menu-list-container'); if (!container) return;
       container.innerHTML = Object.keys(detailMenu).sort().map(name => `
         <div class="menu-item">
           <span class="menu-item-name">${name}</span>
           <div class="menu-item-actions">
-            <button onclick="openEditMenuPopup('${name}')" title="Edit">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button class="danger" onclick="deleteMenu('${name}')" title="Hapus">
-              <i class="fas fa-trash-alt"></i>
-            </button>
+            <button onclick="openEditMenuPopup('${name}')"><i class="fas fa-edit"></i></button>
+            <button class="danger" onclick="deleteMenu('${name}')"><i class="fas fa-trash-alt"></i></button>
           </div>
-        </div>`
-      ).join('');
+        </div>`).join('');
     }
     
     async function addNewMenu() {
       const name = document.getElementById('newMenuName').value.trim();
-      const details = document.getElementById('newMenuDetails').value
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
+      const details = document.getElementById('newMenuDetails').value.split(',').map(s => s.trim()).filter(Boolean);
+      if (!name) { showToast("Nama menu tidak boleh kosong", "error"); return; }
+      if (detailMenu[name]) { showToast("Menu sudah ada", "error"); return; }
       
-      if (!name) {
-        showToast("Nama menu tidak boleh kosong", "error");
-        return;
-      }
-      
-      if (detailMenu[name]) {
-        showToast("Menu sudah ada", "error");
-        return;
-      }
-      
-      const loader = showLoader();
+      showLoader();
       try {
         await db.collection('menus').doc(name).set({ details });
         showToast(`Menu "${name}" berhasil ditambahkan`);
-        await loadMenus(); 
-        renderMenuList();
-        document.getElementById('newMenuName').value = '';
-        document.getElementById('newMenuDetails').value = '';
-      } catch (e) {
-        console.error("Gagal menambah menu:", e);
-        showToast("Gagal menambah menu", "error");
-      } finally {
-        loader.hide();
-      }
+        await loadMenus(); renderMenuList();
+        document.getElementById('newMenuName').value = ''; document.getElementById('newMenuDetails').value = '';
+      } catch (e) { showToast("Gagal menambah menu", "error"); } 
+      finally { hideLoader(); }
     }
     
     async function deleteMenu(name) {
-      if (!confirm(`Yakin ingin menghapus menu "${name}"?`)) return;
+      if (isMenuInUse(name)) {
+        if (!confirm(`⚠️ PERINGATAN!\n\nMenu "${name}" sedang digunakan oleh reservasi yang ada.\n\nMenghapus menu ini TIDAK akan mengubah data reservasi tersebut dan dapat menyebabkan inkonsistensi.\n\nYakin tetap ingin menghapus?`)) return;
+      } else {
+        if (!confirm(`Yakin ingin menghapus menu "${name}"?`)) return;
+      }
       
-      const loader = showLoader();
+      showLoader();
       try {
         await db.collection('menus').doc(name).delete();
         showToast(`Menu "${name}" berhasil dihapus`);
-        await loadMenus(); 
-        renderMenuList();
-      } catch (e) {
-        console.error("Gagal menghapus menu:", e);
-        showToast("Gagal menghapus menu", "error");
-      } finally {
-        loader.hide();
-      }
+        await loadMenus(); renderMenuList();
+      } catch (e) { showToast("Gagal menghapus menu", "error"); } 
+      finally { hideLoader(); }
     }
     
     function openEditMenuPopup(name) {
-      const popup = document.getElementById('menuManagementPopup');
-      popup.innerHTML = `
+      document.getElementById('menuManagementPopup').innerHTML = `
         <h3><i class="fas fa-edit"></i> Edit Menu</h3>
         <label>Nama Menu: <input type="text" id="editingMenuName" value="${name}"></label>
-        <label>Detail (pisahkan koma): 
-          <textarea id="editingMenuDetails">${detailMenu[name].join(', ')}</textarea>
-        </label>
+        <label>Detail (pisahkan koma): <textarea id="editingMenuDetails">${detailMenu[name].join(', ')}</textarea></label>
         <div class="data-actions">
-          <button onclick="saveEditedMenu('${name}')">
-            <i class="fas fa-save"></i> Simpan
-          </button>
+          <button onclick="saveEditedMenu('${name}')"><i class="fas fa-save"></i> Simpan</button>
           <button class="danger" onclick="showMenuManagement()">Batal</button>
         </div>`;
     }
     
     async function saveEditedMenu(originalName) {
       const newName = document.getElementById('editingMenuName').value.trim();
-      const newDetails = document.getElementById('editingMenuDetails').value
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
+      const newDetails = document.getElementById('editingMenuDetails').value.split(',').map(s => s.trim()).filter(Boolean);
+      if (!newName) { showToast("Nama menu tidak boleh kosong", "error"); return; }
       
-      if (!newName) {
-        showToast("Nama menu tidak boleh kosong", "error");
-        return;
+      if (originalName !== newName && isMenuInUse(originalName)) {
+        if (!confirm(`⚠️ PERINGATAN!\n\nNama menu "${originalName}" sedang digunakan.\n\nMengubah namanya TIDAK akan memperbarui reservasi yang ada secara otomatis.\n\nYakin tetap ingin melanjutkan?`)) return;
       }
-      
-      const loader = showLoader();
+
+      showLoader();
       try {
         if (originalName !== newName) {
-          if (detailMenu[newName]) {
-            showToast("Nama menu sudah digunakan", "error");
-            return;
-          }
+          if (detailMenu[newName]) { showToast("Nama menu sudah digunakan", "error"); hideLoader(); return; }
           await db.collection('menus').doc(originalName).delete();
         }
-        
         await db.collection('menus').doc(newName).set({ details: newDetails });
         showToast(`Menu "${newName}" berhasil diperbarui`);
-        await loadMenus(); 
-        showMenuManagement();
-      } catch(e) {
-        console.error("Gagal menyimpan menu:", e);
-        showToast("Gagal menyimpan perubahan menu", "error");
-      } finally {
-        loader.hide();
-      }
+        await loadMenus(); showMenuManagement();
+      } catch(e) { showToast("Gagal menyimpan perubahan menu", "error"); } 
+      finally { hideLoader(); }
     }
     
-    function closeMenuManagement() { 
-      document.getElementById('menuManagementPopup').style.display = 'none'; 
-      overlay.style.display = 'none'; 
-    }
+    function closeMenuManagement() { document.getElementById('menuManagementPopup').style.display = 'none'; overlay.style.display = 'none'; }
     
-    // Utility Functions
     function findReservationById(id) {
       for (const key in dataReservasi) {
         const found = dataReservasi[key].find(r => r.id === id);
@@ -926,355 +684,192 @@
     
     function populateMenuDropdowns(selectElement, selectedValue = '') {
       if (!selectElement) return;
-      
       const sortedMenuNames = Object.keys(detailMenu).sort();
-      selectElement.innerHTML = '';
-      
-      if (sortedMenuNames.length === 0) {
-        selectElement.add(new Option('Tidak Ada Pilihan', ''));
-      } else {
-        selectElement.add(new Option('Pilih Menu...', ''));
-        sortedMenuNames.forEach(name => 
-          selectElement.add(new Option(name, name))
-        );
-      }
-      
+      selectElement.innerHTML = '<option value="">Pilih Menu...</option>';
+      sortedMenuNames.forEach(name => selectElement.add(new Option(name, name)));
       if (selectedValue) selectElement.value = selectedValue;
     }
     
-    // Customer List Functions
     async function showCustomerMenu() {
-      const loader = showLoader();
-      try {
-        const snapshot = await db.collection('reservations').orderBy('createdAt', 'desc').get();
-        const customers = new Map(); 
+        showLoader();
+        try {
+            const snapshot = await db.collection('reservations').orderBy('createdAt', 'desc').limit(500).get();
+            const customers = new Map();
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.nomorHp && !customers.has(data.nomorHp)) {
+                    customers.set(data.nomorHp, data.nama);
+                }
+            });
 
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.nomorHp && !customers.has(data.nomorHp)) {
-            customers.set(data.nomorHp, data.nama);
-          }
-        });
+            const popup = document.getElementById('customerListPopup');
+            const sortedCustomers = [...customers.entries()].sort((a, b) => a[1].localeCompare(b[1]));
 
-        const popup = document.getElementById('customerListPopup');
-        if (customers.size === 0) {
-          popup.innerHTML = `
-            <h3><i class="fas fa-address-book"></i> Daftar Customer</h3>
-            <p style="text-align:center; padding: 20px 0;">Belum ada data customer dengan nomor HP.</p>
-            <div class="data-actions">
-                <button class="danger" onclick="closeCustomerMenu()">Tutup</button>
-            </div>`;
-        } else {
-          const sortedCustomers = [...customers.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+            let contentHTML = `<h3><i class="fas fa-address-book"></i> Daftar Customer (${sortedCustomers.length})</h3>`;
+            if (sortedCustomers.length > 0) {
+                contentHTML += `
+                    <div class="search-container" style="margin-bottom: 15px;">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="customerSearchInput" placeholder="Cari nama atau nomor HP..." 
+                               oninput="filterCustomers(this.value)">
+                    </div>
+                    <div id="customer-list"></div>`;
+            } else {
+                contentHTML += `<p style="text-align:center; padding: 20px 0;">Belum ada data customer.</p>`;
+            }
+            contentHTML += `<div class="data-actions" style="margin-top:20px;"><button class="danger" onclick="closeCustomerMenu()">Tutup</button></div>`;
+            
+            popup.innerHTML = contentHTML;
+            window.filterCustomers = (query) => { // Make function globally accessible from oninput
+                const q = query.toLowerCase();
+                const filtered = sortedCustomers.filter(([phone, name]) => name.toLowerCase().includes(q) || phone.includes(q));
+                renderCustomerList(filtered);
+            };
+            renderCustomerList(sortedCustomers);
 
-          let customerListHTML = sortedCustomers.map(([phone, name]) => `
-            <div class="menu-item">
-              <span class="menu-item-name"><i class="fas fa-user"></i> ${name} <br/><small style="color:#777;">${phone}</small></span>
-              <div class="menu-item-actions">
-                <button class="whatsapp" onclick="openWhatsApp('${phone}', '${name}')" title="Hubungi via WhatsApp">
-                    <i class="fab fa-whatsapp"></i> Hubungi
-                </button>
-              </div>
-            </div>`
-          ).join('');
+            popup.style.display = 'block';
+            overlay.style.display = 'block';
 
-          popup.innerHTML = `
-            <h3><i class="fas fa-address-book"></i> Daftar Customer (${customers.size})</h3>
-            <div id="menu-list-container" style="max-height: 50vh;">
-                ${customerListHTML}
-            </div>
-            <div class="data-actions" style="margin-top:20px;">
-                <button class="danger" onclick="closeCustomerMenu()">Tutup</button>
-            </div>`;
-        }
-
-        popup.style.display = 'block';
-        overlay.style.display = 'block';
-
-      } catch (e) {
-        console.error("Gagal memuat data customer:", e);
-        showToast("Gagal memuat data customer", "error");
-      } finally {
-        loader.hide();
-      }
+        } catch (e) { showToast("Gagal memuat data customer", "error"); } 
+        finally { hideLoader(); }
     }
 
-    function closeCustomerMenu() {
-      document.getElementById('customerListPopup').style.display = 'none';
-      overlay.style.display = 'none';
-    }
-
-    function openWhatsApp(phone, name) {
-        if (!phone) {
-            showToast("Nomor HP tidak tersedia", "error");
+    function renderCustomerList(customerData) {
+        const container = document.getElementById('customer-list');
+        if (!container) return;
+        if (customerData.length === 0) {
+            container.innerHTML = `<p style="text-align:center;">Tidak ada customer yang cocok.</p>`;
             return;
         }
+        container.innerHTML = customerData.map(([phone, name]) => `
+            <div class="menu-item">
+                <span class="menu-item-name"><i class="fas fa-user"></i> ${name} <br/><small style="color:#777;">${phone}</small></span>
+                <div class="menu-item-actions">
+                    <button class="whatsapp" onclick="openWhatsApp('${phone}', '${name}')"><i class="fab fa-whatsapp"></i> Hubungi</button>
+                </div>
+            </div>`).join('');
+    }
+
+    function closeCustomerMenu() { document.getElementById('customerListPopup').style.display = 'none'; overlay.style.display = 'none'; }
+
+    function openWhatsApp(phone, name) {
         const formattedPhone = phone.replace(/^0/, '62');
         const message = `Halo Kak *${name}*, kami dari Dolan Sawah ingin menyapa. Terima kasih telah menjadi pelanggan kami! 😊`;
         window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
     }
     
-    // WhatsApp Integration
     function contactViaWhatsApp(id) {
       const res = findReservationById(id);
-      if (!res || !res.nomorHp) {
-        showToast("Nomor HP tidak tersedia", "error");
-        return;
-      }
-      
-      const menuItems = res.menuDetails || detailMenu[res.menu] || [];
-      const menuList = menuItems.length 
-        ? menuItems.map(item => `  • ${item}`).join('\n') 
-        : '  - _Detail tidak tersedia_ -';
-        
+      if (!res || !res.nomorHp) { showToast("Nomor HP tidak tersedia", "error"); return; }
+      const menuList = (res.menuDetails || []).map(item => `  • ${item}`).join('\n') || '  - _Detail tidak tersedia_ -';
       const dpInfo = res.dp ? `💰 *DP:* Rp ${formatRupiah(res.dp)} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
-    
-      const message = `Halo Kak *${res.nama}* 👋,
-    
-Kami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:
-    
-🗓️ *Tanggal:* ${res.date}
-⏰ *Jam:* ${res.jam}
-📍 *Tempat:* ${res.tempat}
-👥 *Jumlah:* ${res.jumlah} orang
-    
-📝 *Pesanan Menu: ${res.menu}*
-${menuList}
-    
-${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊
-    
-Terima kasih,
-*Tim Dolan Sawah*`;
-          
+      const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n📝 *Pesanan Menu: ${res.menu}*\n${menuList}\n\n${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊\n\nTerima kasih,\n*Tim Dolan Sawah*`;
       const phone = res.nomorHp.replace(/^0/, '62');
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     }
     
     function shareViaWhatsApp(scope) {
       let message = '';
-      
       if (scope === 'day' && tanggalDipilih) {
-        const day = parseInt(tanggalDipilih.split('-')[1]);
-        const reservations = dataReservasi[tanggalDipilih] ? [...dataReservasi[tanggalDipilih]].sort((a,b) => a.jam.localeCompare(b.jam)) : [];
-        
-        message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n`;
-        message += `*Tanggal:* ${day} ${monthNames[currentMonth]} ${currentYear}\n`;
-        message += `=========================\n\n`;
-        
-        if (reservations.length === 0) {
-          message += `_Tidak ada reservasi untuk tanggal ini._`;
-        } else {
-          reservations.forEach((res, index) => {
-            message += `*${index + 1}. ${res.nama}*\n`;
-            message += `⏰ Jam: *${res.jam}*\n`;
-            message += `📍 Tempat: *${res.tempat}*\n`;
-            message += `👥 Jumlah: *${res.jumlah} orang*\n`;
-            message += `🍽️ Menu: *${res.menu}*\n`;
-            
-            const menuItems = res.menuDetails || detailMenu[res.menu] || [];
-            if (menuItems.length > 0) {
-              menuItems.forEach(item => {
-                message += `  - _${item}_\n`;
-              });
-            }
-
-            if (res.dp) {
-              message += `💰 DP: *Rp ${formatRupiah(res.dp)}*\n`;
-            }
-            if (res.tambahan) {
-              message += `📝 Tambahan: *${res.tambahan}*\n`;
-            }
+        const reservations = (dataReservasi[tanggalDipilih] || []).sort((a,b) => a.jam.localeCompare(b.jam));
+        message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
+        if (reservations.length === 0) { message += `_Tidak ada reservasi untuk tanggal ini._`; } 
+        else {
+          reservations.forEach((r, i) => {
+            message += `*${i + 1}. ${r.nama}*\n⏰ Jam: *${r.jam}*\n📍 Tempat: *${r.tempat}*\n👥 Jumlah: *${r.jumlah} org*\n🍽️ Menu: *${r.menu}*\n`;
+            if (r.dp) { message += `💰 DP: *Rp ${formatRupiah(r.dp)}*\n`; }
+            if (r.tambahan) { message += `📝 Tambahan: *${r.tambahan}*\n`; }
             message += `-------------------------\n\n`;
           });
         }
       } else if (scope === 'month') {
-        message = `*🗓️ REKAP RESERVASI BULANAN 🗓️*\n`;
-        message += `*Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n`;
-        message += `=========================\n\n`;
-        
+        message = `*🗓️ REKAP RESERVASI BULANAN 🗓️*\n*Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n=========================\n\n`;
         const sortedDates = Object.keys(dataReservasi).sort((a, b) => a.localeCompare(b));
-        let totalReservations = 0;
-        
-        if (sortedDates.length > 0) {
+        let totalReservations = sortedDates.reduce((acc, key) => acc + dataReservasi[key].length, 0);
+        if (totalReservations === 0) { message += `_Tidak ada reservasi untuk bulan ini._`; }
+        else {
           sortedDates.forEach(dateKey => {
-            const day = parseInt(dateKey.split('-')[1]);
-            const reservations = dataReservasi[dateKey] ? [...dataReservasi[dateKey]].sort((a,b) => a.jam.localeCompare(b.jam)) : [];
+            const reservations = dataReservasi[dateKey];
             if (reservations.length > 0) {
-              totalReservations += reservations.length;
-              message += `*📆 Tanggal: ${day} ${monthNames[currentMonth]}*\n`;
-              reservations.forEach(res => {
-                message += `- ${res.jam} | *${res.nama}* | ${res.tempat} | ${res.jumlah} org\n`;
+              message += `*📆 Tanggal: ${parseInt(dateKey.split('-')[1])} ${monthNames[currentMonth]}*\n`;
+              reservations.sort((a,b) => a.jam.localeCompare(b.jam)).forEach(r => {
+                message += `- ${r.jam} | *${r.nama}* | ${r.tempat} | ${r.jumlah} org\n`;
               });
               message += `-------------------------\n`;
             }
           });
         }
-        
-        if (totalReservations === 0) {
-          message += `_Tidak ada reservasi untuk bulan ini._`;
-        }
-      } else {
-        showToast("Pilih tanggal terlebih dahulu untuk laporan harian.", "error");
-        return;
-      }
-      
+      } else { showToast("Pilih tanggal terlebih dahulu untuk laporan harian.", "error"); return; }
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     }
     
-    // Email Integration
     function shareViaEmail() {
-      if (!tanggalDipilih) {
-        showToast("Pilih tanggal terlebih dahulu", "error");
-        return;
+      if (!tanggalDipilih || !(dataReservasi[tanggalDipilih] || []).length) {
+        showToast("Pilih tanggal yang memiliki reservasi.", "error"); return;
       }
-      
-      const reservations = dataReservasi[tanggalDipilih] || [];
-      if (reservations.length === 0) {
-        showToast("Tidak ada reservasi untuk dikirim", "error");
-        return;
-      }
-      
-      const day = tanggalDipilih.split('-')[1];
+      const day = parseInt(tanggalDipilih.split('-')[1]);
       const subject = `Laporan Reservasi ${day} ${monthNames[currentMonth]} ${currentYear}`;
-      
       let body = `Berikut daftar reservasi untuk tanggal ${day} ${monthNames[currentMonth]} ${currentYear}:\n\n`;
-      
-      reservations.forEach((res, index) => {
-        body += `${index + 1}. ${res.nama}\n`;
-        body += `   Jam: ${res.jam}\n`;
-        body += `   Tempat: ${res.tempat}\n`;
-        body += `   Jumlah: ${res.jumlah} orang\n`;
-        body += `   Menu: ${res.menu}\n`;
-
-        const menuItems = res.menuDetails || detailMenu[res.menu] || [];
-        if (menuItems.length > 0) {
-            body += `   Detail Menu:\n`;
-            menuItems.forEach(item => {
-                body += `     • ${item}\n`;
-            });
-        }
-
-        if (res.dp) body += `   DP: Rp${formatRupiah(res.dp)}\n`;
-        if (res.tambahan) body += `   Catatan: ${res.tambahan}\n`;
+      (dataReservasi[tanggalDipilih] || []).forEach((r, i) => {
+        body += `${i + 1}. ${r.nama}\n   Jam: ${r.jam}\n   Tempat: ${r.tempat}\n   Jumlah: ${r.jumlah} orang\n   Menu: ${r.menu}\n`;
+        if (r.dp) body += `   DP: Rp${formatRupiah(r.dp)}\n`;
+        if (r.tambahan) body += `   Catatan: ${r.tambahan}\n`;
         body += `\n`;
       });
-      
       window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
     
-    // Sorting Functions
     function sortReservations(sortBy) {
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
-      
-      const reservations = [...dataReservasi[tanggalDipilih]];
-      
-      switch(sortBy) {
-        case 'jam':
-          reservations.sort((a, b) => a.jam.localeCompare(b.jam));
-          break;
-        case 'tempat':
-          reservations.sort((a, b) => a.tempat.localeCompare(b.tempat));
-          break;
-        default:
-          break;
-      }
-      
-      updateReservationList(reservations);
+      const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => a[sortBy].localeCompare(b[sortBy]));
+      updateReservationList(sorted);
       document.getElementById('sortOptions').style.display = 'none';
       showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
     }
     
-    // UI Helper Functions
-    function toggleSortOptions(event) {
-      event.stopPropagation();
-      const sortOptions = document.getElementById('sortOptions');
-      const whatsappOptions = document.getElementById('whatsappOptions');
-      
-      whatsappOptions.style.display = 'none';
-      sortOptions.style.display = sortOptions.style.display === 'block' ? 'none' : 'block';
+    function toggleOptions(event, elementId) {
+        event.stopPropagation();
+        const el = document.getElementById(elementId);
+        const otherElId = elementId === 'sortOptions' ? 'whatsappOptions' : 'sortOptions';
+        document.getElementById(otherElId).style.display = 'none';
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
-    
-    function toggleWhatsAppOptions(event) {
-      event.stopPropagation();
-      const sortOptions = document.getElementById('sortOptions');
-      const whatsappOptions = document.getElementById('whatsappOptions');
-      
-      sortOptions.style.display = 'none';
-      whatsappOptions.style.display = whatsappOptions.style.display === 'block' ? 'none' : 'block';
-    }
-    
-    document.addEventListener('click', () => { 
-      document.querySelectorAll('.sort-options, .whatsapp-options').forEach(el => {
-        el.style.display = 'none';
-      }); 
-    });
-    
-    // ============================================
-    // === BAGIAN YANG DIMODIFIKASI UNTUK IMPOR ===
-    // ============================================
+    const toggleSortOptions = (e) => toggleOptions(e, 'sortOptions');
+    const toggleWhatsAppOptions = (e) => toggleOptions(e, 'whatsappOptions');
     
     function showExportData() {
-      // 1. Siapkan data dengan format yang dibutuhkan oleh website kedua
-      const exportPayload = {
-        version: "3.1-export-compatible", // Tambahkan versi untuk identifikasi
-        data: dataReservasi // 'dataReservasi' sudah memiliki format "MM-DD": [...]
-      };
-      
-      // 2. Ubah objek menjadi string JSON
+      const exportPayload = { version: "3.2-export", data: dataReservasi };
       const jsonString = JSON.stringify(exportPayload);
-      
-      // 3. Enkripsi string JSON ke Base64 agar cocok dengan fungsi impor (atob)
-      // Menggunakan unescape dan encodeURIComponent agar aman untuk karakter spesial
       const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
-      
-      // 4. Tampilkan kode yang sudah dienkripsi di textarea
       document.getElementById('dataTransferCode').value = encodedData;
       document.getElementById('exportMonthName').textContent = monthNames[currentMonth];
       document.getElementById('dataTransfer').style.display = 'block';
-      showToast("Kode ekspor (format baru) telah dibuat.");
+      showToast("Kode ekspor telah dibuat.");
     }
     
     function copyExportCode() {
       const code = document.getElementById('dataTransferCode');
-      code.select();
-      code.setSelectionRange(0, 99999); // Kompatibilitas untuk mobile
+      navigator.clipboard.writeText(code.value).then(() => showToast("Kode ekspor berhasil disalin!"))
+        .catch(err => showToast("Gagal menyalin kode", "error"));
+    }
+    
+    function hideDataTransfer() { document.getElementById('dataTransfer').style.display = 'none'; }
+    
+    function navigateMonth(direction) {
+        currentMonth += direction;
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        resetCalendarView(); loadReservationsForCurrentMonth();
+    }
+    const previousMonth = () => navigateMonth(-1);
+    const nextMonth = () => navigateMonth(1);
 
-      // Gunakan API Clipboard modern untuk menyalin
-      navigator.clipboard.writeText(code.value).then(() => {
-          showToast("Kode ekspor berhasil disalin!");
-      }).catch(err => {
-          console.error('Gagal menyalin: ', err);
-          showToast("Gagal menyalin kode", "error");
-      });
-    }
-    
-    // ============================================
-    // === AKHIR BAGIAN YANG DIMODIFIKASI       ===
-    // ============================================
-
-    function hideDataTransfer() { 
-      document.getElementById('dataTransfer').style.display = 'none'; 
-    }
-    
-    // Navigation Functions
-    function previousMonth() { 
-      currentMonth--;
-      if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-      }
-      resetCalendarView();
-      loadReservationsForCurrentMonth();
-    }
-    
-    function nextMonth() { 
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      }
-      resetCalendarView();
-      loadReservationsForCurrentMonth();
+    function goToToday() {
+        currentMonth = new Date().getMonth();
+        currentYear = new Date().getFullYear();
+        resetCalendarView();
+        loadReservationsForCurrentMonth();
+        showToast("Kembali ke bulan ini");
     }
     
     function resetCalendarView() {
@@ -1284,37 +879,25 @@ Terima kasih,
     }
     
     function forceSync() {
-      const loader = showLoader();
-      db.enableNetwork()
-        .then(() => {
-          showToast("Sinkronisasi berhasil");
-          loadReservationsForCurrentMonth();
-        })
-        .catch(() => showToast("Gagal sinkronisasi", "error"))
-        .finally(() => loader.hide());
+      showLoader();
+      db.enableNetwork().then(() => { showToast("Sinkronisasi berhasil"); loadReservationsForCurrentMonth(); })
+        .catch(() => showToast("Gagal sinkronisasi", "error")).finally(hideLoader);
     }
     
-    function printData() { 
-      window.print(); 
-    }
+    function printData() { window.print(); }
     
-    // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => {
-      // Close popups when clicking outside
       overlay.addEventListener('click', () => {
-        document.getElementById('editFormPopup').style.display = 'none';
-        document.getElementById('menuManagementPopup').style.display = 'none';
-        document.getElementById('customerListPopup').style.display = 'none';
-        overlay.style.display = 'none';
+        tutupEditForm(); closeMenuManagement(); closeCustomerMenu();
       });
-      
-      // Form validation on blur
-      document.getElementById('nomorHp')?.addEventListener('blur', function() {
-        if (this.value && !isValidPhone(this.value)) {
-          document.getElementById('nomorHp-error').textContent = 'Nomor HP harus 10-13 digit angka';
-          this.classList.add('invalid');
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          tutupEditForm(); closeMenuManagement(); closeCustomerMenu();
         }
       });
+      document.addEventListener('click', () => { 
+        document.querySelectorAll('.sort-options, .whatsapp-options').forEach(el => el.style.display = 'none'); 
+      }); 
     });
   </script>
 </body>
