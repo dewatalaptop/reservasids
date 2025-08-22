@@ -128,7 +128,7 @@
     }
     .toast.error { background-color: var(--danger); }
     .toast.success { background-color: var(--success); }
-    .toast.info { background-color: var(--primary); } /* [BARU] Toast untuk info */
+    .toast.info { background-color: var(--primary); }
     .invalid { border-color: var(--danger) !important; }
     .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; }
     @media (max-width: 480px) { .action-buttons, .data-actions { flex-direction: column; } .action-buttons button, .data-actions button { width: 100%; } }
@@ -137,6 +137,8 @@
     @media print {
       body * { visibility: hidden; }
       header, footer, #main-container, .reservation-view-header button, #detailSearchInput { display: none !important; }
+      /* [DIPERBARUI] Sembunyikan semua tombol aksi di header saat print */
+      .reservation-view-header .header-actions { display: none !important; }
       #reservation-view-container, #reservation-view-container *, #reservation-view-title, #reservation-detail-list, #reservation-detail-list * {
         visibility: visible;
       }
@@ -239,7 +241,20 @@
   <div id="reservation-view-container" style="display: none; background-color: #f5f5f5; padding: 20px;">
     <div class="reservation-view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--primary);">
         <h2 id="reservation-view-title" style="color: var(--primary-dark); font-size: 1.8rem;"></h2>
-        <button onclick="kembaliKeKalender()"><i class="fas fa-arrow-left"></i> Kembali ke Kalender</button>
+        <div class="header-actions" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+            <button class="whatsapp" onclick="shareViaWhatsApp('day')" style="margin-top:0;"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+            <button class="secondary" onclick="shareViaEmail()" style="margin-top:0;"><i class="fas fa-envelope"></i> Email</button>
+            <div class="sort-options-container" style="width: auto; position: relative;">
+                <button class="secondary" onclick="toggleDetailSort(event)" style="margin-top:0;"><i class="fas fa-sort"></i> Urutkan</button>
+                <div class="sort-options" id="sortOptionsDetail" style="bottom: auto; top: 100%; margin-top: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <p>Urutkan berdasarkan:</p>
+                    <button onclick="sortReservations('jam')">Jam</button>
+                    <button onclick="sortReservations('tempat')">Tempat</button>
+                </div>
+            </div>
+            <button onclick="printData()" style="margin-top:0;"><i class="fas fa-print"></i> Print</button>
+            <button class="danger" onclick="kembaliKeKalender()" style="margin-top:0;"><i class="fas fa-arrow-left"></i> Kembali</button>
+        </div>
     </div>
     
     <div class="search-container">
@@ -248,7 +263,7 @@
     </div>
 
     <div id="reservation-detail-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
-        </div>
+    </div>
   </div>
   
   <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan </p></footer>
@@ -287,7 +302,7 @@
     const logoutButton = document.getElementById('logout-button');
     const monthYearEl = document.getElementById('monthYear');
     const calendarEl = document.getElementById('calendar');
-    const summaryEl = document.getElementById('summary'); // Mungkin sudah tidak ada, tapi kita biarkan untuk keamanan
+    const summaryEl = document.getElementById('summary');
     const overlay = document.getElementById('overlay');
     const loadingOverlay = document.getElementById('loadingOverlay');
     const toast = document.getElementById('toast');
@@ -464,22 +479,19 @@
       }
     }
     
-    // ## [FUNGSI YANG DIPERBARUI] ##
     function pilihTanggal(day) {
       const dateKey = `${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const reservations = dataReservasi[dateKey] || [];
       
       tanggalDipilih = dateKey;
-      buatKalender(); // Selalu re-render kalender untuk highlight tanggal yang dipilih
+      buatKalender(); 
 
-      // Jika tidak ada reservasi pada tanggal itu, cukup tampilkan form input dan pesan
       if (reservations.length === 0) {
         document.getElementById('formPopup').style.display = 'block'; 
         showToast("Tidak ada reservasi pada tanggal ini. Silakan input baru.", "info");
-        return; // Hentikan eksekusi fungsi
+        return; 
       }
       
-      // Jika ada reservasi, lanjutkan ke halaman detail
       const viewContainer = document.getElementById('reservation-view-container');
       const viewTitle = document.getElementById('reservation-view-title');
       const mainContainer = document.getElementById('main-container');
@@ -495,7 +507,6 @@
       window.scrollTo(0, 0);
     }
 
-    // ## [FUNGSI BARU] ##
     function kembaliKeKalender() {
       const viewContainer = document.getElementById('reservation-view-container');
       const mainContainer = document.getElementById('main-container');
@@ -506,9 +517,8 @@
       resetCalendarView();
     }
     
-    // ## [FUNGSI YANG DIPERBARUI] ##
     function updateReservationList(reservations) {
-      const container = document.getElementById('reservation-detail-list'); // Target container baru
+      const container = document.getElementById('reservation-detail-list');
       
       if (!reservations || reservations.length === 0) {
         container.innerHTML = `<p style="text-align:center; padding:20px 0; grid-column: 1 / -1;">Tidak ada reservasi yang cocok dengan pencarian.</p>`; 
@@ -537,7 +547,6 @@
       }).join('');
     }
     
-    // ## [FUNGSI YANG DIPERBARUI] ##
     function filterReservations(query) {
       if (!tanggalDipilih) return;
       const q = query.toLowerCase();
@@ -769,7 +778,7 @@
             contentHTML += `<div class="data-actions" style="margin-top:20px;"><button class="danger" onclick="closeCustomerMenu()">Tutup</button></div>`;
             
             popup.innerHTML = contentHTML;
-            window.filterCustomers = (query) => { // Make function globally accessible from oninput
+            window.filterCustomers = (query) => {
                 const q = query.toLowerCase();
                 const filtered = sortedCustomers.filter(([phone, name]) => name.toLowerCase().includes(q) || phone.includes(q));
                 renderCustomerList(filtered);
@@ -871,8 +880,11 @@
     function sortReservations(sortBy) {
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
       const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => a[sortBy].localeCompare(b[sortBy]));
-      updateReservationList(sorted); // Akan mengupdate di halaman detail
-      document.getElementById('sortOptions').style.display = 'none';
+      // [DIPERBARUI] Data di-assign kembali agar urutannya permanen untuk sesi itu
+      dataReservasi[tanggalDipilih] = sorted;
+      updateReservationList(sorted);
+      // Sembunyikan semua dropdown setelah sorting
+      document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
       showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
     }
     
@@ -880,11 +892,19 @@
         event.stopPropagation();
         const el = document.getElementById(elementId);
         const otherElId = elementId === 'sortOptions' ? 'whatsappOptions' : 'sortOptions';
-        document.getElementById(otherElId).style.display = 'none';
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        const otherEl = document.getElementById(otherElId);
+        if(otherEl) otherEl.style.display = 'none';
+        if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
     const toggleSortOptions = (e) => toggleOptions(e, 'sortOptions');
     const toggleWhatsAppOptions = (e) => toggleOptions(e, 'whatsappOptions');
+
+    // [FUNGSI BARU] Khusus untuk toggle dropdown urutkan di halaman detail
+    function toggleDetailSort(event) {
+        event.stopPropagation();
+        const el = document.getElementById('sortOptionsDetail');
+        if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
     
     function showExportData() {
       const exportPayload = { version: "3.2-export", data: dataReservasi };
@@ -923,9 +943,9 @@
     
     function resetCalendarView() {
       tanggalDipilih = '';
-      if(summaryEl) summaryEl.style.display = 'none'; // Jaga-jaga jika elemen masih ada
+      if(summaryEl) summaryEl.style.display = 'none';
       document.getElementById('formPopup').style.display = 'none';
-      buatKalender(); // Re-render untuk menghapus highlight
+      buatKalender();
     }
     
     function forceSync() {
@@ -943,7 +963,6 @@
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
           tutupEditForm(); closeMenuManagement(); closeCustomerMenu();
-          // [BARU] Tombol Esc juga bisa kembali ke kalender
           if (document.getElementById('reservation-view-container').style.display === 'block') {
             kembaliKeKalender();
           }
