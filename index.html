@@ -817,17 +817,34 @@
         window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
     }
     
+    // ===================================================================================
+    // [MULAI PERBAIKAN] Kode di bawah ini telah diperbaiki
+    // ===================================================================================
     function contactViaWhatsApp(id) {
       const res = findReservationById(id);
-      if (!res || !res.nomorHp) { showToast("Nomor HP tidak tersedia", "error"); return; }
-      const menuList = (res.menuDetails || []).map(item => `  • ${item}`).join('\n') || '  - _Detail tidak tersedia_ -';
+      if (!res || !res.nomorHp) {
+        showToast("Nomor HP tidak tersedia", "error");
+        return;
+      }
+      
+      // Mengambil detail menu dan memformatnya menjadi daftar
+      const menuList = (res.menuDetails || []).map(item => `  - ${item.trim()}`).join('\n') || '  - _Detail tidak tersedia_ -';
+      
+      // [FIX] Menyiapkan info "Request Tambahan" jika ada
+      const tambahanInfo = res.tambahan ? `📝 *Request Tambahan:*\n${res.tambahan}\n\n` : '';
+      
       const dpInfo = res.dp ? `💰 *DP:* Rp ${formatRupiah(res.dp)} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
-      const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n📝 *Pesanan Menu: ${res.menu}*\n${menuList}\n\n${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊\n\nTerima kasih,\n*Tim Dolan Sawah*`;
+      
+      // [FIX] Template pesan diperbarui untuk menyertakan 'tambahanInfo'
+      const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu: ${res.menu}*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊\n\nTerima kasih,\n*Tim Dolan Sawah*`;
+      
       const phone = res.nomorHp.replace(/^0/, '62');
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     }
-    
-    // [DIPERBARUI] Fungsi ini sekarang menyertakan detail menu.
+    // ===================================================================================
+    // [SELESAI PERBAIKAN]
+    // ===================================================================================
+
     function shareViaWhatsApp(scope) {
       let message = '';
       if (scope === 'day' && tanggalDipilih) {
@@ -842,7 +859,6 @@
             message += `👥 Jumlah: *${r.jumlah} org*\n`;
             message += `🍽️ Menu: *${r.menu}*\n`;
 
-            // Bagian kode baru untuk menambahkan detail menu
             if (r.menuDetails && r.menuDetails.length > 0) {
               const menuItems = r.menuDetails.map(item => `  - ${item.trim()}`).join('\n');
               message += `${menuItems}\n`;
@@ -887,7 +903,6 @@
         body += `   Tempat: ${r.tempat}\n`;
         body += `   Jumlah: ${r.jumlah} orang\n`;
         body += `   Menu: ${r.menu}\n`;
-        // Menambahkan detail menu juga di email
         if (r.menuDetails && r.menuDetails.length > 0) {
           const menuItems = r.menuDetails.map(item => `     - ${item.trim()}`).join('\n');
           body += `${menuItems}\n`;
@@ -899,11 +914,10 @@
       window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
     
-    // [DIPERBARUI] Fungsi ini menyimpan hasil urutan agar konsisten.
     function sortReservations(sortBy) {
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
       const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => a[sortBy].localeCompare(b[sortBy]));
-      dataReservasi[tanggalDipilih] = sorted; // Simpan urutan baru
+      dataReservasi[tanggalDipilih] = sorted;
       updateReservationList(sorted);
       document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
       showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
