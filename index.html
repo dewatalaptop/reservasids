@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah (Firebase) - Versi Perbaikan Cetak</title>
+  <title>Sistem Reservasi Dolan Sawah (Firebase) - Versi Cetak Tab Baru</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -141,106 +141,14 @@
     .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; }
     @media (max-width: 480px) { .action-buttons, .data-actions { flex-direction: column; } .action-buttons button, .data-actions button { width: 100%; } }
 
-    /* [MULAI PERBAIKAN] Kode CSS untuk Print yang Telah Disempurnakan */
-    #print-container {
-      display: none; /* Sembunyikan secara default */
-    }
-
-    @media print {
-      /* Sembunyikan semua elemen di body kecuali wadah cetak khusus kita */
-      body > *:not(#print-container) {
-        display: none !important;
-        visibility: hidden !important;
-      }
-      
-      body {
-        background: none !important; /* Hapus background image saat print */
-        color: #000;
-        font-size: 10pt; /* Ukuran font yang optimal untuk cetak */
-      }
-
-      /* Tampilkan dan atur wadah cetak kita agar mengisi halaman */
-      #print-container {
-        display: block !important;
-        visibility: visible !important;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 20px;
-        font-family: 'Poppins', sans-serif;
-      }
-      
-      #print-title {
-        font-size: 1.8rem;
-        text-align: center;
-        margin-bottom: 25px;
-        color: #333;
-        font-weight: 600;
-      }
-      
-      /* Ini adalah bagian kunci untuk layout 2 kolom */
-      #print-list {
-        column-count: 2;
-        column-gap: 25px;
-      }
-
-      .print-item {
-        /* Ini adalah bagian kunci agar item tidak terpotong antar kolom/halaman */
-        break-inside: avoid;
-        page-break-inside: avoid;
-        
-        margin-bottom: 20px;
-        padding: 15px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background-color: #fff;
-      }
-      
-      /* Membuat tampilan per item menjadi lebih menarik dan rapi */
-      .print-item h3 {
-        font-size: 1.2rem;
-        color: var(--primary);
-        margin: 0 0 10px 0;
-        border-bottom: 2px solid var(--secondary);
-        padding-bottom: 5px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 500;
-      }
-
-      .print-item p {
-        margin: 6px 0;
-        line-height: 1.5;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .print-item p i {
-        color: var(--primary-dark);
-        width: 16px; /* Memberi lebar tetap agar ikon rata */
-        text-align: center;
-      }
-      
-      .print-item .menu-details-print {
-          padding-left: 24px;
-          margin-top: 8px;
-          font-style: italic;
-          color: #555;
-          line-height: 1.4;
-          border-left: 2px solid #eee;
-          padding-left: 15px;
-          margin-left: 8px;
-      }
-    }
-    /* [SELESAI PERBAIKAN] */
+    /* [DIHAPUS] Kode @media print tidak lagi diperlukan karena kita membuat tab baru */
+    
   </style>
 </head>
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 3.6 (Advanced Print Layout)</small>
+    <small>Version 3.7 (New Tab Print)</small>
   </header>
   
   <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
@@ -344,8 +252,6 @@
     <div id="reservation-detail-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
     </div>
   </div>
-  
-  <div id="print-container"></div>
   
   <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan </p></footer>
 
@@ -535,7 +441,6 @@
             if (tanggalDipilih) {
                 const reservations = dataReservasi[tanggalDipilih] || [];
                 updateReservationList(reservations);
-                updatePrintView(reservations); // [PERUBAHAN KUNCI] Panggil fungsi update print di sini
             }
             hideLoader();
           }, 
@@ -579,7 +484,6 @@
       detailSearchInput.value = ''; 
       
       updateReservationList(reservations); 
-      updatePrintView(reservations); // [PERUBAHAN KUNCI] Generate versi cetak saat tanggal dipilih
       
       mainContainer.style.display = 'none';
       viewContainer.style.display = 'block';
@@ -627,42 +531,6 @@
       }).join('');
     }
 
-    // [FUNGSI YANG DISEMPURNAKAN] Fungsi ini membuat layout cetak yang atraktif
-    function updatePrintView(reservations) {
-        const printContainer = document.getElementById('print-container');
-        const viewTitleEl = document.getElementById('reservation-view-title');
-        if (!printContainer || !viewTitleEl) return;
-
-        // Mengambil judul dari tampilan utama untuk konsistensi
-        const titleHtml = `<h2 id="print-title">${viewTitleEl.innerHTML}</h2>`;
-
-        if (!reservations || reservations.length === 0) {
-            printContainer.innerHTML = `${titleHtml}<p style="text-align:center;">Tidak ada reservasi untuk dicetak.</p>`;
-            return;
-        }
-
-        const itemsHtml = reservations.map((r, index) => {
-            const menuList = (r.menuDetails || []).map(item => `&bull; ${item.trim()}`).join('<br>') || "<i>Detail tidak tersedia</i>";
-            const dpInfo = r.dp ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)}</p>` : '';
-            const tambahanInfo = r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
-
-            return `
-                <div class="print-item">
-                    <h3><i class="fas fa-user-circle"></i> ${index + 1}. ${r.nama}</h3>
-                    <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p>
-                    <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p>
-                    <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
-                    <p><i class="fas fa-utensils"></i> <strong>Menu:</strong> ${r.menu}</p>
-                    <div class="menu-details-print">${menuList}</div>
-                    ${dpInfo}
-                    ${tambahanInfo}
-                </div>
-            `;
-        }).join('');
-
-        printContainer.innerHTML = `${titleHtml}<div id="print-list">${itemsHtml}</div>`;
-    }
-    
     function filterReservations(query) {
       if (!tanggalDipilih) return;
       const q = query.toLowerCase();
@@ -670,7 +538,6 @@
         r.nama.toLowerCase().includes(q) || r.tempat.toLowerCase().includes(q) || r.menu.toLowerCase().includes(q)
       );
       updateReservationList(filtered);
-      updatePrintView(filtered); // [PERUBAHAN KUNCI] Update view cetak juga saat filter
     }
     
     function showAddForm() {
@@ -1014,7 +881,6 @@
       dataReservasi[tanggalDipilih] = sorted; 
       
       updateReservationList(sorted);
-      updatePrintView(sorted); // [PERUBAHAN KUNCI] Update view cetak juga saat sorting
       document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
       showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
     }
@@ -1078,9 +944,107 @@
         .catch(() => showToast("Gagal sinkronisasi", "error")).finally(hideLoader);
     }
     
-    // Fungsi ini hanya memanggil dialog print bawaan browser
-    function printData() { 
-      window.print(); 
+    // [FUNGSI BARU] Fungsi printData dirombak total untuk membuka tab baru
+    function printData() {
+      if (!tanggalDipilih) {
+        showToast("Silakan pilih tanggal terlebih dahulu.", "error");
+        return;
+      }
+      
+      const reservations = dataReservasi[tanggalDipilih] || [];
+      const title = document.getElementById('reservation-view-title').innerHTML;
+      const day = parseInt(tanggalDipilih.split('-')[1]);
+      const dateString = `${day} ${monthNames[currentMonth]} ${currentYear}`;
+
+      // Membuat konten HTML untuk setiap item reservasi
+      const itemsHtml = reservations.map((r, index) => {
+        const menuList = (r.menuDetails || []).map(item => `&bull; ${item.trim()}`).join('<br>') || "<i>Detail tidak tersedia</i>";
+        const dpInfo = r.dp ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)}</p>` : '';
+        const tambahanInfo = r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
+
+        return `
+          <div class="print-item">
+            <h3><i class="fas fa-user-circle"></i> ${index + 1}. ${r.nama}</h3>
+            <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p>
+            <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p>
+            <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
+            <p><i class="fas fa-utensils"></i> <strong>Menu:</strong> ${r.menu}</p>
+            <div class="menu-details-print">${menuList}</div>
+            ${dpInfo}
+            ${tambahanInfo}
+          </div>
+        `;
+      }).join('');
+
+      // Membuat dokumen HTML lengkap sebagai string
+      const printPageHtml = `
+        <!DOCTYPE html>
+        <html lang="id">
+        <head>
+          <meta charset="UTF-8">
+          <title>Cetak Reservasi - ${dateString}</title>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+          <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+          <style>
+            :root {
+              --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a;
+            }
+            body {
+              font-family: 'Poppins', sans-serif;
+              margin: 0;
+              padding: 25px;
+              background-color: #f4f4f4;
+              -webkit-print-color-adjust: exact; /* Memastikan warna tercetak di Chrome */
+              color-adjust: exact; /* Standar */
+            }
+            #print-title {
+              font-size: 1.8rem; text-align: center; margin-bottom: 25px; color: #333; font-weight: 600;
+            }
+            #print-list {
+              column-count: 2; column-gap: 25px;
+            }
+            .print-item {
+              break-inside: avoid; page-break-inside: avoid;
+              margin-bottom: 20px; padding: 15px; border-radius: 8px;
+              border: 1px solid #ccc; background-color: #fff;
+            }
+            .print-item h3 {
+              font-size: 1.2rem; color: var(--primary); margin: 0 0 10px 0;
+              border-bottom: 2px solid var(--secondary); padding-bottom: 5px;
+              display: flex; align-items: center; gap: 8px; font-weight: 500;
+            }
+            .print-item p {
+              margin: 6px 0; line-height: 1.5; display: flex; align-items: center; gap: 8px;
+            }
+            .print-item p i {
+              color: var(--primary-dark); width: 16px; text-align: center;
+            }
+            .print-item .menu-details-print {
+              margin-top: 8px; font-style: italic; color: #555;
+              line-height: 1.4; border-left: 2px solid #eee;
+              padding-left: 15px; margin-left: 8px;
+            }
+            @media print {
+              body { padding: 10px; background-color: #fff; }
+              #print-list { column-count: 2; }
+            }
+            @media (max-width: 768px) {
+              #print-list { column-count: 1; }
+            }
+          </style>
+        </head>
+        <body>
+          <h2 id="print-title">${title}</h2>
+          ${reservations.length > 0 ? `<div id="print-list">${itemsHtml}</div>` : '<p style="text-align:center;">Tidak ada reservasi untuk tanggal ini.</p>'}
+        </body>
+        </html>
+      `;
+
+      // Membuka tab baru dan menuliskan konten HTML ke dalamnya
+      const printWindow = window.open('', '_blank');
+      printWindow.document.open();
+      printWindow.document.write(printPageHtml);
+      printWindow.document.close();
     }
     
     document.addEventListener('DOMContentLoaded', () => {
