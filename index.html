@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah (Firebase) - Versi Cetak Final</title>
+  <title>Sistem Reservasi Dolan Sawah (Firebase) - Versi Perbaikan Cetak</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -143,94 +143,95 @@
 
     /* [MULAI PERBAIKAN] Kode CSS untuk Print yang Telah Disempurnakan */
     #print-container {
-      display: none;
+      display: none; /* Sembunyikan secara default */
     }
 
     @media print {
-      body, #print-container {
-        /* [PERUBAHAN] Menambahkan properti ini untuk "memaksa" browser merender layout lebih akurat */
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-
+      /* Sembunyikan semua elemen di body kecuali wadah cetak khusus kita */
       body > *:not(#print-container) {
         display: none !important;
+        visibility: hidden !important;
       }
       
       body {
-        background: none !important;
+        background: none !important; /* Hapus background image saat print */
+        color: #000;
+        font-size: 10pt; /* Ukuran font yang optimal untuk cetak */
       }
 
+      /* Tampilkan dan atur wadah cetak kita agar mengisi halaman */
       #print-container {
         display: block !important;
-        position: static;
+        visibility: visible !important;
+        position: absolute;
+        left: 0;
+        top: 0;
         width: 100%;
-        padding: 10px;
+        padding: 20px;
         font-family: 'Poppins', sans-serif;
-        color: #000;
       }
       
       #print-title {
-        font-size: 1.4rem;
+        font-size: 1.8rem;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         color: #333;
+        font-weight: 600;
       }
       
-      #print-title .icon-svg { /* [BARU] Styling untuk ikon di judul */
-         width: 22px; height: 22px; vertical-align: middle; margin-right: 5px;
-      }
-      
+      /* Ini adalah bagian kunci untuk layout 2 kolom */
       #print-list {
         column-count: 2;
-        column-gap: 20px;
+        column-gap: 25px;
       }
 
       .print-item {
-        /* [PERUBAHAN] Menambahkan fallback `page-break-inside` */
+        /* Ini adalah bagian kunci agar item tidak terpotong antar kolom/halaman */
         break-inside: avoid;
         page-break-inside: avoid;
         
-        margin-bottom: 15px;
-        padding: 12px;
+        margin-bottom: 20px;
+        padding: 15px;
         border: 1px solid #ccc;
         border-radius: 8px;
-        font-size: 9pt; /* Ukuran font lebih cocok untuk print */
+        background-color: #fff;
       }
       
+      /* Membuat tampilan per item menjadi lebih menarik dan rapi */
       .print-item h3 {
-        font-size: 11pt;
-        color: #2a9d8f;
-        margin: 0 0 8px 0;
-        border-bottom: 2px solid #e9c46a;
+        font-size: 1.2rem;
+        color: var(--primary);
+        margin: 0 0 10px 0;
+        border-bottom: 2px solid var(--secondary);
         padding-bottom: 5px;
         display: flex;
         align-items: center;
         gap: 8px;
+        font-weight: 500;
       }
 
       .print-item p {
-        margin: 4px 0;
-        line-height: 1.4;
+        margin: 6px 0;
+        line-height: 1.5;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 8px;
       }
-      
-      .print-item .icon-svg { /* [BARU] Styling untuk ikon SVG */
-        width: 13px;
-        height: 13px;
-        fill: #2a9d8f;
-        flex-shrink: 0;
-        margin-top: 2px;
+      .print-item p i {
+        color: var(--primary-dark);
+        width: 16px; /* Memberi lebar tetap agar ikon rata */
+        text-align: center;
       }
       
       .print-item .menu-details-print {
-          padding-left: 21px;
-          margin-top: 4px;
+          padding-left: 24px;
+          margin-top: 8px;
           font-style: italic;
           color: #555;
-          line-height: 1.3;
+          line-height: 1.4;
+          border-left: 2px solid #eee;
+          padding-left: 15px;
+          margin-left: 8px;
       }
     }
     /* [SELESAI PERBAIKAN] */
@@ -239,7 +240,7 @@
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 4.0 (Robust Print Engine)</small>
+    <small>Version 3.6 (Advanced Print Layout)</small>
   </header>
   
   <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
@@ -368,18 +369,6 @@
       console.warn("Firebase persistence error: ", err.code);
       showToast("Mode offline tidak tersedia", "error");
     });
-    
-    // [PERUBAHAN] Menyimpan kode SVG ikon dalam sebuah objek agar mudah digunakan
-    const icons = {
-      calendar: `<svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M128 0c17.7 0 32 14.3 32 32V64H288V32c0-17.7 14.3-32 32-32s32 14.3 32 32V64h48c26.5 0 48 21.5 48 48v48H0V112C0 85.5 21.5 64 48 64H96V32c0-17.7 14.3-32 32-32zM0 192H448V464c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V192zm64 80v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V272c0-8.8-7.2-16-16-16H80c-8.8 0-16 7.2-16 16zm128 0v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V272c0-8.8-7.2-16-16-16H208c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V272c0-8.8-7.2-16-16-16H336zM64 400v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V400c0-8.8-7.2-16-16-16H80c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V400c0-8.8-7.2-16-16-16H208zm128 0v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16V400c0-8.8-7.2-16-16-16H336c-8.8 0-16 7.2-16 16z"/></svg>`,
-      user: `<svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zM209.1 359.2l-18.6-31c-6.4-10.7 1.3-24.2 13.7-24.2H243.8c12.4 0 20.1 13.6 13.7 24.2l-18.6 31C234.4 368 229.7 372 224 372s-10.4-4-14.9-12.8zM224 512c35.3 0 64-28.7 64-64H160c0 35.3 28.7 64 64 64z"/></svg>`,
-      clock: `<svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.9 4.4 33.3-6.7s4.4-25.9-6.7-33.3L280 243.2V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z"/></svg>`,
-      map: `<svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>`,
-      users: `<svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM624 352h-16V336c0-13.3-10.7-24-24-24s-24 10.7-24 24v16h-16c-13.3 0-24 10.7-24 24s10.7 24 24 24h16v16c0 13.3 10.7 24 24 24s24-10.7 24-24v-16h16c13.3 0 24-10.7 24-24s-10.7-24-24-24zM432 128a128 128 0 1 0 0-256 128 128 0 1 0 0 256z"/></svg>`,
-      utensils: `<svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M16 64C16 46.3 30.3 32 48 32H64c17.7 0 32 14.3 32 32s-14.3 32-32 32H48V208c0 8.8-7.2 16-16 16s-16-7.2-16-16V64zM56 288c-13.3 0-24 10.7-24 24V480c0 17.7 14.3 32 32 32H88c17.7 0 32-14.3 32-32V312c0-13.3-10.7-24-24-24H56zM288 32c17.7 0 32 14.3 32 32V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V64c0-17.7 14.3-32 32-32zm96 0c17.7 0 32 14.3 32 32V208c0 13.3-10.7 24-24 24s-24-10.7-24-24V64c0-17.7 14.3-32 32-32z"/></svg>`,
-      money: `<svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M64 64C28.7 64 0 92.7 0 128V384c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V128c0-35.3-28.7-64-64-64H64zm288 224c0 17.7-14.3 32-32 32H224c-17.7 0-32-14.3-32-32s14.3-32 32-32h96c17.7 0 32 14.3 32 32zM448 320c17.7 0 32-14.3 32-32s-14.3-32-32-32H224c-17.7 0-32 14.3-32 32s14.3 32 32 32H448zM288 192c0 17.7-14.3 32-32 32H224c-17.7 0-32-14.3-32-32s14.3-32 32-32h32c17.7 0 32 14.3 32 32z"/></svg>`,
-      comment: `<svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480H40c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24V240c0 13.3 10.7 24 24 24s24-10.7 24-24V184c0-13.3-10.7-24-24-24zm32 224a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"/></svg>`,
-    }
 
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     let dataReservasi = {};
@@ -546,7 +535,7 @@
             if (tanggalDipilih) {
                 const reservations = dataReservasi[tanggalDipilih] || [];
                 updateReservationList(reservations);
-                updatePrintView(reservations);
+                updatePrintView(reservations); // [PERUBAHAN KUNCI] Panggil fungsi update print di sini
             }
             hideLoader();
           }, 
@@ -586,11 +575,11 @@
       const mainContainer = document.getElementById('main-container');
       const detailSearchInput = document.getElementById('detailSearchInput');
 
-      viewTitle.innerHTML = `<i class="far fa-calendar-check"></i> Reservasi untuk ${day} ${monthNames[currentMonth]} ${currentYear}`;
+      viewTitle.innerHTML = `<i class="far fa-calendar-check"></i> Reservasi ${day} ${monthNames[currentMonth]} ${currentYear}`;
       detailSearchInput.value = ''; 
       
       updateReservationList(reservations); 
-      updatePrintView(reservations);
+      updatePrintView(reservations); // [PERUBAHAN KUNCI] Generate versi cetak saat tanggal dipilih
       
       mainContainer.style.display = 'none';
       viewContainer.style.display = 'block';
@@ -638,15 +627,14 @@
       }).join('');
     }
 
-    // [PERUBAHAN] Fungsi updatePrintView sekarang menggunakan ikon SVG
+    // [FUNGSI YANG DISEMPURNAKAN] Fungsi ini membuat layout cetak yang atraktif
     function updatePrintView(reservations) {
         const printContainer = document.getElementById('print-container');
-        const day = parseInt(tanggalDipilih.split('-')[1]);
-        const titleText = `Reservasi untuk ${day} ${monthNames[currentMonth]} ${currentYear}`;
-        
-        if (!printContainer) return;
+        const viewTitleEl = document.getElementById('reservation-view-title');
+        if (!printContainer || !viewTitleEl) return;
 
-        const titleHtml = `<h2 id="print-title">${icons.calendar} ${titleText}</h2>`;
+        // Mengambil judul dari tampilan utama untuk konsistensi
+        const titleHtml = `<h2 id="print-title">${viewTitleEl.innerHTML}</h2>`;
 
         if (!reservations || reservations.length === 0) {
             printContainer.innerHTML = `${titleHtml}<p style="text-align:center;">Tidak ada reservasi untuk dicetak.</p>`;
@@ -655,16 +643,16 @@
 
         const itemsHtml = reservations.map((r, index) => {
             const menuList = (r.menuDetails || []).map(item => `&bull; ${item.trim()}`).join('<br>') || "<i>Detail tidak tersedia</i>";
-            const dpInfo = r.dp ? `<p>${icons.money} <strong>DP:</strong> Rp ${formatRupiah(r.dp)}</p>` : '';
-            const tambahanInfo = r.tambahan ? `<p>${icons.comment} <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
+            const dpInfo = r.dp ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)}</p>` : '';
+            const tambahanInfo = r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
 
             return `
                 <div class="print-item">
-                    <h3>${icons.user} ${index + 1}. ${r.nama}</h3>
-                    <p>${icons.clock} <strong>Jam:</strong> ${r.jam}</p>
-                    <p>${icons.map} <strong>Tempat:</strong> ${r.tempat}</p>
-                    <p>${icons.users} <strong>Jumlah:</strong> ${r.jumlah} org</p>
-                    <p>${icons.utensils} <strong>Menu:</strong> ${r.menu}</p>
+                    <h3><i class="fas fa-user-circle"></i> ${index + 1}. ${r.nama}</h3>
+                    <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p>
+                    <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p>
+                    <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
+                    <p><i class="fas fa-utensils"></i> <strong>Menu:</strong> ${r.menu}</p>
                     <div class="menu-details-print">${menuList}</div>
                     ${dpInfo}
                     ${tambahanInfo}
@@ -682,7 +670,7 @@
         r.nama.toLowerCase().includes(q) || r.tempat.toLowerCase().includes(q) || r.menu.toLowerCase().includes(q)
       );
       updateReservationList(filtered);
-      updatePrintView(filtered);
+      updatePrintView(filtered); // [PERUBAHAN KUNCI] Update view cetak juga saat filter
     }
     
     function showAddForm() {
@@ -1026,7 +1014,7 @@
       dataReservasi[tanggalDipilih] = sorted; 
       
       updateReservationList(sorted);
-      updatePrintView(sorted);
+      updatePrintView(sorted); // [PERUBAHAN KUNCI] Update view cetak juga saat sorting
       document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
       showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
     }
@@ -1090,7 +1078,10 @@
         .catch(() => showToast("Gagal sinkronisasi", "error")).finally(hideLoader);
     }
     
-    function printData() { window.print(); }
+    // Fungsi ini hanya memanggil dialog print bawaan browser
+    function printData() { 
+      window.print(); 
+    }
     
     document.addEventListener('DOMContentLoaded', () => {
       overlay.addEventListener('click', () => {
