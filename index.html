@@ -141,24 +141,47 @@
     .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; }
     @media (max-width: 480px) { .action-buttons, .data-actions { flex-direction: column; } .action-buttons button, .data-actions button { width: 100%; } }
 
+    /* [MULAI PERBAIKAN] Kode CSS untuk Print */
     @media print {
       body * { visibility: hidden; }
-      header, footer, #main-container, .reservation-view-header button, #detailSearchInput, .header-actions { display: none !important; }
+      body { background: none; }
+      header, footer, #main-container, .reservation-view-header button, #detailSearchInput, .header-actions, .data-actions { display: none !important; }
+      
       #reservation-view-container, #reservation-view-container *, #reservation-view-title, #reservation-detail-list, #reservation-detail-list * {
         visibility: visible;
       }
+
       #reservation-view-container {
-        position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; margin-top: 0; padding: 0;
+        position: absolute; left: 0; top: 0; width: 100%; 
+        box-shadow: none; border: none; margin: 0; padding: 20px;
       }
-      .reservation-item { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
-      .data-actions button { display: none !important; }
+      
+      #reservation-view-title { font-size: 1.5rem; margin-bottom: 20px; text-align: center; }
+
+      /* Mengaktifkan layout 2 kolom untuk daftar reservasi */
+      #reservation-detail-list {
+        display: block; /* Override 'grid' agar 'column' berfungsi */
+        column-count: 2; /* Membuat 2 kolom */
+        column-gap: 25px; /* Jarak antar kolom */
+      }
+      
+      .reservation-item {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        page-break-inside: avoid; /* Mencegah item terpotong di tengah halaman/kolom */
+        break-inside: avoid; /* Versi lebih baru dari 'page-break-inside' */
+        font-size: 0.9rem; /* Sedikit memperkecil font agar muat */
+      }
+      .menu-detail { font-size: 0.8rem; }
     }
+    /* [SELESAI PERBAIKAN] */
+
   </style>
 </head>
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 3.4 (Functional Improvements)</small>
+    <small>Version 3.5 (Print Layout Improvement)</small>
   </header>
   
   <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
@@ -449,7 +472,6 @@
             });
             buatKalender();
             if (tanggalDipilih) {
-                // Jika sebuah tanggal sedang dipilih, refresh datanya
                 const reservations = dataReservasi[tanggalDipilih] || [];
                 updateReservationList(reservations);
             }
@@ -483,7 +505,7 @@
       const dateKey = `${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       tanggalDipilih = dateKey;
       
-      buatKalender(); // Highlight tanggal yang dipilih
+      buatKalender(); 
 
       const reservations = dataReservasi[dateKey] || [];
       const viewContainer = document.getElementById('reservation-view-container');
@@ -494,7 +516,7 @@
       viewTitle.innerHTML = `<i class="far fa-calendar-check"></i> Reservasi untuk ${day} ${monthNames[currentMonth]} ${currentYear}`;
       detailSearchInput.value = ''; 
       
-      updateReservationList(reservations); // Tampilkan daftar reservasi (atau pesan kosong)
+      updateReservationList(reservations); 
       
       mainContainer.style.display = 'none';
       viewContainer.style.display = 'block';
@@ -551,10 +573,9 @@
       updateReservationList(filtered);
     }
     
-    // [BARU] Fungsi untuk menampilkan form tambah data
     function showAddForm() {
         document.getElementById('reservation-form').reset();
-        populateMenuDropdowns(document.getElementById('menu')); // Pastikan menu terisi
+        populateMenuDropdowns(document.getElementById('menu')); 
         document.getElementById('addFormPopup').style.display = 'block';
         overlay.style.display = 'block';
     }
@@ -580,7 +601,7 @@
       try {
         await db.collection('reservations').add(data);
         showToast("Reservasi berhasil disimpan!");
-        closeAddForm(); // Tutup form setelah berhasil
+        closeAddForm(); 
       } catch (e) { showToast("Gagal menyimpan reservasi", "error"); } 
       finally { hideLoader(); }
     }
@@ -849,7 +870,6 @@
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     }
     
-    // [DIPERBAIKI] Fungsi ini sekarang menggunakan format HTML dan mengambil data yang sudah diurutkan.
     function shareViaEmail() {
       if (!tanggalDipilih || !(dataReservasi[tanggalDipilih] || []).length) {
         showToast("Pilih tanggal yang memiliki reservasi.", "error"); return;
@@ -863,8 +883,6 @@
         <hr>
         <ol>`;
 
-      // Fungsi sortReservations() telah mengubah urutan data di 'dataReservasi',
-      // jadi kita tinggal membacanya langsung untuk mendapatkan data terurut.
       (dataReservasi[tanggalDipilih] || []).forEach((r) => {
         let menuDetailsHtml = (r.menuDetails && r.menuDetails.length > 0)
           ? `<div style="padding-left: 20px; font-style: italic; color: #555;">${r.menuDetails.map(item => `&ndash; ${item.trim()}`).join('<br>')}</div>`
@@ -889,11 +907,9 @@
       window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
     
-    // [DIPERBAIKI] Fungsi ini sekarang menyimpan hasil urutan secara permanen (selama sesi).
     function sortReservations(sortBy) {
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
       
-      // Mengurutkan dan menyimpan kembali ke dalam variabel utama
       const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => a[sortBy].localeCompare(b[sortBy]));
       dataReservasi[tanggalDipilih] = sorted; 
       
