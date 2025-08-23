@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah (Firebase) - Versi Perbaikan</title>
+  <title>Sistem Reservasi Dolan Sawah (Firebase) - Versi Perbaikan Cetak</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -141,47 +141,98 @@
     .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; }
     @media (max-width: 480px) { .action-buttons, .data-actions { flex-direction: column; } .action-buttons button, .data-actions button { width: 100%; } }
 
-    /* [MULAI PERBAIKAN] Kode CSS untuk Print */
+    /* [MULAI PERBAIKAN] Kode CSS untuk Print yang Telah Disempurnakan */
+    #print-container {
+      display: none; /* Sembunyikan secara default */
+    }
+
     @media print {
-      body * { visibility: hidden; }
-      body { background: none; }
-      header, footer, #main-container, .reservation-view-header button, #detailSearchInput, .header-actions, .data-actions { display: none !important; }
+      /* Sembunyikan semua elemen di body kecuali wadah cetak khusus kita */
+      body > *:not(#print-container) {
+        display: none !important;
+        visibility: hidden !important;
+      }
       
-      #reservation-view-container, #reservation-view-container *, #reservation-view-title, #reservation-detail-list, #reservation-detail-list * {
-        visibility: visible;
+      body {
+        background: none !important; /* Hapus background image saat print */
       }
 
-      #reservation-view-container {
-        position: absolute; left: 0; top: 0; width: 100%; 
-        box-shadow: none; border: none; margin: 0; padding: 20px;
+      /* Tampilkan dan atur wadah cetak kita agar mengisi halaman */
+      #print-container {
+        display: block !important;
+        visibility: visible !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        font-family: 'Poppins', sans-serif;
+        color: #000;
       }
       
-      #reservation-view-title { font-size: 1.5rem; margin-bottom: 20px; text-align: center; }
+      #print-title {
+        font-size: 1.5rem;
+        text-align: center;
+        margin-bottom: 25px;
+        color: #333;
+      }
+      
+      /* Ini adalah bagian kunci untuk layout 2 kolom */
+      #print-list {
+        column-count: 2;
+        column-gap: 25px;
+      }
 
-      /* Mengaktifkan layout 2 kolom untuk daftar reservasi */
-      #reservation-detail-list {
-        display: block; /* Override 'grid' agar 'column' berfungsi */
-        column-count: 2; /* Membuat 2 kolom */
-        column-gap: 25px; /* Jarak antar kolom */
-      }
-      
-      .reservation-item {
-        box-shadow: none;
+      .print-item {
+        /* Ini adalah bagian kunci agar item tidak terpotong */
+        break-inside: avoid;
+        page-break-inside: avoid;
+        
+        margin-bottom: 20px;
+        padding: 15px;
         border: 1px solid #ccc;
-        page-break-inside: avoid; /* Mencegah item terpotong di tengah halaman/kolom */
-        break-inside: avoid; /* Versi lebih baru dari 'page-break-inside' */
-        font-size: 0.9rem; /* Sedikit memperkecil font agar muat */
+        border-radius: 8px;
+        font-size: 0.9rem;
       }
-      .menu-detail { font-size: 0.8rem; }
+      
+      /* Membuat tampilan per item menjadi lebih menarik */
+      .print-item h3 {
+        font-size: 1.1rem;
+        color: #2a9d8f;
+        margin: 0 0 10px 0;
+        border-bottom: 2px solid #e9c46a;
+        padding-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .print-item p {
+        margin: 5px 0;
+        line-height: 1.5;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .print-item p i {
+        color: var(--primary);
+      }
+      
+      .print-item .menu-details-print {
+          padding-left: 25px;
+          margin-top: 5px;
+          font-style: italic;
+          color: #555;
+          line-height: 1.4;
+      }
     }
     /* [SELESAI PERBAIKAN] */
-
   </style>
 </head>
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 3.5 (Print Layout Improvement)</small>
+    <small>Version 3.6 (Advanced Print Layout)</small>
   </header>
   
   <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
@@ -285,6 +336,8 @@
     <div id="reservation-detail-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
     </div>
   </div>
+  
+  <div id="print-container"></div>
   
   <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan </p></footer>
 
@@ -474,6 +527,7 @@
             if (tanggalDipilih) {
                 const reservations = dataReservasi[tanggalDipilih] || [];
                 updateReservationList(reservations);
+                updatePrintView(reservations); // [PERUBAHAN] Update view cetak juga
             }
             hideLoader();
           }, 
@@ -517,6 +571,7 @@
       detailSearchInput.value = ''; 
       
       updateReservationList(reservations); 
+      updatePrintView(reservations); // [PERUBAHAN] Generate versi cetak saat tanggal dipilih
       
       mainContainer.style.display = 'none';
       viewContainer.style.display = 'block';
@@ -563,6 +618,42 @@
           </div>`;
       }).join('');
     }
+
+    // [FUNGSI BARU] Fungsi untuk membuat layout versi cetak
+    function updatePrintView(reservations) {
+        const printContainer = document.getElementById('print-container');
+        const viewTitleEl = document.getElementById('reservation-view-title');
+        if (!printContainer || !viewTitleEl) return;
+
+        // Mengambil judul dari tampilan utama
+        const titleHtml = `<h2 id="print-title">${viewTitleEl.innerHTML}</h2>`;
+
+        if (!reservations || reservations.length === 0) {
+            printContainer.innerHTML = `${titleHtml}<p style="text-align:center;">Tidak ada reservasi untuk dicetak.</p>`;
+            return;
+        }
+
+        const itemsHtml = reservations.map((r, index) => {
+            const menuList = (r.menuDetails || []).map(item => `&bull; ${item.trim()}`).join('<br>') || "<i>Detail tidak tersedia</i>";
+            const dpInfo = r.dp ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)}</p>` : '';
+            const tambahanInfo = r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
+
+            return `
+                <div class="print-item">
+                    <h3><i class="fas fa-user"></i> ${index + 1}. ${r.nama}</h3>
+                    <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p>
+                    <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p>
+                    <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
+                    <p><i class="fas fa-utensils"></i> <strong>Menu:</strong> ${r.menu}</p>
+                    <div class="menu-details-print">${menuList}</div>
+                    ${dpInfo}
+                    ${tambahanInfo}
+                </div>
+            `;
+        }).join('');
+
+        printContainer.innerHTML = `${titleHtml}<div id="print-list">${itemsHtml}</div>`;
+    }
     
     function filterReservations(query) {
       if (!tanggalDipilih) return;
@@ -571,6 +662,7 @@
         r.nama.toLowerCase().includes(q) || r.tempat.toLowerCase().includes(q) || r.menu.toLowerCase().includes(q)
       );
       updateReservationList(filtered);
+      updatePrintView(filtered); // [PERUBAHAN] Update view cetak juga saat filter
     }
     
     function showAddForm() {
@@ -914,6 +1006,7 @@
       dataReservasi[tanggalDipilih] = sorted; 
       
       updateReservationList(sorted);
+      updatePrintView(sorted); // [PERUBAHAN] Update view cetak juga saat sorting
       document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
       showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
     }
