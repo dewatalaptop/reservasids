@@ -139,16 +139,23 @@
     .toast.info { background-color: var(--primary); }
     .invalid { border-color: var(--danger) !important; }
     .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; }
-    @media (max-width: 480px) { .action-buttons, .data-actions { flex-direction: column; } .action-buttons button, .data-actions button { width: 100%; } }
-
-    /* [DIHAPUS] Kode @media print tidak lagi diperlukan karena kita membuat tab baru */
     
+    .print-options-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;
+    }
+    .print-options-grid label {
+        display: flex; align-items: center; gap: 8px; font-weight: 400;
+        background-color: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #eee;
+    }
+    .print-options-grid input[type="checkbox"] { width: auto; margin-top: 0; }
+
+    @media (max-width: 480px) { .action-buttons, .data-actions { flex-direction: column; } .action-buttons button, .data-actions button { width: 100%; } }
   </style>
 </head>
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 3.7 (New Tab Print)</small>
+    <small>Version 3.8.1 (Logic Fix)</small>
   </header>
   
   <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
@@ -206,7 +213,19 @@
       <label>Nomor HP: <input type="tel" id="nomorHp" placeholder="Cth: 081234567890" /><span class="error-message" id="nomorHp-error"></span></label>
       <label>Jam Reservasi: <input type="time" id="jam" required /><span class="error-message" id="jam-error"></span></label>
       <label>Jumlah Peserta: <input type="number" id="jumlah" min="1" required /><span class="error-message" id="jumlah-error"></span></label>
+      
       <label>DP (Rupiah): <input type="number" id="dp" value="0" min="0" /></label>
+      <label>Tipe Pembayaran DP: 
+        <select id="tipeDp">
+          <option value="">- Tanpa DP -</option>
+          <option>Cash</option>
+          <option>QRIS</option>
+          <option>Transfer BCA</option>
+          <option>Transfer Mandiri</option>
+          <option>Transfer BRI</option>
+        </select>
+      </label>
+      
       <label>Menu: <select id="menu" required></select><span class="error-message" id="menu-error"></span></label>
       <label>Tempat: <select id="tempat" required>
         <option value="">Pilih Tempat</option><option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
@@ -222,6 +241,24 @@
   <div id="editFormPopup" class="popup-form"></div>
   <div id="menuManagementPopup" class="popup-form"></div>
   <div id="customerListPopup" class="popup-form"></div>
+
+  <div id="printOptionsPopup" class="popup-form">
+    <h3><i class="fas fa-print"></i> Opsi Cetak</h3>
+    <p>Pilih detail yang ingin Anda sertakan dalam hasil cetak:</p>
+    <div id="print-options-form">
+        <div class="print-options-grid">
+            <label><input type="checkbox" id="print-detail-menu" checked> Detail Menu</label>
+            <label><input type="checkbox" id="print-kontak" checked> Kontak (No. HP)</label>
+            <label><input type="checkbox" id="print-dp" checked> Info DP</label>
+            <label><input type="checkbox" id="print-tambahan" checked> Request Tambahan</label>
+        </div>
+        <div class="data-actions">
+            <button type="button" onclick="executePrint()"><i class="fas fa-check"></i> Lanjutkan Cetak</button>
+            <button type="button" class="danger" onclick="closePrintOptions()"><i class="fas fa-times"></i> Batal</button>
+        </div>
+    </div>
+  </div>
+  
   <div class="overlay" id="overlay"></div>
 
   <div id="reservation-view-container" style="display: none; background-color: #f5f5f5; padding: 20px;">
@@ -334,7 +371,6 @@
         errorMessages.forEach(el => el.textContent = '');
         inputs.forEach(el => el.classList.remove('invalid'));
 
-        const data = {};
         const elements = form.elements;
 
         if (!elements.nama.value.trim()) {
@@ -381,6 +417,7 @@
             jam: elements.jam.value,
             jumlah: parseInt(elements.jumlah.value),
             dp: parseInt(elements.dp.value) || 0,
+            tipeDp: elements.tipeDp.value,
             menu: elements.menu.value,
             tempat: elements.tempat.value,
             tambahan: elements.tambahan.value.trim(),
@@ -511,7 +548,10 @@
       
       container.innerHTML = reservations.map(r => {
         const isiMenu = (detailMenu[r.menu] || r.menuDetails || []).map(item => `• ${item}`).join('<br/>') || "-";
-        const dpInfo = r.dp ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)}</div>` : '';
+        
+        const dpTypeInfo = r.tipeDp ? ` (${r.tipeDp})` : '';
+        const dpInfo = r.dp > 0 ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)}${dpTypeInfo}</div>` : '';
+        
         const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> ${r.nomorHp}</div>` : '';
         return `
           <div class="reservation-item" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
@@ -545,6 +585,16 @@
         populateMenuDropdowns(document.getElementById('menu')); 
         document.getElementById('addFormPopup').style.display = 'block';
         overlay.style.display = 'block';
+
+        // [PERBAIKAN] Menambahkan event listener untuk konsistensi data DP
+        const addForm = document.getElementById('reservation-form');
+        const dpInput = addForm.querySelector('#dp');
+        const tipeDpSelect = addForm.querySelector('#tipeDp');
+        dpInput.addEventListener('input', () => {
+            if (!dpInput.value || parseInt(dpInput.value) <= 0) {
+                tipeDpSelect.value = '';
+            }
+        });
     }
 
     function closeAddForm() {
@@ -595,6 +645,12 @@
           <label>Jam: <input type="time" id="jam" value="${res.jam}" required /><span class="error-message" id="jam-error"></span></label>
           <label>Jumlah: <input type="number" id="jumlah" value="${res.jumlah}" min="1" required /><span class="error-message" id="jumlah-error"></span></label>
           <label>DP: <input type="number" id="dp" value="${res.dp || 0}" min="0" /></label>
+          <label>Tipe Pembayaran DP: 
+            <select id="tipeDp">
+                <option value="">- Tanpa DP -</option> <option>Cash</option> <option>QRIS</option>
+                <option>Transfer BCA</option> <option>Transfer Mandiri</option> <option>Transfer BRI</option>
+            </select>
+          </label>
           <label>Menu: <select id="menu" required></select><span class="error-message" id="menu-error"></span></label>
           <label>Tempat: <select id="tempat" required>
             <option>Lantai 1</option><option>Lantai 2</option><option>Lantai 3</option>
@@ -609,8 +665,19 @@
       
       populateMenuDropdowns(form.querySelector('#menu'), res.menu);
       form.querySelector('#tempat').value = res.tempat;
+      form.querySelector('#tipeDp').value = res.tipeDp || '';
       form.style.display = 'block'; 
       overlay.style.display = 'block';
+
+      // [PERBAIKAN] Menambahkan event listener untuk konsistensi data DP di form edit
+      const editForm = document.getElementById('edit-reservation-form');
+      const dpInput = editForm.querySelector('#dp');
+      const tipeDpSelect = editForm.querySelector('#tipeDp');
+      dpInput.addEventListener('input', () => {
+          if (!dpInput.value || parseInt(dpInput.value) <= 0) {
+              tipeDpSelect.value = '';
+          }
+      });
     }
     
     async function simpanPerubahanReservasi() {
@@ -789,7 +856,10 @@
         if (!res || !res.nomorHp) { showToast("Nomor HP tidak tersedia", "error"); return; }
         const menuList = (res.menuDetails || []).map(item => `  - ${item.trim()}`).join('\n') || '  - _Detail tidak tersedia_ -';
         const tambahanInfo = res.tambahan ? `📝 *Request Tambahan:*\n${res.tambahan}\n\n` : '';
-        const dpInfo = res.dp ? `💰 *DP:* Rp ${formatRupiah(res.dp)} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
+        
+        const dpTypeInfo = res.tipeDp ? ` (via ${res.tipeDp})` : '';
+        const dpInfo = res.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(res.dp)}${dpTypeInfo} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
+
         const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu: ${res.menu}*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊\n\nTerima kasih,\n*Tim Dolan Sawah*`;
         const phone = res.nomorHp.replace(/^0/, '62');
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
@@ -811,7 +881,10 @@
             if (r.menuDetails && r.menuDetails.length > 0) {
               message += r.menuDetails.map(item => `  - ${item.trim()}`).join('\n') + '\n';
             }
-            if (r.dp) { message += `💰 DP: *Rp ${formatRupiah(r.dp)}*\n`; }
+            if (r.dp > 0) { 
+                const dpTypeInfo = r.tipeDp ? ` (${r.tipeDp})` : '';
+                message += `💰 DP: *Rp ${formatRupiah(r.dp)}${dpTypeInfo}*\n`; 
+            }
             if (r.tambahan) { message += `📝 Tambahan: *${r.tambahan}*\n`; }
             message += `-------------------------\n\n`;
           });
@@ -854,7 +927,10 @@
         let menuDetailsHtml = (r.menuDetails && r.menuDetails.length > 0)
           ? `<div style="padding-left: 20px; font-style: italic; color: #555;">${r.menuDetails.map(item => `&ndash; ${item.trim()}`).join('<br>')}</div>`
           : '';
-        let dpHtml = r.dp ? `<p><strong>💰 DP:</strong> Rp${formatRupiah(r.dp)}</p>` : '';
+        
+        const dpTypeInfo = r.tipeDp ? ` (${r.tipeDp})` : '';
+        let dpHtml = r.dp > 0 ? `<p><strong>💰 DP:</strong> Rp${formatRupiah(r.dp)}${dpTypeInfo}</p>` : '';
+
         let tambahanHtml = r.tambahan ? `<p><strong>📝 Catatan:</strong> ${r.tambahan}</p>` : '';
 
         body += `
@@ -944,23 +1020,41 @@
         .catch(() => showToast("Gagal sinkronisasi", "error")).finally(hideLoader);
     }
     
-    // [FUNGSI BARU] Fungsi printData dirombak total untuk membuka tab baru
     function printData() {
       if (!tanggalDipilih) {
         showToast("Silakan pilih tanggal terlebih dahulu.", "error");
         return;
       }
-      
+      document.getElementById('printOptionsPopup').style.display = 'block';
+      overlay.style.display = 'block';
+    }
+
+    function closePrintOptions() {
+        document.getElementById('printOptionsPopup').style.display = 'none';
+        overlay.style.display = 'none';
+    }
+
+    function executePrint() {
       const reservations = dataReservasi[tanggalDipilih] || [];
       const title = document.getElementById('reservation-view-title').innerHTML;
       const day = parseInt(tanggalDipilih.split('-')[1]);
       const dateString = `${day} ${monthNames[currentMonth]} ${currentYear}`;
 
-      // Membuat konten HTML untuk setiap item reservasi
+      const options = {
+          showMenu: document.getElementById('print-detail-menu').checked,
+          showKontak: document.getElementById('print-kontak').checked,
+          showDp: document.getElementById('print-dp').checked,
+          showTambahan: document.getElementById('print-tambahan').checked
+      };
+
       const itemsHtml = reservations.map((r, index) => {
-        const menuList = (r.menuDetails || []).map(item => `&bull; ${item.trim()}`).join('<br>') || "<i>Detail tidak tersedia</i>";
-        const dpInfo = r.dp ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)}</p>` : '';
-        const tambahanInfo = r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
+        const menuList = options.showMenu ? ((r.menuDetails || []).map(item => `&bull; ${item.trim()}`).join('<br>') || "<i>Detail tidak tersedia</i>") : '';
+        
+        const dpTypeInfo = r.tipeDp ? ` (${r.tipeDp})` : '';
+        const dpInfo = options.showDp && r.dp > 0 ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)}${dpTypeInfo}</p>` : '';
+        
+        const tambahanInfo = options.showTambahan && r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
+        const kontakInfo = options.showKontak && r.nomorHp ? `<p><i class="fas fa-phone"></i> <strong>Kontak:</strong> ${r.nomorHp}</p>` : '';
 
         return `
           <div class="print-item">
@@ -968,15 +1062,14 @@
             <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p>
             <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p>
             <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
-            <p><i class="fas fa-utensils"></i> <strong>Menu:</strong> ${r.menu}</p>
-            <div class="menu-details-print">${menuList}</div>
+            ${kontakInfo}
+            ${options.showMenu ? `<p><i class="fas fa-utensils"></i> <strong>Menu:</strong> ${r.menu}</p><div class="menu-details-print">${menuList}</div>` : ''}
             ${dpInfo}
             ${tambahanInfo}
           </div>
         `;
       }).join('');
 
-      // Membuat dokumen HTML lengkap sebagai string
       const printPageHtml = `
         <!DOCTYPE html>
         <html lang="id">
@@ -986,51 +1079,17 @@
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
           <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
           <style>
-            :root {
-              --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a;
-            }
-            body {
-              font-family: 'Poppins', sans-serif;
-              margin: 0;
-              padding: 25px;
-              background-color: #f4f4f4;
-              -webkit-print-color-adjust: exact; /* Memastikan warna tercetak di Chrome */
-              color-adjust: exact; /* Standar */
-            }
-            #print-title {
-              font-size: 1.8rem; text-align: center; margin-bottom: 25px; color: #333; font-weight: 600;
-            }
-            #print-list {
-              column-count: 2; column-gap: 25px;
-            }
-            .print-item {
-              break-inside: avoid; page-break-inside: avoid;
-              margin-bottom: 20px; padding: 15px; border-radius: 8px;
-              border: 1px solid #ccc; background-color: #fff;
-            }
-            .print-item h3 {
-              font-size: 1.2rem; color: var(--primary); margin: 0 0 10px 0;
-              border-bottom: 2px solid var(--secondary); padding-bottom: 5px;
-              display: flex; align-items: center; gap: 8px; font-weight: 500;
-            }
-            .print-item p {
-              margin: 6px 0; line-height: 1.5; display: flex; align-items: center; gap: 8px;
-            }
-            .print-item p i {
-              color: var(--primary-dark); width: 16px; text-align: center;
-            }
-            .print-item .menu-details-print {
-              margin-top: 8px; font-style: italic; color: #555;
-              line-height: 1.4; border-left: 2px solid #eee;
-              padding-left: 15px; margin-left: 8px;
-            }
-            @media print {
-              body { padding: 10px; background-color: #fff; }
-              #print-list { column-count: 2; }
-            }
-            @media (max-width: 768px) {
-              #print-list { column-count: 1; }
-            }
+            :root { --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; }
+            body { font-family: 'Poppins', sans-serif; margin: 0; padding: 25px; background-color: #f4f4f4; -webkit-print-color-adjust: exact; color-adjust: exact; }
+            #print-title { font-size: 1.8rem; text-align: center; margin-bottom: 25px; color: #333; font-weight: 600; }
+            #print-list { column-count: 2; column-gap: 25px; }
+            .print-item { break-inside: avoid; page-break-inside: avoid; margin-bottom: 20px; padding: 15px; border-radius: 8px; border: 1px solid #ccc; background-color: #fff; }
+            .print-item h3 { font-size: 1.2rem; color: var(--primary); margin: 0 0 10px 0; border-bottom: 2px solid var(--secondary); padding-bottom: 5px; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+            .print-item p { margin: 6px 0; line-height: 1.5; display: flex; align-items: center; gap: 8px; }
+            .print-item p i { color: var(--primary-dark); width: 16px; text-align: center; }
+            .print-item .menu-details-print { margin-top: 8px; font-style: italic; color: #555; line-height: 1.4; border-left: 2px solid #eee; padding-left: 15px; margin-left: 8px; }
+            @media print { body { padding: 10px; background-color: #fff; } #print-list { column-count: 2; } }
+            @media (max-width: 768px) { #print-list { column-count: 1; } }
           </style>
         </head>
         <body>
@@ -1040,11 +1099,11 @@
         </html>
       `;
 
-      // Membuka tab baru dan menuliskan konten HTML ke dalamnya
       const printWindow = window.open('', '_blank');
       printWindow.document.open();
       printWindow.document.write(printPageHtml);
       printWindow.document.close();
+      closePrintOptions();
     }
     
     document.addEventListener('DOMContentLoaded', () => {
@@ -1053,6 +1112,7 @@
         tutupEditForm(); 
         closeMenuManagement(); 
         closeCustomerMenu();
+        closePrintOptions();
       });
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
@@ -1060,6 +1120,7 @@
           tutupEditForm(); 
           closeMenuManagement(); 
           closeCustomerMenu();
+          closePrintOptions();
           if (document.getElementById('reservation-view-container').style.display === 'block') {
             kembaliKeKalender();
           }
