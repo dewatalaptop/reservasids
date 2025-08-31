@@ -161,7 +161,6 @@
     .analysis-item .name { font-weight: 500; }
     .analysis-item .value { font-weight: 600; color: var(--primary); background-color: rgba(42, 157, 143, 0.1); padding: 3px 8px; border-radius: 12px; font-size: 0.85rem; }
 
-    /* NEW Notification Bell Styles */
     #notification-bell-container {
       position: absolute;
       top: 50%;
@@ -417,8 +416,11 @@
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
     let unsubscribeReservations = null;
-    let thankYouInterval = null;
     let allReservationsCache = null;
+
+    // --- NEW: Robust Notification Trigger Variables ---
+    let notificationInterval = null;
+    let lastNotificationCheck = 0;
     
     const mainContainer = document.getElementById('main-container');
     const loginContainer = document.getElementById('login-container');
@@ -439,7 +441,7 @@
             loginContainer.style.display = 'block'; 
             mainContainer.style.display = 'none';
             logoutButton.style.display = 'none';
-            if (thankYouInterval) clearInterval(thankYouInterval);
+            if (notificationInterval) clearInterval(notificationInterval);
         }
     });
 
@@ -548,7 +550,7 @@
     function initializeApp() { 
       loadMenus(); 
       loadReservationsForCurrentMonth(); 
-      initThankYouChecker();
+      setupReliableNotificationChecker(); // UPDATED
     }
     
     async function loadMenus() {
@@ -1286,14 +1288,40 @@
 
     function closeAnalysisPopup() { document.getElementById('analysisPopup').style.display = 'none'; overlay.style.display = 'none'; }
 
-    // --- NEW / REVISED: Thank You Notification Bell Functions ---
-    function initThankYouChecker() {
-        if (thankYouInterval) clearInterval(thankYouInterval);
-        checkThankYouNotifications();
-        thankYouInterval = setInterval(checkThankYouNotifications, 5 * 60 * 1000); // Check every 5 minutes
+    // --- NEW / REVISED: Robust Thank You Notification Bell Functions ---
+
+    function setupReliableNotificationChecker() {
+        if (notificationInterval) clearInterval(notificationInterval);
+        
+        // 1. Check immediately on load
+        runNotificationCheck();
+        
+        // 2. Check every 2 minutes as a fallback
+        notificationInterval = setInterval(runNotificationCheck, 2 * 60 * 1000);
+        
+        // 3. Check when tab becomes visible
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                runNotificationCheck();
+            }
+        });
+        
+        // 4. Check on user interaction (throttled)
+        document.addEventListener('click', runNotificationCheck);
+    }
+    
+    // This is a "throttled" wrapper to prevent the check from running too frequently
+    function runNotificationCheck() {
+        const now = Date.now();
+        const throttleTime = 60 * 1000; // 1 minute
+        if (now - lastNotificationCheck > throttleTime) {
+            lastNotificationCheck = now;
+            checkThankYouNotifications();
+        }
     }
 
     async function checkThankYouNotifications() {
+        console.log("Checking for notifications at " + new Date().toLocaleTimeString()); // For debugging
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1404,9 +1432,11 @@
       document.addEventListener('click', (event) => { 
         // Close dropdowns if click is outside
         const bellContainer = document.getElementById('notification-bell-container');
-        const dropdown = document.getElementById('notification-dropdown');
-        if (dropdown.style.display === 'block' && !bellContainer.contains(event.target)) {
-           dropdown.style.display = 'none';
+        if (bellContainer) {
+            const dropdown = document.getElementById('notification-dropdown');
+            if (dropdown && dropdown.style.display === 'block' && !bellContainer.contains(event.target)) {
+               dropdown.style.display = 'none';
+            }
         }
         document.querySelectorAll('.sort-options, .whatsapp-options').forEach(el => el.style.display = 'none'); 
       }); 
