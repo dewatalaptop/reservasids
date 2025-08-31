@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah (Firebase) - Versi Cetak Tab Baru</title>
+  <title>Sistem Reservasi Dolan Sawah (Firebase)</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -152,7 +152,6 @@
     }
     .print-options-grid input[type="checkbox"] { width: auto; margin-top: 0; }
 
-    /* --- STYLES for Analysis and Notifications --- */
     .analysis-section { margin-bottom: 25px; }
     .analysis-section h4 { color: var(--primary-dark); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
     .analysis-list { list-style: none; padding-left: 0; }
@@ -165,7 +164,7 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      right: 80px; /* Adjust as needed next to logout */
+      right: 80px;
       cursor: pointer;
     }
     #notification-bell-container .fa-bell {
@@ -239,7 +238,7 @@
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Version 3.8.1 (Logic Fix)</small>
+    <small>Versi 4.0 (Perbaikan Notifikasi)</small>
 
     <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
       <i class="fas fa-bell"></i>
@@ -418,7 +417,7 @@
     let unsubscribeReservations = null;
     let allReservationsCache = null;
 
-    // --- NEW: Robust Notification Trigger Variables ---
+    // Robust Notification Trigger Variables
     let notificationInterval = null;
     let lastNotificationCheck = 0;
     
@@ -550,7 +549,7 @@
     function initializeApp() { 
       loadMenus(); 
       loadReservationsForCurrentMonth(); 
-      setupReliableNotificationChecker(); // UPDATED
+      setupReliableNotificationChecker();
     }
     
     async function loadMenus() {
@@ -972,7 +971,7 @@
       let message = '';
       if (scope === 'day' && tanggalDipilih) {
         const reservations = (dataReservasi[tanggalDipilih] || []);
-        message = `*📋 LAPORAN RESERVasi DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
+        message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
         if (reservations.length === 0) { message += `_Tidak ada reservasi untuk tanggal ini._`; } 
         else {
           reservations.forEach((r, i) => {
@@ -1288,33 +1287,26 @@
 
     function closeAnalysisPopup() { document.getElementById('analysisPopup').style.display = 'none'; overlay.style.display = 'none'; }
 
-    // --- NEW / REVISED: Robust Thank You Notification Bell Functions ---
+    // --- REVISED: Robust Thank You Notification Bell Functions ---
 
     function setupReliableNotificationChecker() {
         if (notificationInterval) clearInterval(notificationInterval);
         
-        // 1. Check immediately on load
-        runNotificationCheck();
+        runNotificationCheck(true); // Run immediately on load, forced
+        notificationInterval = setInterval(() => runNotificationCheck(true), 2 * 60 * 1000); // Force check every 2 minutes
         
-        // 2. Check every 2 minutes as a fallback
-        notificationInterval = setInterval(runNotificationCheck, 2 * 60 * 1000);
-        
-        // 3. Check when tab becomes visible
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-                runNotificationCheck();
+                runNotificationCheck(true); // Force check when tab is visible
             }
         });
-        
-        // 4. Check on user interaction (throttled)
-        document.addEventListener('click', runNotificationCheck);
+        document.addEventListener('click', () => runNotificationCheck(false)); // Check on click, not forced
     }
     
-    // This is a "throttled" wrapper to prevent the check from running too frequently
-    function runNotificationCheck() {
+    function runNotificationCheck(force = false) {
         const now = Date.now();
         const throttleTime = 60 * 1000; // 1 minute
-        if (now - lastNotificationCheck > throttleTime) {
+        if (force || (now - lastNotificationCheck > throttleTime)) {
             lastNotificationCheck = now;
             checkThankYouNotifications();
         }
@@ -1322,6 +1314,7 @@
 
     async function checkThankYouNotifications() {
         console.log("Checking for notifications at " + new Date().toLocaleTimeString()); // For debugging
+
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1341,13 +1334,14 @@
             snapshot.forEach(doc => {
                 const res = { id: doc.id, ...doc.data() };
                 if (!res.jam || !res.nomorHp) return;
-
+                
+                // Robust time parsing to avoid timezone issues
                 const [hour, minute] = res.jam.split(':');
-                const reservationTime = new Date(res.date);
-                reservationTime.setHours(hour, minute, 0, 0);
-                const thankYouTime = new Date(reservationTime.getTime() + 5 * 60 * 60 * 1000);
+                const reservationDateTime = new Date(year, month - 1, day, hour, minute);
+                
+                const thankYouTriggerTime = new Date(reservationDateTime.getTime() + (5 * 60 * 60 * 1000));
 
-                if (now > thankYouTime) {
+                if (now > thankYouTriggerTime) {
                     listHtml += `
                         <li class="notification-item" id="notification-item-${res.id}">
                           <span class="info">Kirim ucapan untuk <strong>${res.nama}</strong> (Reservasi jam ${res.jam})</span>
@@ -1394,8 +1388,7 @@
         if (newCount <= 0) {
             badge.style.display = 'none';
             document.getElementById('notification-dropdown').style.display = 'none';
-            // Re-run check to show empty message
-            setTimeout(checkThankYouNotifications, 500);
+            setTimeout(() => runNotificationCheck(true), 500); // Re-check to show "empty" message
         }
     }
     
@@ -1430,7 +1423,6 @@
       });
       
       document.addEventListener('click', (event) => { 
-        // Close dropdowns if click is outside
         const bellContainer = document.getElementById('notification-bell-container');
         if (bellContainer) {
             const dropdown = document.getElementById('notification-dropdown');
@@ -1441,6 +1433,7 @@
         document.querySelectorAll('.sort-options, .whatsapp-options').forEach(el => el.style.display = 'none'); 
       }); 
     });
-  </script>
+</script>
+
 </body>
 </html>
