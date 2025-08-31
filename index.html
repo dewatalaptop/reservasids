@@ -152,7 +152,7 @@
     }
     .print-options-grid input[type="checkbox"] { width: auto; margin-top: 0; }
 
-    /* --- NEW STYLES for Analysis and Notifications --- */
+    /* --- STYLES for Analysis and Notifications --- */
     .analysis-section { margin-bottom: 25px; }
     .analysis-section h4 { color: var(--primary-dark); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
     .analysis-list { list-style: none; padding-left: 0; }
@@ -161,29 +161,79 @@
     .analysis-item .name { font-weight: 500; }
     .analysis-item .value { font-weight: 600; color: var(--primary); background-color: rgba(42, 157, 143, 0.1); padding: 3px 8px; border-radius: 12px; font-size: 0.85rem; }
 
-    #thank-you-container {
-      position: fixed; bottom: 20px; right: 20px; width: 340px; max-height: 450px; z-index: 1500;
-      background-color: #fff; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-      display: flex; flex-direction: column; overflow: hidden; border-top: 4px solid var(--info);
+    /* NEW Notification Bell Styles */
+    #notification-bell-container {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      right: 80px; /* Adjust as needed next to logout */
+      cursor: pointer;
     }
-    .thank-you-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 15px; background-color: var(--info); color: white; font-weight: 600;
+    #notification-bell-container .fa-bell {
+      font-size: 1.8rem;
+      color: white;
     }
-    .thank-you-header button { background: none; border: none; color: white; opacity: 0.8; cursor: pointer; font-size: 1.2rem; padding: 0; margin: 0; line-height: 1; }
-    .thank-you-list { list-style: none; padding: 8px; margin: 0; overflow-y: auto; }
-    .thank-you-item {
-      padding: 12px; margin-bottom: 8px; background-color: #f8f9fa; border-radius: 6px;
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -10px;
+      background-color: var(--danger);
+      color: white;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 2px solid var(--primary-dark);
+    }
+    .notification-list-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 15px);
+      right: 0;
+      width: 320px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      z-index: 1600;
+      color: var(--dark);
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #eee;
+    }
+    .notification-list-dropdown h4 {
+      padding: 12px 15px;
+      margin: 0;
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #eee;
+      font-size: 0.95rem;
+      color: var(--primary-dark);
+    }
+    .notification-list-dropdown ul {
+      list-style: none;
+      padding: 8px;
+      margin: 0;
+    }
+    .notification-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      background-color: white;
+      border-radius: 6px;
       border-left: 4px solid var(--secondary);
     }
-    .thank-you-item .info { display: block; font-size: 0.95rem; margin-bottom: 10px; }
-    .thank-you-item .info strong { color: var(--primary-dark); }
-    .thank-you-item button { width: 100%; margin: 0; padding: 8px; font-size: 0.9rem; }
+    .notification-item:hover { background-color: #f8f9fa; }
+    .notification-item .info { display: block; font-size: 0.9rem; margin-bottom: 10px; }
+    .notification-item .info strong { color: var(--primary-dark); }
+    .notification-item button { width: 100%; margin: 0; padding: 8px; font-size: 0.9rem; }
 
     @media (max-width: 480px) { 
       .action-buttons, .data-actions { flex-direction: column; } 
-      .action-buttons button, .data-actions button { width: 100%; } 
-      #thank-you-container { width: calc(100% - 30px); left: 15px; right: 15px; bottom: 15px; }
+      .action-buttons button, .data-actions button { width: 100%; }
+      #notification-bell-container { right: 60px; }
+      .notification-list-dropdown { width: calc(100vw - 40px); }
     }
   </style>
 </head>
@@ -191,6 +241,16 @@
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
     <small>Version 3.8.1 (Logic Fix)</small>
+
+    <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
+      <i class="fas fa-bell"></i>
+      <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
+      <div id="notification-dropdown" class="notification-list-dropdown">
+        <h4><i class="fas fa-bell"></i> Pengingat Ucapan Terima Kasih</h4>
+        <ul id="notification-list-ul">
+            </ul>
+      </div>
+    </div>
   </header>
   
   <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
@@ -325,14 +385,6 @@
 
     <div id="reservation-detail-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
     </div>
-  </div>
-
-  <div id="thank-you-container" style="display: none;">
-    <div class="thank-you-header">
-      <span><i class="fas fa-bell"></i> Pengingat Ucapan Terima Kasih</span>
-      <button onclick="closeThankYouContainer()">&times;</button>
-    </div>
-    <ul class="thank-you-list" id="thankYouList"></ul>
   </div>
   
   <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan </p></footer>
@@ -1155,7 +1207,7 @@
       closePrintOptions();
     }
     
-    // --- NEW: Data Analysis Functions ---
+    // --- Data Analysis Functions ---
     async function showAnalysis() {
         const popup = document.getElementById('analysisPopup');
         popup.innerHTML = `<h3><i class="fas fa-chart-pie"></i> Analisis Data Reservasi</h3><div id="analysis-content"><div class="spinner" style="margin: 20px auto;"></div><p style="text-align:center;">Menganalisis data...</p></div><div class="data-actions"><button class="danger" onclick="closeAnalysisPopup()">Tutup</button></div>`;
@@ -1234,7 +1286,7 @@
 
     function closeAnalysisPopup() { document.getElementById('analysisPopup').style.display = 'none'; overlay.style.display = 'none'; }
 
-    // --- NEW: Thank You Notification Functions ---
+    // --- NEW / REVISED: Thank You Notification Bell Functions ---
     function initThankYouChecker() {
         if (thankYouInterval) clearInterval(thankYouInterval);
         checkThankYouNotifications();
@@ -1254,8 +1306,8 @@
                 .where('thankYouSent', '!=', true)
                 .get();
 
-            const thankYouList = document.getElementById('thankYouList');
-            thankYouList.innerHTML = '';
+            const notificationListUl = document.getElementById('notification-list-ul');
+            let listHtml = '';
             let notificationsFound = 0;
 
             snapshot.forEach(doc => {
@@ -1265,27 +1317,36 @@
                 const [hour, minute] = res.jam.split(':');
                 const reservationTime = new Date(res.date);
                 reservationTime.setHours(hour, minute, 0, 0);
-
-                const thankYouTime = new Date(reservationTime.getTime() + 5 * 60 * 60 * 1000); // 5 hours later
+                const thankYouTime = new Date(reservationTime.getTime() + 5 * 60 * 60 * 1000);
 
                 if (now > thankYouTime) {
-                    const listItem = document.createElement('li');
-                    listItem.className = 'thank-you-item';
-                    listItem.id = `thank-you-item-${res.id}`;
-                    listItem.innerHTML = `
-                        <span class="info">Kirim ucapan untuk <strong>${res.nama}</strong> (Reservasi jam ${res.jam})</span>
-                        <button class="whatsapp" onclick="sendThankYouWhatsApp('${res.id}', '${res.nama}', '${res.nomorHp}')">
-                            <i class="fab fa-whatsapp"></i> Kirim Ucapan Terima Kasih
-                        </button>`;
-                    thankYouList.appendChild(listItem);
+                    listHtml += `
+                        <li class="notification-item" id="notification-item-${res.id}">
+                          <span class="info">Kirim ucapan untuk <strong>${res.nama}</strong> (Reservasi jam ${res.jam})</span>
+                          <button class="whatsapp" onclick="sendThankYouWhatsApp('${res.id}', '${res.nama}', '${res.nomorHp}')">
+                              <i class="fab fa-whatsapp"></i> Kirim Ucapan
+                          </button>
+                        </li>`;
                     notificationsFound++;
                 }
             });
 
-            const container = document.getElementById('thank-you-container');
-            container.style.display = notificationsFound > 0 ? 'flex' : 'none';
+            if(notificationsFound === 0){
+                listHtml = `<li style="padding: 15px; text-align: center; color: #888; font-size: 0.9rem;">Tidak ada pengingat.</li>`;
+            }
+            notificationListUl.innerHTML = listHtml;
+            
+            const badge = document.getElementById('notification-badge');
+            badge.textContent = notificationsFound;
+            badge.style.display = notificationsFound > 0 ? 'flex' : 'none';
 
         } catch (e) { console.error("Error checking notifications: ", e); }
+    }
+    
+    function toggleNotificationDropdown(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById('notification-dropdown');
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     }
 
     function sendThankYouWhatsApp(id, name, phone) {
@@ -1294,12 +1355,19 @@
         window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
         
         markThankYouSent(id);
-        const itemToRemove = document.getElementById(`thank-you-item-${id}`);
-        if (itemToRemove) {
-          itemToRemove.remove();
-          if(document.getElementById('thankYouList').children.length === 0){
-             closeThankYouContainer();
-          }
+
+        const itemToRemove = document.getElementById(`notification-item-${id}`);
+        if (itemToRemove) itemToRemove.remove();
+        
+        const badge = document.getElementById('notification-badge');
+        let newCount = parseInt(badge.textContent) - 1;
+        badge.textContent = newCount;
+
+        if (newCount <= 0) {
+            badge.style.display = 'none';
+            document.getElementById('notification-dropdown').style.display = 'none';
+            // Re-run check to show empty message
+            setTimeout(checkThankYouNotifications, 500);
         }
     }
     
@@ -1308,8 +1376,6 @@
         await db.collection('reservations').doc(id).update({ thankYouSent: true });
       } catch(e) { console.error("Failed to mark 'thank you sent': ", e); }
     }
-
-    function closeThankYouContainer() { document.getElementById('thank-you-container').style.display = 'none'; }
 
     document.addEventListener('DOMContentLoaded', () => {
       overlay.addEventListener('click', () => {
@@ -1320,6 +1386,7 @@
         closePrintOptions();
         closeAnalysisPopup();
       });
+
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
           closeAddForm();
@@ -1333,7 +1400,14 @@
           }
         }
       });
-      document.addEventListener('click', () => { 
+      
+      document.addEventListener('click', (event) => { 
+        // Close dropdowns if click is outside
+        const bellContainer = document.getElementById('notification-bell-container');
+        const dropdown = document.getElementById('notification-dropdown');
+        if (dropdown.style.display === 'block' && !bellContainer.contains(event.target)) {
+           dropdown.style.display = 'none';
+        }
         document.querySelectorAll('.sort-options, .whatsapp-options').forEach(el => el.style.display = 'none'); 
       }); 
     });
