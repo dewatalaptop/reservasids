@@ -152,13 +152,27 @@
     }
     .print-options-grid input[type="checkbox"] { width: auto; margin-top: 0; }
 
+    #analysis-filters { text-align: center; margin-bottom: 15px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    #analysis-filters button { margin-top: 0; padding: 6px 12px; font-size: 0.85rem; }
+    #analysis-filters button.active { background-color: var(--primary-dark); color: white; }
     .analysis-section { margin-bottom: 25px; }
     .analysis-section h4 { color: var(--primary-dark); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
     .analysis-list { list-style: none; padding-left: 0; }
     .analysis-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
     .analysis-item:last-child { border-bottom: none; }
     .analysis-item .name { font-weight: 500; }
+    .analysis-item .name-clickable { font-weight: 500; cursor: pointer; color: var(--primary); text-decoration: underline; }
+    .analysis-item .name-clickable:hover { color: var(--primary-dark); }
     .analysis-item .value { font-weight: 600; color: var(--primary); background-color: rgba(42, 157, 143, 0.1); padding: 3px 8px; border-radius: 12px; font-size: 0.85rem; }
+    
+    #customer-profile-view { padding: 10px; }
+    #customer-profile-view h4 { font-size: 1.3rem; margin-bottom: 15px; color: var(--primary-dark); }
+    .profile-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .stat-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid var(--secondary); }
+    .stat-card .value { font-size: 1.5rem; font-weight: 600; color: var(--primary-dark); }
+    .stat-card .label { font-size: 0.8rem; color: #666; }
+    .profile-history { max-height: 250px; overflow-y: auto; padding-right: 10px; }
+    .history-item { padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
 
     #notification-bell-container {
       position: absolute;
@@ -238,7 +252,7 @@
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Versi 4.0 (Perbaikan Notifikasi)</small>
+    <small>Versi 4.1 (Analisis & Notifikasi Update)</small>
 
     <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
       <i class="fas fa-bell"></i>
@@ -416,6 +430,7 @@
     let currentYear = new Date().getFullYear();
     let unsubscribeReservations = null;
     let allReservationsCache = null;
+    let lastAnalysisPeriod = 'month'; // To remember the last analysis filter
 
     // Robust Notification Trigger Variables
     let notificationInterval = null;
@@ -947,9 +962,9 @@
 
     function closeCustomerMenu() { document.getElementById('customerListPopup').style.display = 'none'; overlay.style.display = 'none'; }
 
-    function openWhatsApp(phone, name) {
+    function openWhatsApp(phone, name, messageTemplate) {
         const formattedPhone = phone.replace(/^0/, '62');
-        const message = `Halo Kak *${name}*, kami dari Dolan Sawah ingin menyapa. Terima kasih telah menjadi pelanggan kami! 😊`;
+        const message = messageTemplate || `Halo Kak *${name}*, kami dari Dolan Sawah ingin menyapa. Terima kasih telah menjadi pelanggan kami! 😊`;
         window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
     }
     
@@ -971,7 +986,7 @@
       let message = '';
       if (scope === 'day' && tanggalDipilih) {
         const reservations = (dataReservasi[tanggalDipilih] || []);
-        message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
+        message = `*📋 LAPORAN RESERVasi DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
         if (reservations.length === 0) { message += `_Tidak ada reservasi untuk tanggal ini._`; } 
         else {
           reservations.forEach((r, i) => {
@@ -1208,15 +1223,23 @@
       closePrintOptions();
     }
     
-    // --- Data Analysis Functions ---
+    // --- Data Analysis Functions (MODIFIED) ---
     async function showAnalysis() {
         const popup = document.getElementById('analysisPopup');
-        popup.innerHTML = `<h3><i class="fas fa-chart-pie"></i> Analisis Data Reservasi</h3><div id="analysis-content"><div class="spinner" style="margin: 20px auto;"></div><p style="text-align:center;">Menganalisis data...</p></div><div class="data-actions"><button class="danger" onclick="closeAnalysisPopup()">Tutup</button></div>`;
+        popup.innerHTML = `
+            <h3><i class="fas fa-chart-pie"></i> Analisis Data Reservasi</h3>
+            <div id="analysis-filters">
+                <button class="secondary" id="filter-week" onclick="runFilteredAnalysis('week')">Minggu Ini</button>
+                <button class="secondary" id="filter-month" onclick="runFilteredAnalysis('month')">Bulan Ini</button>
+                <button class="secondary" id="filter-all" onclick="runFilteredAnalysis('all')">Sepanjang Waktu</button>
+            </div>
+            <div id="analysis-content"><div class="spinner" style="margin: 20px auto;"></div><p style="text-align:center;">Menganalisis data...</p></div>
+            <div class="data-actions"><button class="danger" onclick="closeAnalysisPopup()">Tutup</button></div>`;
         popup.style.display = 'block';
         overlay.style.display = 'block';
 
         if (allReservationsCache) {
-            renderAnalysis(analyzeData(allReservationsCache));
+            runFilteredAnalysis(lastAnalysisPeriod);
             return;
         }
 
@@ -1224,22 +1247,43 @@
             const snapshot = await db.collection('reservations').get();
             allReservationsCache = [];
             snapshot.forEach(doc => allReservationsCache.push(doc.data()));
-            const analysisResults = analyzeData(allReservationsCache);
-            renderAnalysis(analysisResults);
+            runFilteredAnalysis(lastAnalysisPeriod); // Default view
         } catch (e) {
             document.getElementById('analysis-content').innerHTML = `<p style="text-align:center; color: var(--danger);">Gagal memuat data untuk analisis.</p>`;
             showToast("Gagal mengambil data analisis", "error");
         }
     }
 
+    function runFilteredAnalysis(period) {
+        lastAnalysisPeriod = period;
+        const buttons = document.querySelectorAll('#analysis-filters button');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`filter-${period}`).classList.add('active');
+
+        const now = new Date();
+        let startDate;
+        if (period === 'week') {
+            startDate = new Date(now.setDate(now.getDate() - now.getDay()));
+        } else if (period === 'month') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+
+        const filteredData = period === 'all' ? allReservationsCache : allReservationsCache.filter(r => new Date(r.date) >= startDate);
+        
+        const analysisResults = analyzeData(filteredData);
+        renderAnalysis(analysisResults, period);
+    }
+
     function analyzeData(data) {
         const frequentCustomers = data.filter(r => r.nomorHp).reduce((acc, r) => {
-            acc[r.nomorHp] = { name: r.nama, count: (acc[r.nomorHp]?.count || 0) + 1 };
+            if (!acc[r.nomorHp]) acc[r.nomorHp] = { name: r.nama, count: 0, nomorHp: r.nomorHp };
+            acc[r.nomorHp].count++;
             return acc;
         }, {});
         
         const topSpenders = data.filter(r => r.nomorHp && r.dp > 0).reduce((acc, r) => {
-            acc[r.nomorHp] = { name: r.nama, totalDp: (acc[r.nomorHp]?.totalDp || 0) + r.dp };
+            if (!acc[r.nomorHp]) acc[r.nomorHp] = { name: r.nama, totalDp: 0, nomorHp: r.nomorHp };
+            acc[r.nomorHp].totalDp += r.dp;
             return acc;
         }, {});
         
@@ -1263,31 +1307,72 @@
         };
     }
 
-    function renderAnalysis(results) {
+    function renderAnalysis(results, period) {
         const contentEl = document.getElementById('analysis-content');
+        const periodText = { week: 'Minggu Ini', month: 'Bulan Ini', all: 'Sepanjang Waktu' }[period];
         contentEl.innerHTML = `
             <div class="analysis-section">
-                <h4><i class="fas fa-crown"></i> Pelanggan Paling Setia</h4>
-                <ul class="analysis-list">${results.frequentCustomers.map(c => `<li class="analysis-item"><span class="name">${c.name}</span><span class="value">${c.count}x Reservasi</span></li>`).join('') || '<li>Belum ada data</li>'}</ul>
+                <h4><i class="fas fa-crown"></i> Pelanggan Paling Setia (${periodText})</h4>
+                <ul class="analysis-list">${results.frequentCustomers.map(c => `<li class="analysis-item"><span class="name-clickable" onclick="showCustomerProfile('${c.nomorHp}', '${c.name}')">${c.name}</span><span class="value">${c.count}x Reservasi</span></li>`).join('') || '<li style="text-align:center;color:#888;">Belum ada data</li>'}</ul>
             </div>
             <div class="analysis-section">
-                <h4><i class="fas fa-wallet"></i> Pembelanjaan Teratas (DP)</h4>
-                <ul class="analysis-list">${results.topSpenders.map(c => `<li class="analysis-item"><span class="name">${c.name}</span><span class="value">Rp ${formatRupiah(c.totalDp)}</span></li>`).join('') || '<li>Belum ada data</li>'}</ul>
+                <h4><i class="fas fa-wallet"></i> Pembelanjaan Teratas (DP) (${periodText})</h4>
+                <ul class="analysis-list">${results.topSpenders.map(c => `<li class="analysis-item"><span class="name-clickable" onclick="showCustomerProfile('${c.nomorHp}', '${c.name}')">${c.name}</span><span class="value">Rp ${formatRupiah(c.totalDp)}</span></li>`).join('') || '<li style="text-align:center;color:#888;">Belum ada data</li>'}</ul>
             </div>
             <div class="analysis-section">
-                <h4><i class="fas fa-star"></i> Menu Paling Populer</h4>
-                <ul class="analysis-list">${results.popularMenus.map(([name, count]) => `<li class="analysis-item"><span class="name">${name}</span><span class="value">${count}x Dipesan</span></li>`).join('') || '<li>Belum ada data</li>'}</ul>
+                <h4><i class="fas fa-star"></i> Menu Paling Populer (${periodText})</h4>
+                <ul class="analysis-list">${results.popularMenus.map(([name, count]) => `<li class="analysis-item"><span class="name">${name}</span><span class="value">${count}x Dipesan</span></li>`).join('') || '<li style="text-align:center;color:#888;">Belum ada data</li>'}</ul>
             </div>
             <div class="analysis-section">
-                <h4><i class="fas fa-calendar-alt"></i> Hari Paling Ramai</h4>
-                <ul class="analysis-list">${results.busiestDays.map(([day, count]) => `<li class="analysis-item"><span class="name">${day}</span><span class="value">${count} Reservasi</span></li>`).join('') || '<li>Belum ada data</li>'}</ul>
+                <h4><i class="fas fa-calendar-alt"></i> Hari Paling Ramai (${periodText})</h4>
+                <ul class="analysis-list">${results.busiestDays.map(([day, count]) => `<li class="analysis-item"><span class="name">${day}</span><span class="value">${count} Reservasi</span></li>`).join('') || '<li style="text-align:center;color:#888;">Belum ada data</li>'}</ul>
+            </div>
+        `;
+    }
+    
+    function showCustomerProfile(nomorHp, name) {
+        const customerReservations = allReservationsCache.filter(r => r.nomorHp === nomorHp).sort((a,b) => b.date.localeCompare(a.date));
+        const totalDp = customerReservations.reduce((sum, r) => sum + (r.dp || 0), 0);
+        const totalPax = customerReservations.reduce((sum, r) => sum + (r.jumlah || 0), 0);
+        
+        const historyHtml = customerReservations.map(r => `
+            <div class="history-item">
+                <strong>${r.date}</strong> - ${r.jumlah} org (${r.menu})
+            </div>
+        `).join('');
+
+        const contentEl = document.getElementById('analysis-content');
+        contentEl.innerHTML = `
+            <div id="customer-profile-view">
+                <button class="secondary" onclick="runFilteredAnalysis('${lastAnalysisPeriod}')" style="margin-top:0; margin-bottom: 15px;"><i class="fas fa-arrow-left"></i> Kembali</button>
+                <h4><i class="fas fa-user-circle"></i> Profil: ${name}</h4>
+                <p style="margin-top:-10px; margin-bottom: 15px; color:#555;"><i class="fas fa-phone"></i> ${nomorHp}</p>
+                <button class="whatsapp" onclick="openWhatsApp('${nomorHp}', '${name}')" style="width:100%; margin-bottom:20px;"><i class="fab fa-whatsapp"></i> Hubungi via WhatsApp</button>
+                
+                <div class="profile-stats">
+                    <div class="stat-card">
+                        <div class="value">${customerReservations.length}</div>
+                        <div class="label">Total Reservasi</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">Rp ${formatRupiah(totalDp)}</div>
+                        <div class="label">Total DP Dibayar</div>
+                    </div>
+                     <div class="stat-card">
+                        <div class="value">${totalPax}</div>
+                        <div class="label">Total Tamu</div>
+                    </div>
+                </div>
+
+                <h5>Riwayat Reservasi:</h5>
+                <div class="profile-history">${historyHtml || '<p>Tidak ada riwayat.</p>'}</div>
             </div>
         `;
     }
 
     function closeAnalysisPopup() { document.getElementById('analysisPopup').style.display = 'none'; overlay.style.display = 'none'; }
 
-    // --- REVISED: Robust Thank You Notification Bell Functions ---
+    // --- REVISED: Robust Thank You Notification Bell Functions (MODIFIED) ---
 
     function setupReliableNotificationChecker() {
         if (notificationInterval) clearInterval(notificationInterval);
@@ -1335,11 +1420,11 @@
                 const res = { id: doc.id, ...doc.data() };
                 if (!res.jam || !res.nomorHp) return;
                 
-                // Robust time parsing to avoid timezone issues
                 const [hour, minute] = res.jam.split(':');
                 const reservationDateTime = new Date(year, month - 1, day, hour, minute);
                 
-                const thankYouTriggerTime = new Date(reservationDateTime.getTime() + (5 * 60 * 60 * 1000));
+                // MODIFIED: Changed from 5 hours to 3 hours
+                const thankYouTriggerTime = new Date(reservationDateTime.getTime() + (3 * 60 * 60 * 1000));
 
                 if (now > thankYouTriggerTime) {
                     listHtml += `
@@ -1372,9 +1457,8 @@
     }
 
     function sendThankYouWhatsApp(id, name, phone) {
-        const formattedPhone = phone.replace(/^0/, '62');
         const message = `Halo Kak *${name}*,\n\nKami dari *Dolan Sawah* ingin mengucapkan terima kasih banyak atas kunjungannya hari ini. Kami harap Anda menikmati hidangan dan suasananya. 😊\n\nKami sangat menantikan kedatangan Kakak selanjutnya. Jangan ragu untuk memberikan masukan jika ada ya.\n\nSehat selalu!\n\nSalam hangat,\n*Tim Dolan Sawah* 🙏`;
-        window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
+        openWhatsApp(phone, name, message);
         
         markThankYouSent(id);
 
