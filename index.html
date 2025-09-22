@@ -1029,43 +1029,99 @@
         const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
         openWhatsApp(res.nomorHp, res.nama, message);
     }
-    function shareViaWhatsApp(scope) {
+        function shareViaWhatsApp(scope) {
       let message = '';
       if (scope === 'day' && tanggalDipilih) {
         const reservations = (dataReservasi[tanggalDipilih] || []);
         message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
-        if (reservations.length === 0) { message += `_Tidak ada reservasi untuk tanggal ini._`; } 
-        else {
+        if (reservations.length === 0) {
+          message += `_Tidak ada reservasi untuk tanggal ini._`;
+        } else {
           reservations.forEach((r, i) => {
-            const menuList = (r.menus && r.menus.length > 0) ? r.menus.map(item => `  - ${item.quantity}x ${item.name}`).join('\n') : `  - ${r.menu}`;
-            message += `*${i + 1}. ${r.nama}*\n⏰ Jam: *${r.jam}* | 📍 Tempat: *${r.tempat}* | 👥 Jumlah: *${r.jumlah} org*\n🍽️ Pesanan:\n${menuList}\n`;
-            if (r.dp > 0) message += `💰 DP: *Rp ${formatRupiah(r.dp)}* ${r.tipeDp ? `(${r.tipeDp})` : ''}\n`;
-            if (r.tambahan) message += `📝 Tambahan: *${r.tambahan}*\n`;
+            // --- BLOK LOGIKA YANG DIPERBAIKI ---
+            let menuList = '  - _(Tidak ada detail menu)_'; // Default message
+            if (r.menus && r.menus.length > 0) {
+              // Logic for new multi-menu data
+              menuList = r.menus.map(item => `  - ${item.quantity}x ${item.name}`).join('\n');
+            } else if (r.menu) {
+              // Fallback logic for old single-menu data
+              menuList = `  - ${r.menu}`;
+            }
+            // --- AKHIR BLOK ---
+
+            message += `*${i + 1}. ${r.nama}*\n`;
+            message += `⏰ Jam: *${r.jam}* | 📍 Tempat: *${r.tempat}* | 👥 Jumlah: *${r.jumlah} org*\n`;
+            message += `🍽️ *Pesanan Menu:*\n${menuList}\n`;
+            if (r.dp > 0) {
+              message += `💰 DP: *Rp ${formatRupiah(r.dp)}* ${r.tipeDp ? `(${r.tipeDp})` : ''}\n`;
+            }
+            if (r.tambahan) {
+              message += `📝 Tambahan: *${r.tambahan}*\n`;
+            }
             message += `-------------------------\n\n`;
           });
         }
       } else if (scope === 'month') {
+        // This part remains the same, it's already correct.
         message = `*🗓️ REKAP RESERVASI BULANAN 🗓️*\n*Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n=========================\n\n`;
-        let totalReservations = Object.values(dataReservasi).flat().length;
-        if (totalReservations === 0) { message += `_Tidak ada reservasi untuk bulan ini._`; }
-        else { Object.keys(dataReservasi).sort().forEach(dateKey => { message += `*📆 Tgl ${parseInt(dateKey.split('-')[1])}:* ${dataReservasi[dateKey].length} reservasi\n`; }); }
-      } else { showToast("Pilih tanggal untuk laporan harian.", "error"); return; }
+        const sortedDates = Object.keys(dataReservasi).sort((a, b) => a.localeCompare(b));
+        let totalReservations = sortedDates.reduce((acc, key) => acc + dataReservasi[key].length, 0);
+        if (totalReservations === 0) {
+          message += `_Tidak ada reservasi untuk bulan ini._`;
+        } else {
+          sortedDates.forEach(dateKey => {
+            const reservationsOnDate = dataReservasi[dateKey];
+            if (reservationsOnDate.length > 0) {
+              message += `*📆 Tanggal: ${parseInt(dateKey.split('-')[1])} ${monthNames[currentMonth]}* (${reservationsOnDate.length} reservasi)\n`;
+            }
+          });
+        }
+      } else {
+        showToast("Pilih tanggal terlebih dahulu untuk laporan harian.", "error");
+        return;
+      }
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     }
-    function shareViaEmail() {
-      if (!tanggalDipilih || !(dataReservasi[tanggalDipilih] || []).length) { showToast("Pilih tanggal yang memiliki reservasi.", "error"); return; }
+
+        function shareViaEmail() {
+      if (!tanggalDipilih || !(dataReservasi[tanggalDipilih] || []).length) {
+        showToast("Pilih tanggal yang memiliki reservasi.", "error");
+        return;
+      }
       const day = parseInt(tanggalDipilih.split('-')[1]);
-      const subject = `Laporan Reservasi - ${day} ${monthNames[currentMonth]} ${currentYear}`;
-      let body = `<h2 style="color: #264653;">Laporan Reservasi: ${day} ${monthNames[currentMonth]} ${currentYear}</h2><hr><ol>`;
-      (dataReservasi[tanggalDipilih] || []).forEach(r => {
-        const menuListHtml = (r.menus && r.menus.length > 0) ? `<ul>${r.menus.map(item => `<li>${item.quantity}x ${item.name}</li>`).join('')}</ul>` : `<p><strong>Menu:</strong> ${r.menu}</p>`;
-        body += `<li style="margin-bottom: 20px;">
-            <h3 style="color: #2a9d8f;">${r.nama}</h3><p><strong>Jam:</strong> ${r.jam} | <strong>Tempat:</strong> ${r.tempat} | <strong>Jumlah:</strong> ${r.jumlah} org</p>${menuListHtml}
-            ${r.dp > 0 ? `<p><strong>DP:</strong> Rp${formatRupiah(r.dp)} (${r.tipeDp || 'N/A'})</p>` : ''}${r.tambahan ? `<p><strong>Catatan:</strong> ${r.tambahan}</p>` : ''}</li>`;
+      const subject = `Laporan Reservasi Dolan Sawah - ${day} ${monthNames[currentMonth]} ${currentYear}`;
+      let body = `<h2 style="color: #264653;">📋 Laporan Reservasi Dolan Sawah</h2><p><strong>Tanggal:</strong> ${day} ${monthNames[currentMonth]} ${currentYear}</p><hr><ol>`;
+
+      (dataReservasi[tanggalDipilih] || []).forEach((r) => {
+        // --- BLOK LOGIKA YANG DIPERBAIKI ---
+        let menuListHtml = '<ul><li>_(Tidak ada detail menu)_</li></ul>'; // Default message
+        if (r.menus && r.menus.length > 0) {
+          // Logic for new multi-menu data
+          menuListHtml = `<ul>${r.menus.map(item => `<li>${item.quantity}x ${item.name}</li>`).join('')}</ul>`;
+        } else if (r.menu) {
+          // Fallback logic for old single-menu data
+          menuListHtml = `<p><strong>Menu:</strong> ${r.menu}</p>`;
+        }
+        // --- AKHIR BLOK ---
+
+        let dpHtml = r.dp > 0 ? `<p><strong>💰 DP:</strong> Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
+        let tambahanHtml = r.tambahan ? `<p><strong>📝 Catatan:</strong> ${r.tambahan}</p>` : '';
+
+        body += `<li style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+            <h3 style="color: #2a9d8f; margin-bottom: 10px;">${r.nama}</h3>
+            <p><strong>⏰ Jam:</strong> ${r.jam}</p>
+            <p><strong>📍 Tempat:</strong> ${r.tempat}</p>
+            <p><strong>👥 Jumlah:</strong> ${r.jumlah} orang</p>
+            <p><strong>🍽️ Pesanan Menu:</strong></p>
+            ${menuListHtml}
+            ${dpHtml}
+            ${tambahanHtml}
+          </li>`;
       });
       body += `</ol>`;
       window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
+
 
     // --- RESTORED: Full Print Functionality ---
     function printData() {
@@ -1073,28 +1129,60 @@
       document.getElementById('printOptionsPopup').style.display = 'block';
       overlay.style.display = 'block';
     }
-    function executePrint() {
+        function executePrint() {
       const reservations = dataReservasi[tanggalDipilih] || [];
       const title = document.getElementById('reservation-view-title').innerHTML;
       const dateString = `${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}`;
-      const options = { showMenu: document.getElementById('print-detail-menu').checked, showKontak: document.getElementById('print-kontak').checked, showDp: document.getElementById('print-dp').checked, showTambahan: document.getElementById('print-tambahan').checked };
+      const options = {
+        showMenu: document.getElementById('print-detail-menu').checked,
+        showKontak: document.getElementById('print-kontak').checked,
+        showDp: document.getElementById('print-dp').checked,
+        showTambahan: document.getElementById('print-tambahan').checked
+      };
+
       const itemsHtml = reservations.map((r, index) => {
-        const menuList = options.showMenu ? ((r.menus && r.menus.length > 0) ? r.menus.map(item => `&bull; ${item.quantity}x ${item.name}`).join('<br>') : `&bull; ${r.menu || 'N/A'}`) : '';
+        // --- BLOK LOGIKA YANG DIPERBAIKI ---
+        let menuList = '';
+        if(options.showMenu) {
+            if (r.menus && r.menus.length > 0) {
+                menuList = r.menus.map(item => `&bull; ${item.quantity}x ${item.name}`).join('<br>');
+            } else if (r.menu) {
+                menuList = `&bull; ${r.menu}`;
+            } else {
+                menuList = `&bull; _(Tidak ada detail menu)_`;
+            }
+        }
+        // --- AKHIR BLOK ---
+        
         const dpInfo = options.showDp && r.dp > 0 ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
         const tambahanInfo = options.showTambahan && r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
         const kontakInfo = options.showKontak && r.nomorHp ? `<p><i class="fas fa-phone"></i> <strong>Kontak:</strong> ${r.nomorHp}</p>` : '';
-        return `<div class="print-item"><h3><i class="fas fa-user-circle"></i> ${index + 1}. ${r.nama}</h3>
-            <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p><p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p><p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
-            ${kontakInfo}${options.showMenu ? `<p><i class="fas fa-utensils"></i> <strong>Pesanan:</strong></p><div class="menu-details-print">${menuList}</div>` : ''}${dpInfo}${tambahanInfo}</div>`;
+
+        return `<div class="print-item">
+            <h3><i class="fas fa-user-circle"></i> ${index + 1}. ${r.nama}</h3>
+            <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p>
+            <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p>
+            <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
+            ${kontakInfo}
+            ${options.showMenu ? `<p><i class="fas fa-utensils"></i> <strong>Pesanan:</strong></p><div class="menu-details-print">${menuList}</div>` : ''}
+            ${dpInfo}
+            ${tambahanInfo}
+          </div>`;
       }).join('');
+
       const printPageHtml = `<!DOCTYPE html><html lang="id"><head><title>Cetak Reservasi - ${dateString}</title>
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
           <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
           <style>:root { --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; } body { font-family: 'Poppins', sans-serif; margin: 0; padding: 25px; -webkit-print-color-adjust: exact; } #print-title { font-size: 1.8rem; text-align: center; margin-bottom: 25px; } #print-list { column-count: 2; column-gap: 25px; } .print-item { break-inside: avoid; margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background-color: #fff; } .print-item h3 { font-size: 1.2rem; color: var(--primary); margin: 0 0 10px 0; border-bottom: 2px solid var(--secondary); padding-bottom: 5px; } .print-item p { margin: 6px 0; } .print-item .menu-details-print { margin-top: 5px; font-style: italic; color: #555; border-left: 2px solid #eee; padding-left: 15px; } @media print { body { padding: 10px; } #print-list { column-count: 2; } } @media (max-width: 768px) { #print-list { column-count: 1; } }</style></head>
-        <body><h2 id="print-title">${title}</h2>${reservations.length > 0 ? `<div id="print-list">${itemsHtml}</div>` : '<p style="text-align:center;">Tidak ada reservasi.</p>'}</body></html>`;
+        <body><h2 id="print-title">${title}</h2>${reservations.length > 0 ? `<div id="print-list">${itemsHtml}</div>` : '<p style="text-align:center;">Tidak ada reservasi untuk tanggal ini.</p>'}</body></html>`;
+      
       const printWindow = window.open('', '_blank');
-      printWindow.document.write(printPageHtml); printWindow.document.close(); closePopup('printOptionsPopup');
+      printWindow.document.open();
+      printWindow.document.write(printPageHtml);
+      printWindow.document.close();
+      closePopup('printOptionsPopup');
     }
+
     
     // --- RESTORED: Full Data Analysis Functionality ---
     async function showAnalysis() {
