@@ -26,6 +26,22 @@
       background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
       background-size: cover; background-attachment: fixed; background-position: center; min-height: 100vh;
     }
+    /* Tambahkan ini di mana saja di dalam tag <style> Anda */
+.notification-item.completed .info {
+  text-decoration: line-through;
+  color: #888;
+}
+.notification-item.completed .status-icon {
+  color: var(--success); /* Warna hijau sukses */
+  margin-right: 8px;
+  font-weight: 600;
+}
+.notification-item button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
     body::before {
       content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background-color: rgba(255, 255, 255, 0.85); z-index: -1;
@@ -1299,6 +1315,7 @@
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') runNotificationCheck(true); });
         document.addEventListener('click', () => runNotificationCheck(false));
     }
+
     function runNotificationCheck(force = false) {
         const now = Date.now();
         if (force || (now - lastNotificationCheck > 60 * 1000)) {
@@ -1306,77 +1323,92 @@
             checkThankYouNotifications();
         }
     }
+
     async function checkThankYouNotifications() {
         const now = new Date();
         const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
         try {
-            const snapshot = await db.collection('reservations').where('date', '==', todayString).where('thankYouSent', '!=', true).get();
+            // Mengambil semua reservasi untuk hari ini, diurutkan berdasarkan jam
+            const snapshot = await db.collection('reservations').where('date', '==', todayString).orderBy('jam').get();
+            
             const notificationListUl = document.getElementById('notification-list-ul');
-            let listHtml = ''; let notificationsFound = 0;
-            snapshot.forEach(doc => {
-                const res = { id: doc.id, ...doc.data() };
-                if (!res.jam || !res.nomorHp) return;
-                const [hour, minute] = res.jam.split(':');
-                const reservationDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
-                const thankYouTriggerTime = new Date(reservationDateTime.getTime() + (3 * 60 * 60 * 1000));
-                if (now > thankYouTriggerTime) {
-                    listHtml += `<li class="notification-item" id="notification-item-${res.id}"><span class="info">Kirim ucapan untuk <strong>${res.nama}</strong> (Jam ${res.jam})</span><button class="whatsapp" onclick="sendThankYouWhatsApp('${res.id}', '${res.nama}', '${res.nomorHp}')"><i class="fab fa-whatsapp"></i> Kirim Ucapan</button></li>`;
-                    notificationsFound++;
-                }
-            });
-            notificationListUl.innerHTML = listHtml || `<li style="padding:15px;text-align:center;color:#888;">Tidak ada pengingat.</li>`;
+            let listHtml = '';
+            let notificationsFound = snapshot.docs.length; // Jumlah total reservasi hari ini
+
+            if (notificationsFound === 0) {
+                notificationListUl.innerHTML = `<li style="padding:15px;text-align:center;color:#888;">Tidak ada reservasi hari ini.</li>`;
+            } else {
+                snapshot.forEach(doc => {
+                    const res = { id: doc.id, ...doc.data() };
+                    if (!res.jam) return; // Lewati jika tidak ada jam
+
+                    const [hour, minute] = res.jam.split(':');
+                    const reservationDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
+                    
+                    // Waktu di mana acara dianggap selesai (Reservasi + 3 jam)
+                    const completionTriggerTime = new Date(reservationDateTime.getTime() + (3 * 60 * 60 * 1000));
+                    
+                    // Cek apakah acara sudah selesai
+                    const isCompleted = now > completionTriggerTime;
+                    const completedClass = isCompleted ? 'completed' : '';
+                    const statusIcon = isCompleted ? '<i class="fas fa-check-circle status-icon"></i>' : '';
+                    
+                    // Cek apakah ucapan terima kasih sudah pernah dikirim
+                    const isThankYouSent = res.thankYouSent === true;
+                    const buttonDisabled = isThankYouSent ? 'disabled' : '';
+                    const buttonText = isThankYouSent ? 'Sudah Dihubungi' : 'Kirim Ucapan';
+                    const buttonIcon = isThankYouSent ? 'fas fa-check' : 'fab fa-whatsapp';
+
+                    listHtml += `
+                        <li class="notification-item ${completedClass}" id="notification-item-${res.id}">
+                            <span class="info">
+                                ${statusIcon}
+                                <strong>${res.nama}</strong> (Jam ${res.jam})
+                            </span>
+                            <button class="whatsapp" onclick="sendThankYouWhatsApp('${res.id}', '${res.nama}', '${res.nomorHp}')" ${buttonDisabled}>
+                                <i class="${buttonIcon}"></i> ${buttonText}
+                            </button>
+                        </li>`;
+                });
+                notificationListUl.innerHTML = listHtml;
+            }
+
+            // Update badge dengan jumlah total reservasi hari ini
             const badge = document.getElementById('notification-badge');
             badge.textContent = notificationsFound;
             badge.style.display = notificationsFound > 0 ? 'flex' : 'none';
-        } catch (e) { console.error("Error checking notifications: ", e); }
+
+        } catch (e) {
+            console.error("Error checking notifications: ", e);
+        }
     }
+
     function toggleNotificationDropdown(event) {
         event.stopPropagation();
         const dropdown = document.getElementById('notification-dropdown');
         dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     }
+
     function sendThankYouWhatsApp(id, name, phone) {
         const message = `Halo Kak *${name}*,\n\nKami dari *Dolan Sawah* ingin mengucapkan terima kasih banyak atas kunjungannya hari ini. Kami harap Anda menikmati hidangan dan suasananya. 😊\n\nKami sangat menantikan kedatangan Kakak selanjutnya.\n\nSalam hangat,\n*Tim Dolan Sawah* 🙏`;
         openWhatsApp(phone, name, message);
         markThankYouSent(id);
-        const itemToRemove = document.getElementById(`notification-item-${id}`); if (itemToRemove) itemToRemove.remove();
-        const badge = document.getElementById('notification-badge'); let newCount = parseInt(badge.textContent) - 1;
-        badge.textContent = newCount;
-        if (newCount <= 0) { badge.style.display = 'none'; document.getElementById('notification-dropdown').style.display = 'none'; setTimeout(() => runNotificationCheck(true), 500); }
+        
+        // Nonaktifkan tombol dan ubah teksnya setelah diklik
+        const button = document.querySelector(`#notification-item-${id} button`);
+        if(button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-check"></i> Sudah Dihubungi';
+        }
+        // Tidak perlu lagi mengurangi angka pada badge
     }
+
     async function markThankYouSent(id) {
       try { await db.collection('reservations').doc(id).update({ thankYouSent: true }); } 
       catch(e) { console.error("Failed to mark 'thank you sent': ", e); }
     }
 
-    // --- General Event Listeners ---
-    function forceSync() { showToast("Sinkronisasi data..."); initializeApp(); }
-    function toggleDetailSort(event) { event.stopPropagation(); const el = document.getElementById('sortOptionsDetail'); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
-    function toggleWhatsAppOptions(event) { event.stopPropagation(); const el = document.getElementById('whatsappOptions'); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
-    
-    document.addEventListener('DOMContentLoaded', () => {
-      overlay.addEventListener('click', () => {
-        document.querySelectorAll('.popup-form').forEach(popup => popup.style.display = 'none');
-        overlay.style.display = 'none';
-      });
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-          document.querySelectorAll('.popup-form').forEach(popup => popup.style.display = 'none');
-          overlay.style.display = 'none';
-          if (document.getElementById('reservation-view-container').style.display === 'block') kembaliKeKalender();
-        }
-      });
-      document.addEventListener('click', (event) => { 
-        const bellContainer = document.getElementById('notification-bell-container');
-        if (bellContainer) {
-            const dropdown = document.getElementById('notification-dropdown');
-            if (dropdown && dropdown.style.display === 'block' && !bellContainer.contains(event.target)) {
-               dropdown.style.display = 'none';
-            }
-        }
-        document.querySelectorAll('.sort-options, .whatsapp-options').forEach(el => el.style.display = 'none'); 
-      }); 
-    });
 </script>
 
 </body>
