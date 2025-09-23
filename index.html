@@ -682,17 +682,26 @@
     }
     
     function sortReservations(sortBy) {
-      if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
-      const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => {
-          const valA = a[sortBy] || '';
-          const valB = b[sortBy] || '';
-          return valA.localeCompare(valB);
-      });
-      dataReservasi[tanggalDipilih] = sorted; 
-      updateReservationList(sorted);
-      document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
-      showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
-    }
+  if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
+  
+  // Buat salinan data asli untuk diurutkan
+  const originalData = dataReservasi[tanggalDipilih] || [];
+  const sorted = [...originalData].sort((a, b) => {
+      const valA = a[sortBy] || '';
+      const valB = b[sortBy] || '';
+      return valA.localeCompare(valB);
+  });
+  
+  // HAPUS BARIS INI: dataReservasi[tanggalDipilih] = sorted; 
+  
+  // Langsung perbarui tampilan dengan data yang sudah diurutkan
+  updateReservationList(sorted);
+  
+  // Sembunyikan dropdown dan tampilkan notifikasi
+  document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
+  showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
+}
+
 
     // --- Add/Edit Reservation Logic ---
     function showAddForm() {
