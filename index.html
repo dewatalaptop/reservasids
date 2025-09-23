@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah (Firebase) - V5.0</title>
+  <title>Sistem Reservasi Dolan Sawah (Firebase) - V5.1</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -311,13 +311,7 @@
           <p>Pilih Opsi Laporan Bulanan:</p>
           <button class="whatsapp" onclick="shareViaWhatsApp('month')">Kirim Rekap 1 Bulan</button>
         </div>
-      </div>
-      <button class="accent" onclick="forceSync()"><i class="fas fa-sync-alt"></i> Sinkronisasi</button>
-    </div>
-
-  </div>
-  
-  <div id="addFormPopup" class="popup-form">
+      </  <div id="addFormPopup" class="popup-form">
     <h3><i class="fas fa-calendar-plus"></i> Input Reservasi</h3>
     <form id="reservation-form">
       <label>Nama: <input type="text" id="nama" required /><span class="error-message" id="nama-error"></span></label>
@@ -404,7 +398,11 @@
   </div>
   
   <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan </p></footer>
+div>
+      <button class="accent" onclick="forceSync()"><i class="fas fa-sync-alt"></i> Sinkronisasi</button>
+    </div>
 
+  </div>
 <script>
     // Firebase Configuration
     const firebaseConfig = {
@@ -484,7 +482,7 @@
       loadMenus();
       loadLocations();
       loadReservationsForCurrentMonth();
-      setupReliableNotificationChecker(); // RESTORED
+      setupReliableNotificationChecker();
     }
     
     // --- Data Loading ---
@@ -606,37 +604,46 @@
     
     // --- Reservation Detail View ---
     function updateReservationList(reservations) {
-      const container = document.getElementById('reservation-detail-list');
-      if (!reservations || reservations.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:20px 0; grid-column: 1 / -1;">Tidak ada reservasi untuk ditampilkan.</p>`; 
-        return;
-      }
-      
-      container.innerHTML = reservations.map(r => {
-        const menuItemsHtml = (r.menus && r.menus.length > 0) 
-            ? r.menus.map(item => `&bull; ${item.quantity}x ${item.name}`).join('<br/>')
-            : (detailMenu[r.menu] || r.menuDetails || []).map(item => `• ${item}`).join('<br/>') || "-"; // Fallback for old data
-        const menuTitle = (r.menus && r.menus.length > 0) ? "Pesanan Menu" : r.menu;
+        const container = document.getElementById('reservation-detail-list');
+        if (!reservations || reservations.length === 0) {
+            container.innerHTML = `<p style="text-align:center; padding:20px 0; grid-column: 1 / -1;">Tidak ada reservasi untuk ditampilkan.</p>`; 
+            return;
+        }
+        
+        container.innerHTML = reservations.map(r => {
+            let menuItemsHtml = "-";
+            let menuTitle = "Pesanan Menu";
 
-        const dpInfo = r.dp > 0 ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</div>` : '';
-        const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> ${r.nomorHp}</div>` : '';
+            if (r.menus && r.menus.length > 0) {
+                menuItemsHtml = r.menus.map(item => {
+                    const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
+                    const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br/>');
+                    return `<strong>${item.quantity}x ${item.name}</strong><br/>${detailString}`;
+                }).join('<br/><br/>');
+            } else if (r.menu) { // Fallback untuk data lama
+                menuTitle = r.menu;
+                menuItemsHtml = (detailMenu[r.menu] || []).map(item => `&bull; ${item}`).join('<br/>') || "-";
+            }
 
-        return `
-          <div class="reservation-item" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
-            <div class="reservation-details">
-              <b><i class="fas fa-user"></i> ${r.nama}</b><br/>
-              <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} org</span>
-              ${dpInfo} ${phoneInfo}
-              <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${menuTitle}:</b><br/>${menuItemsHtml}</div>
-              <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
-            </div>
-            <div class="data-actions">
-              ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.id}')"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
-              <button onclick="editReservasi('${r.id}')"><i class="fas fa-edit"></i> Edit</button>
-              <button class="danger" onclick="hapusReservasi('${r.id}')"><i class="fas fa-trash-alt"></i> Hapus</button>
-            </div>
-          </div>`;
-      }).join('');
+            const dpInfo = r.dp > 0 ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</div>` : '';
+            const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> ${r.nomorHp}</div>` : '';
+
+            return `
+            <div class="reservation-item" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+                <div class="reservation-details">
+                <b><i class="fas fa-user"></i> ${r.nama}</b><br/>
+                <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} org</span>
+                ${dpInfo} ${phoneInfo}
+                <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${menuTitle}:</b><br/>${menuItemsHtml}</div>
+                <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
+                </div>
+                <div class="data-actions">
+                ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.id}')"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
+                <button onclick="editReservasi('${r.id}')"><i class="fas fa-edit"></i> Edit</button>
+                <button class="danger" onclick="hapusReservasi('${r.id}')"><i class="fas fa-trash-alt"></i> Hapus</button>
+                </div>
+            </div>`;
+        }).join('');
     }
 
     function filterReservations(query) {
@@ -774,8 +781,9 @@
         if (!elements.tempat.value) { getErrorEl('tempat').textContent = 'Tempat wajib dipilih'; elements.tempat.classList.add('invalid'); isValid = false; }
         
         const selectedLocationName = elements.tempat.value;
-        if (selectedLocationName && locationsData[selectedLocationName]) {
-            const capacity = locationsData[selectedLocationName].capacity;
+        const locationKey = Object.keys(locationsData).find(key => locationsData[key].name === selectedLocationName);
+        if (locationKey && locationsData[locationKey]) {
+            const capacity = locationsData[locationKey].capacity;
             if (jumlahPeserta > capacity) {
                 getErrorEl('jumlah').textContent = `Jumlah melebihi kapasitas tempat (${capacity} org)`;
                 elements.jumlah.classList.add('invalid');
@@ -797,7 +805,7 @@
             if (!quantity || quantity < 1) { getErrorEl('menus').textContent = 'Jumlah menu minimal 1.'; quantityInput.classList.add('invalid'); isValid = false; }
             if (selectedMenuNames.has(menuName)) { getErrorEl('menus').textContent = 'Tidak boleh ada paket menu yang sama.'; menuSelect.classList.add('invalid'); isValid = false; }
             if(menuName) selectedMenuNames.add(menuName);
-            if(menuName && quantity > 0) menus.push({ name: menuName, quantity });
+            if(menuName && quantity > 0) menus.push({ name: menuName, quantity: quantity, details: detailMenu[menuName] || [] });
         });
         
         if (!isValid) return null;
@@ -825,8 +833,7 @@
     function populateLocationDropdown(selectElement, selectedValue = '') {
         if (!selectElement) return;
         selectElement.innerHTML = '<option value="">Pilih Tempat...</option>';
-        Object.keys(locationsData).forEach(name => {
-            const location = locationsData[name];
+        Object.values(locationsData).sort((a,b) => a.name.localeCompare(b.name)).forEach(location => {
             selectElement.add(new Option(`${location.name} (Kapasitas: ${location.capacity})`, location.name));
         });
         if (selectedValue) selectElement.value = selectedValue;
@@ -837,8 +844,9 @@
         const selectElement = form.querySelector('#tempat');
         const infoElement = form.querySelector('#capacity-info');
         const selectedLocationName = selectElement.value;
-        if (selectedLocationName && locationsData[selectedLocationName]) {
-            infoElement.textContent = `Kapasitas maksimal: ${locationsData[selectedLocationName].capacity} orang.`;
+        const locationKey = Object.keys(locationsData).find(key => locationsData[key].name === selectedLocationName);
+        if (locationKey && locationsData[locationKey]) {
+            infoElement.textContent = `Kapasitas maksimal: ${locationsData[locationKey].capacity} orang.`;
         } else { infoElement.textContent = ''; }
     }
     
@@ -924,49 +932,59 @@
         const name = document.getElementById('newLocationName').value.trim();
         const capacity = parseInt(document.getElementById('newLocationCapacity').value);
         if (!name || !capacity || capacity < 1) { showToast("Nama dan kapasitas valid wajib diisi.", "error"); return; }
-        if (locationsData[name]) { showToast("Tempat dengan nama tersebut sudah ada.", "error"); return; }
+        const keyName = name.replace(/\s+/g, '-').toLowerCase();
+        if (Object.values(locationsData).some(loc => loc.name === name)) {
+             showToast("Tempat dengan nama tersebut sudah ada.", "error"); return;
+        }
         showLoader();
         try {
-            await db.collection('locations').doc(name).set({ name, capacity });
+            await db.collection('locations').doc(keyName).set({ name, capacity });
             showToast(`Tempat "${name}" berhasil ditambahkan.`);
             await loadLocations(); renderLocationList();
             document.getElementById('newLocationName').value = ''; document.getElementById('newLocationCapacity').value = '';
         } catch (e) { showToast("Gagal menambah tempat.", "error"); } finally { hideLoader(); }
     }
-    async function deleteLocation(name) {
-        if (!confirm(`Yakin ingin menghapus tempat "${name}"?`)) return;
+    async function deleteLocation(docId) {
+        if (!confirm(`Yakin ingin menghapus tempat "${locationsData[docId].name}"?`)) return;
         showLoader();
         try {
-            await db.collection('locations').doc(name).delete();
-            showToast(`Tempat "${name}" berhasil dihapus.`);
+            await db.collection('locations').doc(docId).delete();
+            showToast(`Tempat berhasil dihapus.`);
             await loadLocations(); renderLocationList();
         } catch (e) { showToast("Gagal menghapus tempat.", "error"); } finally { hideLoader(); }
     }
-    function openEditLocationPopup(name) {
-        const location = locationsData[name];
+    function openEditLocationPopup(docId) {
+        const location = locationsData[docId];
         document.getElementById('locationManagementPopup').innerHTML = `
             <h3><i class="fas fa-edit"></i> Edit Tempat</h3>
             <label>Nama Tempat: <input type="text" id="editingLocationName" value="${location.name}"></label>
             <label>Kapasitas: <input type="number" id="editingLocationCapacity" value="${location.capacity}" min="1"></label>
-            <div class="data-actions"><button onclick="saveEditedLocation('${name}')"><i class="fas fa-save"></i> Simpan</button><button class="danger" onclick="showLocationManagement()">Batal</button></div>`;
+            <div class="data-actions"><button onclick="saveEditedLocation('${docId}')"><i class="fas fa-save"></i> Simpan</button><button class="danger" onclick="showLocationManagement()">Batal</button></div>`;
     }
-    async function saveEditedLocation(originalName) {
+    async function saveEditedLocation(originalDocId) {
         const newName = document.getElementById('editingLocationName').value.trim();
         const newCapacity = parseInt(document.getElementById('editingLocationCapacity').value);
         if (!newName || !newCapacity || newCapacity < 1) { showToast("Nama dan kapasitas valid wajib diisi.", "error"); return; }
+        
+        const originalName = locationsData[originalDocId].name;
         showLoader();
         try {
             if (originalName !== newName) {
-                if (locationsData[newName]) { showToast("Nama tempat sudah digunakan.", "error"); hideLoader(); return; }
-                await db.collection('locations').doc(originalName).delete();
+                 if (Object.values(locationsData).some(loc => loc.name === newName)) {
+                    showToast("Nama tempat sudah digunakan.", "error"); hideLoader(); return;
+                }
+                await db.collection('locations').doc(originalDocId).delete();
+                const newDocId = newName.replace(/\s+/g, '-').toLowerCase();
+                await db.collection('locations').doc(newDocId).set({ name: newName, capacity: newCapacity });
+            } else {
+                 await db.collection('locations').doc(originalDocId).update({ name: newName, capacity: newCapacity });
             }
-            await db.collection('locations').doc(newName).set({ name: newName, capacity: newCapacity });
             showToast(`Tempat "${newName}" berhasil diperbarui.`);
             await loadLocations(); showLocationManagement();
         } catch(e) { showToast("Gagal menyimpan perubahan.", "error"); } finally { hideLoader(); }
     }
     
-    // --- RESTORED: Full Customer List Functionality ---
+    // --- Customer List Functionality ---
     async function showCustomerMenu() {
         showLoader();
         try {
@@ -1029,178 +1047,170 @@
         const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
         openWhatsApp(res.nomorHp, res.nama, message);
     }
-        function shareViaWhatsApp(scope) {
-  let message = '';
-  if (scope === 'day' && tanggalDipilih) {
-    const reservations = (dataReservasi[tanggalDipilih] || []);
-    message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
-    if (reservations.length === 0) {
-      message += `_Tidak ada reservasi untuk tanggal ini._`;
-    } else {
-      reservations.forEach((r, i) => {
-        // --- BLOK LOGIKA YANG DIPERBAIKI ---
-        let menuList = '  - _(Tidak ada detail menu)_'; // Pesan default
-        if (r.menus && r.menus.length > 0) {
-          menuList = r.menus.map(item => {
-            const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
-            const detailString = details.map(d => `      • ${d}`).join('\n'); // Menambahkan detail dengan indentasi
-            return `  - *${item.quantity}x ${item.name}*\n${detailString}`;
-          }).join('\n');
-        } else if (r.menu) {
-          const details = detailMenu[r.menu] || [];
-          const detailString = details.map(d => `      • ${d}`).join('\n');
-          menuList = `  - *${r.menu}*\n${detailString}`;
-        }
-        // --- AKHIR BLOK ---
+    
+    function shareViaWhatsApp(scope) {
+        let message = '';
+        if (scope === 'day' && tanggalDipilih) {
+            const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => a.jam.localeCompare(b.jam));
+            message = `*📋 LAPORAN RESERVasi DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
+            if (reservations.length === 0) {
+            message += `_Tidak ada reservasi untuk tanggal ini._`;
+            } else {
+            reservations.forEach((r, i) => {
+                let menuList = '  - _(Tidak ada detail menu)_';
+                if (r.menus && r.menus.length > 0) {
+                menuList = r.menus.map(item => {
+                    const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
+                    const detailString = details.map(d => `      • ${d}`).join('\n');
+                    return `  - *${item.quantity}x ${item.name}*\n${detailString}`;
+                }).join('\n');
+                } else if (r.menu) { // Fallback untuk data lama
+                const details = detailMenu[r.menu] || [];
+                const detailString = details.map(d => `      • ${d}`).join('\n');
+                menuList = `  - *${r.menu}*\n${detailString}`;
+                }
 
-        message += `*${i + 1}. ${r.nama}*\n`;
-        message += `⏰ Jam: *${r.jam}* | 📍 Tempat: *${r.tempat}* | 👥 Jumlah: *${r.jumlah} org*\n`;
-        message += `🍽️ *Pesanan Menu:*\n${menuList}\n`;
-        if (r.dp > 0) {
-          message += `💰 DP: *Rp ${formatRupiah(r.dp)}* ${r.tipeDp ? `(${r.tipeDp})` : ''}\n`;
+                message += `*${i + 1}. ${r.nama}*\n`;
+                message += `⏰ Jam: *${r.jam}* | 📍 Tempat: *${r.tempat}* | 👥 Jumlah: *${r.jumlah} org*\n`;
+                message += `🍽️ *Pesanan Menu:*\n${menuList}\n`;
+                if (r.dp > 0) {
+                message += `💰 DP: *Rp ${formatRupiah(r.dp)}* ${r.tipeDp ? `(${r.tipeDp})` : ''}\n`;
+                }
+                if (r.tambahan) {
+                message += `📝 Tambahan: *${r.tambahan}*\n`;
+                }
+                message += `-------------------------\n\n`;
+            });
+            }
+        } else if (scope === 'month') {
+            message = `*🗓️ REKAP RESERVasi BULANAN 🗓️*\n*Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n=========================\n\n`;
+            const sortedDates = Object.keys(dataReservasi).sort((a, b) => a.localeCompare(b));
+            let totalReservations = sortedDates.reduce((acc, key) => acc + dataReservasi[key].length, 0);
+            if (totalReservations === 0) {
+            message += `_Tidak ada reservasi untuk bulan ini._`;
+            } else {
+            sortedDates.forEach(dateKey => {
+                const reservationsOnDate = dataReservasi[dateKey];
+                if (reservationsOnDate.length > 0) {
+                message += `*📆 Tanggal: ${parseInt(dateKey.split('-')[1])} ${monthNames[currentMonth]}* (${reservationsOnDate.length} reservasi)\n`;
+                }
+            });
+            }
+        } else {
+            showToast("Pilih tanggal terlebih dahulu untuk laporan harian.", "error");
+            return;
         }
-        if (r.tambahan) {
-          message += `📝 Tambahan: *${r.tambahan}*\n`;
-        }
-        message += `-------------------------\n\n`;
-      });
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     }
-  } else if (scope === 'month') {
-    message = `*🗓️ REKAP RESERVASI BULANAN 🗓️*\n*Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n=========================\n\n`;
-    const sortedDates = Object.keys(dataReservasi).sort((a, b) => a.localeCompare(b));
-    let totalReservations = sortedDates.reduce((acc, key) => acc + dataReservasi[key].length, 0);
-    if (totalReservations === 0) {
-      message += `_Tidak ada reservasi untuk bulan ini._`;
-    } else {
-      sortedDates.forEach(dateKey => {
-        const reservationsOnDate = dataReservasi[dateKey];
-        if (reservationsOnDate.length > 0) {
-          message += `*📆 Tanggal: ${parseInt(dateKey.split('-')[1])} ${monthNames[currentMonth]}* (${reservationsOnDate.length} reservasi)\n`;
+
+    function shareViaEmail() {
+        if (!tanggalDipilih || !(dataReservasi[tanggalDipilih] || []).length) {
+            showToast("Pilih tanggal yang memiliki reservasi.", "error");
+            return;
         }
-      });
+        const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => a.jam.localeCompare(b.jam));
+        const day = parseInt(tanggalDipilih.split('-')[1]);
+        const subject = `Laporan Reservasi Dolan Sawah - ${day} ${monthNames[currentMonth]} ${currentYear}`;
+        let body = `<h2 style="color: #264653;">📋 Laporan Reservasi Dolan Sawah</h2><p><strong>Tanggal:</strong> ${day} ${monthNames[currentMonth]} ${currentYear}</p><hr><ol>`;
+
+        reservations.forEach((r) => {
+            let menuListHtml = '<ul><li>_(Tidak ada detail menu)_</li></ul>';
+            if (r.menus && r.menus.length > 0) {
+            menuListHtml = `<ul style="margin:0; padding-left: 20px;">${r.menus.map(item => {
+                const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
+                const detailListHtml = `<ul style="margin: 4px 0 8px 20px; padding: 0; list-style-type: circle; color: #555;">${details.map(d => `<li>${d}</li>`).join('')}</ul>`;
+                return `<li><strong>${item.quantity}x ${item.name}</strong>${detailListHtml}</li>`;
+            }).join('')}</ul>`;
+            } else if (r.menu) { // Fallback untuk data lama
+            const details = detailMenu[r.menu] || [];
+            const detailListHtml = `<ul style="margin: 4px 0 8px 20px; padding: 0; list-style-type: circle; color: #555;">${details.map(d => `<li>${d}</li>`).join('')}</ul>`;
+            menuListHtml = `<p><strong>Menu: ${r.menu}</strong></p>${detailListHtml}`;
+            }
+
+            let dpHtml = r.dp > 0 ? `<p><strong>💰 DP:</strong> Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
+            let tambahanHtml = r.tambahan ? `<p><strong>📝 Catatan:</strong> ${r.tambahan}</p>` : '';
+
+            body += `<li style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                <h3 style="color: #2a9d8f; margin-bottom: 10px;">${r.nama}</h3>
+                <p><strong>⏰ Jam:</strong> ${r.jam}</p>
+                <p><strong>📍 Tempat:</strong> ${r.tempat}</p>
+                <p><strong>👥 Jumlah:</strong> ${r.jumlah} orang</p>
+                <p><strong>🍽️ Pesanan Menu:</strong></p>
+                ${menuListHtml}
+                ${dpHtml}
+                ${tambahanHtml}
+            </li>`;
+        });
+        body += `</ol>`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
-  } else {
-    showToast("Pilih tanggal terlebih dahulu untuk laporan harian.", "error");
-    return;
-  }
-  window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-}
-
-
-        function shareViaEmail() {
-  if (!tanggalDipilih || !(dataReservasi[tanggalDipilih] || []).length) {
-    showToast("Pilih tanggal yang memiliki reservasi.", "error");
-    return;
-  }
-  const day = parseInt(tanggalDipilih.split('-')[1]);
-  const subject = `Laporan Reservasi Dolan Sawah - ${day} ${monthNames[currentMonth]} ${currentYear}`;
-  let body = `<h2 style="color: #264653;">📋 Laporan Reservasi Dolan Sawah</h2><p><strong>Tanggal:</strong> ${day} ${monthNames[currentMonth]} ${currentYear}</p><hr><ol>`;
-
-  (dataReservasi[tanggalDipilih] || []).forEach((r) => {
-    // --- BLOK LOGIKA YANG DIPERBAIKI ---
-    let menuListHtml = '<ul><li>_(Tidak ada detail menu)_</li></ul>'; // Pesan default
-    if (r.menus && r.menus.length > 0) {
-      menuListHtml = `<ul style="margin:0; padding-left: 20px;">${r.menus.map(item => {
-        const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
-        const detailListHtml = `<ul style="margin: 4px 0 8px 20px; padding: 0; list-style-type: circle; color: #555;">${details.map(d => `<li>${d}</li>`).join('')}</ul>`;
-        return `<li><strong>${item.quantity}x ${item.name}</strong>${detailListHtml}</li>`;
-      }).join('')}</ul>`;
-    } else if (r.menu) {
-      const details = detailMenu[r.menu] || [];
-      const detailListHtml = `<ul style="margin: 4px 0 8px 20px; padding: 0; list-style-type: circle; color: #555;">${details.map(d => `<li>${d}</li>`).join('')}</ul>`;
-      menuListHtml = `<p><strong>Menu: ${r.menu}</strong></p>${detailListHtml}`;
-    }
-    // --- AKHIR BLOK ---
-
-    let dpHtml = r.dp > 0 ? `<p><strong>💰 DP:</strong> Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
-    let tambahanHtml = r.tambahan ? `<p><strong>📝 Catatan:</strong> ${r.tambahan}</p>` : '';
-
-    body += `<li style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
-        <h3 style="color: #2a9d8f; margin-bottom: 10px;">${r.nama}</h3>
-        <p><strong>⏰ Jam:</strong> ${r.jam}</p>
-        <p><strong>📍 Tempat:</strong> ${r.tempat}</p>
-        <p><strong>👥 Jumlah:</strong> ${r.jumlah} orang</p>
-        <p><strong>🍽️ Pesanan Menu:</strong></p>
-        ${menuListHtml}
-        ${dpHtml}
-        ${tambahanHtml}
-      </li>`;
-  });
-  body += `</ol>`;
-  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-
-
-    // --- RESTORED: Full Print Functionality ---
+    
+    // --- Print Functionality ---
     function printData() {
       if (!tanggalDipilih) { showToast("Silakan pilih tanggal terlebih dahulu.", "error"); return; }
       document.getElementById('printOptionsPopup').style.display = 'block';
       overlay.style.display = 'block';
     }
-        function executePrint() {
-  const reservations = dataReservasi[tanggalDipilih] || [];
-  const title = document.getElementById('reservation-view-title').innerHTML;
-  const dateString = `${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}`;
-  const options = {
-    showMenu: document.getElementById('print-detail-menu').checked,
-    showKontak: document.getElementById('print-kontak').checked,
-    showDp: document.getElementById('print-dp').checked,
-    showTambahan: document.getElementById('print-tambahan').checked
-  };
+    
+    function executePrint() {
+        const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => a.jam.localeCompare(b.jam));
+        const title = document.getElementById('reservation-view-title').innerHTML;
+        const dateString = `${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}`;
+        const options = {
+            showMenu: document.getElementById('print-detail-menu').checked,
+            showKontak: document.getElementById('print-kontak').checked,
+            showDp: document.getElementById('print-dp').checked,
+            showTambahan: document.getElementById('print-tambahan').checked
+        };
 
-  const itemsHtml = reservations.map((r, index) => {
-    // --- BLOK LOGIKA YANG DIPERBAIKI ---
-    let menuList = '';
-    if(options.showMenu) {
-        if (r.menus && r.menus.length > 0) {
-            menuList = r.menus.map(item => {
-                const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
-                const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br>');
-                return `<strong>${item.quantity}x ${item.name}</strong><br>${detailString}`;
-            }).join('<br><br>');
-        } else if (r.menu) {
-            const details = detailMenu[r.menu] || [];
-            const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br>');
-            menuList = `<strong>${r.menu}</strong><br>${detailString}`;
-        } else {
-            menuList = `&bull; _(Tidak ada detail menu)_`;
-        }
+        const itemsHtml = reservations.map((r, index) => {
+            let menuList = '';
+            if(options.showMenu) {
+                if (r.menus && r.menus.length > 0) {
+                    menuList = r.menus.map(item => {
+                        const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
+                        const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br>');
+                        return `<strong>${item.quantity}x ${item.name}</strong><br>${detailString}`;
+                    }).join('<br><br>');
+                } else if (r.menu) { // Fallback untuk data lama
+                    const details = detailMenu[r.menu] || [];
+                    const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br>');
+                    menuList = `<strong>${r.menu}</strong><br>${detailString}`;
+                } else {
+                    menuList = `&bull; _(Tidak ada detail menu)_`;
+                }
+            }
+            
+            const dpInfo = options.showDp && r.dp > 0 ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
+            const tambahanInfo = options.showTambahan && r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
+            const kontakInfo = options.showKontak && r.nomorHp ? `<p><i class="fas fa-phone"></i> <strong>Kontak:</strong> ${r.nomorHp}</p>` : '';
+
+            return `<div class="print-item">
+                <h3><i class="fas fa-user-circle"></i> ${index + 1}. ${r.nama}</h3>
+                <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p>
+                <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p>
+                <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
+                ${kontakInfo}
+                ${options.showMenu ? `<p><i class="fas fa-utensils"></i> <strong>Pesanan:</strong></p><div class="menu-details-print">${menuList}</div>` : ''}
+                ${dpInfo}
+                ${tambahanInfo}
+            </div>`;
+        }).join('');
+
+        const printPageHtml = `<!DOCTYPE html><html lang="id"><head><title>Cetak Reservasi - ${dateString}</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+            <style>:root { --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; } body { font-family: 'Poppins', sans-serif; margin: 0; padding: 25px; -webkit-print-color-adjust: exact; } #print-title { font-size: 1.8rem; text-align: center; margin-bottom: 25px; } #print-list { column-count: 2; column-gap: 25px; } .print-item { break-inside: avoid; margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background-color: #fff; border-radius: 8px; } .print-item h3 { font-size: 1.2rem; color: var(--primary); margin: 0 0 10px 0; border-bottom: 2px solid var(--secondary); padding-bottom: 5px; } .print-item p { margin: 6px 0; } .print-item .menu-details-print { margin-top: 5px; color: #555; border-left: 2px solid #eee; padding-left: 15px; } @media print { body { padding: 10px; } #print-list { column-count: 2; } } @media (max-width: 768px) { #print-list { column-count: 1; } }</style></head>
+            <body><h2 id="print-title">${title}</h2>${reservations.length > 0 ? `<div id="print-list">${itemsHtml}</div>` : '<p style="text-align:center;">Tidak ada reservasi untuk tanggal ini.</p>'}</body></html>`;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.open();
+        printWindow.document.write(printPageHtml);
+        printWindow.document.close();
+        closePopup('printOptionsPopup');
     }
-    // --- AKHIR BLOK ---
     
-    const dpInfo = options.showDp && r.dp > 0 ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
-    const tambahanInfo = options.showTambahan && r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
-    const kontakInfo = options.showKontak && r.nomorHp ? `<p><i class="fas fa-phone"></i> <strong>Kontak:</strong> ${r.nomorHp}</p>` : '';
-
-    return `<div class="print-item">
-        <h3><i class="fas fa-user-circle"></i> ${index + 1}. ${r.nama}</h3>
-        <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p>
-        <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p>
-        <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
-        ${kontakInfo}
-        ${options.showMenu ? `<p><i class="fas fa-utensils"></i> <strong>Pesanan:</strong></p><div class="menu-details-print">${menuList}</div>` : ''}
-        ${dpInfo}
-        ${tambahanInfo}
-      </div>`;
-  }).join('');
-
-  const printPageHtml = `<!DOCTYPE html><html lang="id"><head><title>Cetak Reservasi - ${dateString}</title>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-      <style>:root { --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; } body { font-family: 'Poppins', sans-serif; margin: 0; padding: 25px; -webkit-print-color-adjust: exact; } #print-title { font-size: 1.8rem; text-align: center; margin-bottom: 25px; } #print-list { column-count: 2; column-gap: 25px; } .print-item { break-inside: avoid; margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background-color: #fff; border-radius: 8px; } .print-item h3 { font-size: 1.2rem; color: var(--primary); margin: 0 0 10px 0; border-bottom: 2px solid var(--secondary); padding-bottom: 5px; } .print-item p { margin: 6px 0; } .print-item .menu-details-print { margin-top: 5px; color: #555; border-left: 2px solid #eee; padding-left: 15px; } @media print { body { padding: 10px; } #print-list { column-count: 2; } } @media (max-width: 768px) { #print-list { column-count: 1; } }</style></head>
-    <body><h2 id="print-title">${title}</h2>${reservations.length > 0 ? `<div id="print-list">${itemsHtml}</div>` : '<p style="text-align:center;">Tidak ada reservasi untuk tanggal ini.</p>'}</body></html>`;
-  
-  const printWindow = window.open('', '_blank');
-  printWindow.document.open();
-  printWindow.document.write(printPageHtml);
-  printWindow.document.close();
-  closePopup('printOptionsPopup');
-}
-
-
-    
-    // --- RESTORED: Full Data Analysis Functionality ---
+    // --- Data Analysis Functionality ---
     async function showAnalysis() {
         const popup = document.getElementById('analysisPopup');
         popup.innerHTML = `<h3><i class="fas fa-chart-pie"></i> Analisis Data</h3><div id="analysis-filters">
@@ -1268,7 +1278,7 @@
             <h5>Riwayat Reservasi:</h5><div class="profile-history">${historyHtml || '<p>Tidak ada riwayat.</p>'}</div></div>`;
     }
 
-    // --- RESTORED: Notification Bell Functionality ---
+    // --- Notification Bell Functionality ---
     function setupReliableNotificationChecker() {
         if (notificationInterval) clearInterval(notificationInterval);
         runNotificationCheck(true);
@@ -1355,7 +1365,6 @@
       }); 
     });
 </script>
-
 
 </body>
 </html>
