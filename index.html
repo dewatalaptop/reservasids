@@ -1325,64 +1325,78 @@
     }
 
     async function checkThankYouNotifications() {
-        const now = new Date();
-        const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const now = new Date();
+    const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-        try {
-            // Mengambil semua reservasi untuk hari ini, diurutkan berdasarkan jam
-            const snapshot = await db.collection('reservations').where('date', '==', todayString).orderBy('jam').get();
-            
-            const notificationListUl = document.getElementById('notification-list-ul');
-            let listHtml = '';
-            let notificationsFound = snapshot.docs.length; // Jumlah total reservasi hari ini
+    try {
+        // Optimasi: Hanya ambil yang tanggalnya hari ini dan belum dikirim ucapan
+        const snapshot = await db.collection('reservations')
+            .where('date', '==', todayString)
+            .where('thankYouSent', '!=', true) 
+            .get();
 
-            if (notificationsFound === 0) {
-                notificationListUl.innerHTML = `<li style="padding:15px;text-align:center;color:#888;">Tidak ada reservasi hari ini.</li>`;
-            } else {
-                snapshot.forEach(doc => {
-                    const res = { id: doc.id, ...doc.data() };
-                    if (!res.jam) return; // Lewati jika tidak ada jam
+        const notificationListUl = document.getElementById('notification-list-ul');
 
-                    const [hour, minute] = res.jam.split(':');
-                    const reservationDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
-                    
-                    // Waktu di mana acara dianggap selesai (Reservasi + 3 jam)
-                    const completionTriggerTime = new Date(reservationDateTime.getTime() + (3 * 60 * 60 * 1000));
-                    
-                    // Cek apakah acara sudah selesai
-                    const isCompleted = now > completionTriggerTime;
-                    const completedClass = isCompleted ? 'completed' : '';
-                    const statusIcon = isCompleted ? '<i class="fas fa-check-circle status-icon"></i>' : '';
-                    
-                    // Cek apakah ucapan terima kasih sudah pernah dikirim
-                    const isThankYouSent = res.thankYouSent === true;
-                    const buttonDisabled = isThankYouSent ? 'disabled' : '';
-                    const buttonText = isThankYouSent ? 'Sudah Dihubungi' : 'Kirim Ucapan';
-                    const buttonIcon = isThankYouSent ? 'fas fa-check' : 'fab fa-whatsapp';
+        // Buat array kosong untuk menampung notifikasi yang valid (sudah selesai & perlu ditindaklanjuti)
+        const pendingNotifications = [];
 
-                    listHtml += `
-                        <li class="notification-item ${completedClass}" id="notification-item-${res.id}">
-                            <span class="info">
-                                ${statusIcon}
-                                <strong>${res.nama}</strong> (Jam ${res.jam})
-                            </span>
-                            <button class="whatsapp" onclick="sendThankYouWhatsApp('${res.id}', '${res.nama}', '${res.nomorHp}')" ${buttonDisabled}>
-                                <i class="${buttonIcon}"></i> ${buttonText}
-                            </button>
-                        </li>`;
-                });
-                notificationListUl.innerHTML = listHtml;
+        snapshot.forEach(doc => {
+            const res = { id: doc.id, ...doc.data() };
+            if (!res.jam || !res.nomorHp) return; // Lewati jika data tidak lengkap
+
+            const [hour, minute] = res.jam.split(':');
+            const reservationDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
+
+            // Waktu di mana acara dianggap selesai (Reservasi + 3 jam)
+            const completionTriggerTime = new Date(reservationDateTime.getTime() + (3 * 60 * 60 * 1000));
+
+            // Logika penyaringan utama: Hanya tambahkan ke daftar jika acara SUDAH SELESAI
+            if (now > completionTriggerTime) {
+                pendingNotifications.push(res);
             }
+        });
 
-            // Update badge dengan jumlah total reservasi hari ini
-            const badge = document.getElementById('notification-badge');
-            badge.textContent = notificationsFound;
-            badge.style.display = notificationsFound > 0 ? 'flex' : 'none';
+        // Update UI berdasarkan array yang sudah disaring
+        const pendingCount = pendingNotifications.length;
+        const badge = document.getElementById('notification-badge');
 
-        } catch (e) {
-            console.error("Error checking notifications: ", e);
+        if (pendingCount === 0) {
+            notificationListUl.innerHTML = `<li style="padding:15px;text-align:center;color:#888;">Tidak ada pengingat saat ini.</li>`;
+            badge.style.display = 'none';
+        } else {
+            // Urutkan berdasarkan jam agar yang paling lama selesai muncul di atas
+            pendingNotifications.sort((a, b) => a.jam.localeCompare(b.jam));
+
+            let listHtml = '';
+            pendingNotifications.forEach(res => {
+                // Membuat estimasi waktu selesai untuk ditampilkan ke user
+                const estCompletionTime = new Date(new Date(res.date + 'T' + res.jam).getTime() + 3*60*60*1000);
+                const formattedTime = estCompletionTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+
+                listHtml += `
+                    <li class="notification-item" id="notification-item-${res.id}">
+                        <span class="info">
+                            <i class="fas fa-check-circle status-icon" style="color:var(--accent);"></i>
+                            <strong>${res.nama}</strong> (Selesai sekitar jam ${formattedTime})
+                        </span>
+                        <button class="whatsapp" onclick="sendThankYouWhatsApp('${res.id}', '${res.nama}', '${res.nomorHp}')">
+                            <i class="fab fa-whatsapp"></i> Kirim Ucapan
+                        </button>
+                    </li>`;
+            });
+            notificationListUl.innerHTML = listHtml;
+
+            badge.textContent = pendingCount;
+            badge.style.display = 'flex';
         }
+
+    } catch (e) {
+        console.error("Error checking notifications: ", e);
+        // Sembunyikan badge jika terjadi error agar tidak menyesatkan
+        document.getElementById('notification-badge').style.display = 'none';
     }
+}
+
 
     function toggleNotificationDropdown(event) {
         event.stopPropagation();
@@ -1391,18 +1405,30 @@
     }
 
     function sendThankYouWhatsApp(id, name, phone) {
-        const message = `Halo Kak *${name}*,\n\nKami dari *Dolan Sawah* ingin mengucapkan terima kasih banyak atas kunjungannya hari ini. Kami harap Anda menikmati hidangan dan suasananya. 😊\n\nKami sangat menantikan kedatangan Kakak selanjutnya.\n\nSalam hangat,\n*Tim Dolan Sawah* 🙏`;
-        openWhatsApp(phone, name, message);
-        markThankYouSent(id);
-        
-        // Nonaktifkan tombol dan ubah teksnya setelah diklik
-        const button = document.querySelector(`#notification-item-${id} button`);
-        if(button) {
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-check"></i> Sudah Dihubungi';
-        }
-        // Tidak perlu lagi mengurangi angka pada badge
+    const message = `Halo Kak *${name}*,\n\nKami dari *Dolan Sawah* ingin mengucapkan terima kasih banyak atas kunjungannya hari ini. Kami harap Anda menikmati hidangan dan suasananya. 😊\n\nKami sangat menantikan kedatangan Kakak selanjutnya.\n\nSalam hangat,\n*Tim Dolan Sawah* 🙏`;
+    openWhatsApp(phone, name, message);
+    markThankYouSent(id);
+
+    // --- TAMBAHAN: Update UI secara instan ---
+    const itemToRemove = document.getElementById(`notification-item-${id}`);
+    if (itemToRemove) {
+        itemToRemove.style.display = 'none'; // Sembunyikan item dari daftar notifikasi
     }
+
+    const badge = document.getElementById('notification-badge');
+    let currentCount = parseInt(badge.textContent);
+    if (currentCount > 0) {
+        currentCount--; // Kurangi hitungan badge
+        badge.textContent = currentCount;
+        if (currentCount === 0) {
+            badge.style.display = 'none'; // Sembunyikan badge jika sudah 0
+            // Tampilkan pesan kosong di daftar
+            document.getElementById('notification-list-ul').innerHTML = `<li style="padding:15px;text-align:center;color:#888;">Tidak ada pengingat saat ini.</li>`;
+        }
+    }
+    // ------------------------------------------
+}
+
 
     async function markThankYouSent(id) {
       try { await db.collection('reservations').doc(id).update({ thankYouSent: true }); } 
