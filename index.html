@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah (Firebase) - V5.1</title>
+  <title>Sistem Reservasi Dolan Sawah (Firebase) - V5.2</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -174,7 +174,6 @@
     #add-menu-btn { margin-top: 5px; margin-bottom: 15px; padding: 8px 15px; font-size: 0.9rem; }
     #capacity-info { font-size: 0.8rem; color: #555; display: block; margin-top: 4px; font-weight: 400; }
 
-    /* ===== CSS YANG HILANG (TAMBAHKAN INI) ===== */
     #customer-profile-view { padding: 10px; }
     #customer-profile-view h4 { font-size: 1.3rem; margin-bottom: 15px; color: var(--primary-dark); }
     .profile-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
@@ -260,7 +259,7 @@
 <body>
     <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Versi 5.1 (Perbaikan & Integrasi Fitur)</small>
+    <small>Versi 5.2 (Perbaikan Stabilitas & Data)</small>
 
     <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
       <i class="fas fa-bell"></i>
@@ -311,7 +310,12 @@
           <p>Pilih Opsi Laporan Bulanan:</p>
           <button class="whatsapp" onclick="shareViaWhatsApp('month')">Kirim Rekap 1 Bulan</button>
         </div>
-      </  <div id="addFormPopup" class="popup-form">
+      </div>
+      <button class="accent" onclick="forceSync()"><i class="fas fa-sync-alt"></i> Sinkronisasi</button>
+    </div>
+
+  </div>
+  <div id="addFormPopup" class="popup-form">
     <h3><i class="fas fa-calendar-plus"></i> Input Reservasi</h3>
     <form id="reservation-form">
       <label>Nama: <input type="text" id="nama" required /><span class="error-message" id="nama-error"></span></label>
@@ -398,11 +402,6 @@
   </div>
   
   <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan </p></footer>
-div>
-      <button class="accent" onclick="forceSync()"><i class="fas fa-sync-alt"></i> Sinkronisasi</button>
-    </div>
-
-  </div>
 <script>
     // Firebase Configuration
     const firebaseConfig = {
@@ -455,7 +454,7 @@ div>
             loginContainer.style.display = 'none'; 
             mainContainer.style.display = 'block';
             logoutButton.style.display = 'inline-flex'; 
-            initializeApp();
+            initializeApp(); // Panggil fungsi async yang baru
         } else {
             loginContainer.style.display = 'block'; 
             mainContainer.style.display = 'none';
@@ -478,11 +477,19 @@ div>
     function handleLogout() { if (confirm("Yakin ingin logout?")) auth.signOut(); }
 
     // --- App Initialization ---
-    function initializeApp() { 
-      loadMenus();
-      loadLocations();
-      loadReservationsForCurrentMonth();
-      setupReliableNotificationChecker();
+    async function initializeApp() { 
+      showLoader(); // Tampilkan loader selama proses inisialisasi
+      try {
+        await loadMenus();
+        await loadLocations();
+        // Setelah data menu dan lokasi pasti siap, baru jalankan pengambilan data reservasi
+        loadReservationsForCurrentMonth(); // Fungsi ini akan menyembunyikan loader saat datanya siap
+        setupReliableNotificationChecker();
+      } catch (e) {
+        console.error("Gagal melakukan inisialisasi:", e);
+        showToast("Gagal memulai aplikasi", "error");
+        hideLoader();
+      }
     }
     
     // --- Data Loading ---
@@ -508,7 +515,7 @@ div>
       const startDate = `${currentYear}-${monthStr}-01`;
       const endDate = `${currentYear}-${monthStr}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`;
       
-      showLoader();
+      // Don't show loader here, as it's already shown in initializeApp
       unsubscribeReservations = db.collection('reservations')
         .where('date', '>=', startDate).where('date', '<=', endDate)
         .onSnapshot( snapshot => {
@@ -614,7 +621,7 @@ div>
             let menuItemsHtml = "-";
             let menuTitle = "Pesanan Menu";
 
-            if (r.menus && r.menus.length > 0) {
+            if (Array.isArray(r.menus) && r.menus.length > 0) {
                 menuItemsHtml = r.menus.map(item => {
                     const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
                     const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br/>');
@@ -631,8 +638,8 @@ div>
             return `
             <div class="reservation-item" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
                 <div class="reservation-details">
-                <b><i class="fas fa-user"></i> ${r.nama}</b><br/>
-                <span><i class="fas fa-map-marker-alt"></i> ${r.tempat} • <i class="far fa-clock"></i> ${r.jam} • <i class="fas fa-users"></i> ${r.jumlah} org</span>
+                <b><i class="fas fa-user"></i> ${r.nama || 'Nama tidak ada'}</b><br/>
+                <span><i class="fas fa-map-marker-alt"></i> ${r.tempat || '?'} • <i class="far fa-clock"></i> ${r.jam  || '?'} • <i class="fas fa-users"></i> ${r.jumlah  || '?'} org</span>
                 ${dpInfo} ${phoneInfo}
                 <div class="menu-detail"><b><i class="fas fa-utensils"></i> ${menuTitle}:</b><br/>${menuItemsHtml}</div>
                 <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
@@ -650,9 +657,9 @@ div>
       if (!tanggalDipilih) return;
       const q = query.toLowerCase();
       const filtered = (dataReservasi[tanggalDipilih] || []).filter(r => 
-        r.nama.toLowerCase().includes(q) || 
-        r.tempat.toLowerCase().includes(q) ||
-        (r.menus && r.menus.some(m => m.name.toLowerCase().includes(q))) ||
+        (r.nama && r.nama.toLowerCase().includes(q)) || 
+        (r.tempat && r.tempat.toLowerCase().includes(q)) ||
+        (r.menus && r.menus.some(m => m.name && m.name.toLowerCase().includes(q))) ||
         (r.menu && r.menu.toLowerCase().includes(q))
       );
       updateReservationList(filtered);
@@ -660,7 +667,11 @@ div>
     
     function sortReservations(sortBy) {
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
-      const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => a[sortBy].localeCompare(b[sortBy]));
+      const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => {
+          const valA = a[sortBy] || '';
+          const valB = b[sortBy] || '';
+          return valA.localeCompare(valB);
+      });
       dataReservasi[tanggalDipilih] = sorted; 
       updateReservationList(sorted);
       document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
@@ -693,10 +704,10 @@ div>
         <form id="edit-reservation-form">
           <h3><i class="fas fa-edit"></i> Edit Reservasi</h3>
           <input type="hidden" id="editReservationId" value="${id}" />
-          <label>Nama: <input type="text" id="nama" value="${res.nama}" required /><span class="error-message" id="nama-error"></span></label>
+          <label>Nama: <input type="text" id="nama" value="${res.nama || ''}" required /><span class="error-message" id="nama-error"></span></label>
           <label>Nomor HP: <input type="tel" id="nomorHp" value="${res.nomorHp || ''}" /><span class="error-message" id="nomorHp-error"></span></label>
-          <label>Jam: <input type="time" id="jam" value="${res.jam}" required /><span class="error-message" id="jam-error"></span></label>
-          <label>Jumlah: <input type="number" id="jumlah" value="${res.jumlah}" min="1" required /><span class="error-message" id="jumlah-error"></span></label>
+          <label>Jam: <input type="time" id="jam" value="${res.jam || ''}" required /><span class="error-message" id="jam-error"></span></label>
+          <label>Jumlah: <input type="number" id="jumlah" value="${res.jumlah || ''}" min="1" required /><span class="error-message" id="jumlah-error"></span></label>
           <label>DP: <input type="number" id="dp" value="${res.dp || 0}" min="0" /></label>
           <label>Tipe Pembayaran DP: <select id="tipeDp"></select></label>
           <label>Tempat: <select id="tempat" required onchange="updateCapacityInfo('edit-reservation-form')"></select>
@@ -721,10 +732,12 @@ div>
       
       const menuContainer = editFormEl.querySelector('#selected-menus-container');
       menuContainer.innerHTML = '';
-      if (res.menus && res.menus.length > 0) {
+      if (Array.isArray(res.menus) && res.menus.length > 0) {
         res.menus.forEach(item => addMenuSelectionRow('edit-reservation-form', item.name, item.quantity));
-      } else {
+      } else if (res.menu) {
         addMenuSelectionRow('edit-reservation-form', res.menu, 1);
+      } else {
+        addMenuSelectionRow('edit-reservation-form');
       }
       form.style.display = 'block'; 
       overlay.style.display = 'block';
@@ -777,7 +790,7 @@ div>
         if (!elements.jam.value) { getErrorEl('jam').textContent = 'Jam wajib diisi'; elements.jam.classList.add('invalid'); isValid = false; }
         
         const jumlahPeserta = parseInt(elements.jumlah.value);
-        if (!jumlahPeserta || jumlahPeserta < 1) { getErrorEl('jumlah').textContent = 'Jumlah minimal 1'; elements.jumlah.classList.add('invalid'); isValid = false; }
+        if (isNaN(jumlahPeserta) || jumlahPeserta < 1) { getErrorEl('jumlah').textContent = 'Jumlah minimal 1'; elements.jumlah.classList.add('invalid'); isValid = false; }
         if (!elements.tempat.value) { getErrorEl('tempat').textContent = 'Tempat wajib dipilih'; elements.tempat.classList.add('invalid'); isValid = false; }
         
         const selectedLocationName = elements.tempat.value;
@@ -802,10 +815,10 @@ div>
             const menuName = menuSelect.value;
             const quantity = parseInt(quantityInput.value);
             if (!menuName) { getErrorEl('menus').textContent = 'Semua paket menu harus dipilih.'; menuSelect.classList.add('invalid'); isValid = false; }
-            if (!quantity || quantity < 1) { getErrorEl('menus').textContent = 'Jumlah menu minimal 1.'; quantityInput.classList.add('invalid'); isValid = false; }
+            if (isNaN(quantity) || quantity < 1) { getErrorEl('menus').textContent = 'Jumlah menu minimal 1.'; quantityInput.classList.add('invalid'); isValid = false; }
             if (selectedMenuNames.has(menuName)) { getErrorEl('menus').textContent = 'Tidak boleh ada paket menu yang sama.'; menuSelect.classList.add('invalid'); isValid = false; }
             if(menuName) selectedMenuNames.add(menuName);
-            if(menuName && quantity > 0) menus.push({ name: menuName, quantity: quantity, details: detailMenu[menuName] || [] });
+            if(menuName && quantity > 0) menus.push({ name: menuName, quantity: quantity });
         });
         
         if (!isValid) return null;
@@ -926,19 +939,19 @@ div>
     }
     function renderLocationList() {
         const container = document.getElementById('location-list-container'); if (!container) return;
-        container.innerHTML = Object.keys(locationsData).map(name => `<div class="menu-item"><span>${locationsData[name].name}<br/><small>Kapasitas: ${locationsData[name].capacity} org</small></span><div class="menu-item-actions"><button onclick="openEditLocationPopup('${name}')"><i class="fas fa-edit"></i></button><button class="danger" onclick="deleteLocation('${name}')"><i class="fas fa-trash-alt"></i></button></div></div>`).join('');
+        container.innerHTML = Object.keys(locationsData).sort((a,b) => locationsData[a].name.localeCompare(locationsData[b].name)).map(docId => `<div class="menu-item"><span>${locationsData[docId].name}<br/><small>Kapasitas: ${locationsData[docId].capacity} org</small></span><div class="menu-item-actions"><button onclick="openEditLocationPopup('${docId}')"><i class="fas fa-edit"></i></button><button class="danger" onclick="deleteLocation('${docId}')"><i class="fas fa-trash-alt"></i></button></div></div>`).join('');
     }
     async function addNewLocation() {
         const name = document.getElementById('newLocationName').value.trim();
         const capacity = parseInt(document.getElementById('newLocationCapacity').value);
-        if (!name || !capacity || capacity < 1) { showToast("Nama dan kapasitas valid wajib diisi.", "error"); return; }
-        const keyName = name.replace(/\s+/g, '-').toLowerCase();
-        if (Object.values(locationsData).some(loc => loc.name === name)) {
+        if (!name || isNaN(capacity) || capacity < 1) { showToast("Nama dan kapasitas valid wajib diisi.", "error"); return; }
+        const docId = name.replace(/\s+/g, '-').toLowerCase();
+        if (Object.values(locationsData).some(loc => loc.name.toLowerCase() === name.toLowerCase())) {
              showToast("Tempat dengan nama tersebut sudah ada.", "error"); return;
         }
         showLoader();
         try {
-            await db.collection('locations').doc(keyName).set({ name, capacity });
+            await db.collection('locations').doc(docId).set({ name, capacity });
             showToast(`Tempat "${name}" berhasil ditambahkan.`);
             await loadLocations(); renderLocationList();
             document.getElementById('newLocationName').value = ''; document.getElementById('newLocationCapacity').value = '';
@@ -964,18 +977,18 @@ div>
     async function saveEditedLocation(originalDocId) {
         const newName = document.getElementById('editingLocationName').value.trim();
         const newCapacity = parseInt(document.getElementById('editingLocationCapacity').value);
-        if (!newName || !newCapacity || newCapacity < 1) { showToast("Nama dan kapasitas valid wajib diisi.", "error"); return; }
+        if (!newName || isNaN(newCapacity) || newCapacity < 1) { showToast("Nama dan kapasitas valid wajib diisi.", "error"); return; }
         
         const originalName = locationsData[originalDocId].name;
         showLoader();
         try {
-            if (originalName !== newName) {
-                 if (Object.values(locationsData).some(loc => loc.name === newName)) {
+            if (originalName.toLowerCase() !== newName.toLowerCase()) {
+                if (Object.values(locationsData).some(loc => loc.name.toLowerCase() === newName.toLowerCase())) {
                     showToast("Nama tempat sudah digunakan.", "error"); hideLoader(); return;
                 }
-                await db.collection('locations').doc(originalDocId).delete();
                 const newDocId = newName.replace(/\s+/g, '-').toLowerCase();
                 await db.collection('locations').doc(newDocId).set({ name: newName, capacity: newCapacity });
+                await db.collection('locations').doc(originalDocId).delete();
             } else {
                  await db.collection('locations').doc(originalDocId).update({ name: newName, capacity: newCapacity });
             }
@@ -1041,7 +1054,7 @@ div>
     function contactViaWhatsApp(id) {
         const res = findReservationById(id);
         if (!res || !res.nomorHp) { showToast("Nomor HP tidak tersedia", "error"); return; }
-        const menuList = (res.menus && res.menus.length > 0) ? res.menus.map(item => `  - ${item.quantity}x ${item.name}`).join('\n') : "  - _Detail tidak tersedia_ -";
+        const menuList = (Array.isArray(res.menus) && res.menus.length > 0) ? res.menus.map(item => `  - ${item.quantity}x ${item.name}`).join('\n') : "  - _Detail tidak tersedia_ -";
         const tambahanInfo = res.tambahan ? `📝 *Request Tambahan:*\n${res.tambahan}\n\n` : '';
         const dpInfo = res.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(res.dp)} ${res.tipeDp ? `(via ${res.tipeDp})` : ''} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
         const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
@@ -1051,27 +1064,27 @@ div>
     function shareViaWhatsApp(scope) {
         let message = '';
         if (scope === 'day' && tanggalDipilih) {
-            const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => a.jam.localeCompare(b.jam));
-            message = `*📋 LAPORAN RESERVasi DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
+            const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
+            message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
             if (reservations.length === 0) {
             message += `_Tidak ada reservasi untuk tanggal ini._`;
             } else {
             reservations.forEach((r, i) => {
                 let menuList = '  - _(Tidak ada detail menu)_';
-                if (r.menus && r.menus.length > 0) {
+                if (Array.isArray(r.menus) && r.menus.length > 0) {
                 menuList = r.menus.map(item => {
                     const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
                     const detailString = details.map(d => `      • ${d}`).join('\n');
                     return `  - *${item.quantity}x ${item.name}*\n${detailString}`;
                 }).join('\n');
-                } else if (r.menu) { // Fallback untuk data lama
+                } else if (r.menu) {
                 const details = detailMenu[r.menu] || [];
                 const detailString = details.map(d => `      • ${d}`).join('\n');
                 menuList = `  - *${r.menu}*\n${detailString}`;
                 }
 
-                message += `*${i + 1}. ${r.nama}*\n`;
-                message += `⏰ Jam: *${r.jam}* | 📍 Tempat: *${r.tempat}* | 👥 Jumlah: *${r.jumlah} org*\n`;
+                message += `*${i + 1}. ${r.nama || 'Nama tidak ada'}*\n`;
+                message += `⏰ Jam: *${r.jam || '?'}* | 📍 Tempat: *${r.tempat || '?'}* | 👥 Jumlah: *${r.jumlah || '?'} org*\n`;
                 message += `🍽️ *Pesanan Menu:*\n${menuList}\n`;
                 if (r.dp > 0) {
                 message += `💰 DP: *Rp ${formatRupiah(r.dp)}* ${r.tipeDp ? `(${r.tipeDp})` : ''}\n`;
@@ -1083,7 +1096,7 @@ div>
             });
             }
         } else if (scope === 'month') {
-            message = `*🗓️ REKAP RESERVasi BULANAN 🗓️*\n*Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n=========================\n\n`;
+            message = `*🗓️ REKAP RESERVASI BULANAN 🗓️*\n*Dolan Sawah - ${monthNames[currentMonth]} ${currentYear}*\n=========================\n\n`;
             const sortedDates = Object.keys(dataReservasi).sort((a, b) => a.localeCompare(b));
             let totalReservations = sortedDates.reduce((acc, key) => acc + dataReservasi[key].length, 0);
             if (totalReservations === 0) {
@@ -1108,20 +1121,20 @@ div>
             showToast("Pilih tanggal yang memiliki reservasi.", "error");
             return;
         }
-        const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => a.jam.localeCompare(b.jam));
+        const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
         const day = parseInt(tanggalDipilih.split('-')[1]);
         const subject = `Laporan Reservasi Dolan Sawah - ${day} ${monthNames[currentMonth]} ${currentYear}`;
         let body = `<h2 style="color: #264653;">📋 Laporan Reservasi Dolan Sawah</h2><p><strong>Tanggal:</strong> ${day} ${monthNames[currentMonth]} ${currentYear}</p><hr><ol>`;
 
         reservations.forEach((r) => {
             let menuListHtml = '<ul><li>_(Tidak ada detail menu)_</li></ul>';
-            if (r.menus && r.menus.length > 0) {
+            if (Array.isArray(r.menus) && r.menus.length > 0) {
             menuListHtml = `<ul style="margin:0; padding-left: 20px;">${r.menus.map(item => {
                 const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
                 const detailListHtml = `<ul style="margin: 4px 0 8px 20px; padding: 0; list-style-type: circle; color: #555;">${details.map(d => `<li>${d}</li>`).join('')}</ul>`;
                 return `<li><strong>${item.quantity}x ${item.name}</strong>${detailListHtml}</li>`;
             }).join('')}</ul>`;
-            } else if (r.menu) { // Fallback untuk data lama
+            } else if (r.menu) {
             const details = detailMenu[r.menu] || [];
             const detailListHtml = `<ul style="margin: 4px 0 8px 20px; padding: 0; list-style-type: circle; color: #555;">${details.map(d => `<li>${d}</li>`).join('')}</ul>`;
             menuListHtml = `<p><strong>Menu: ${r.menu}</strong></p>${detailListHtml}`;
@@ -1131,10 +1144,10 @@ div>
             let tambahanHtml = r.tambahan ? `<p><strong>📝 Catatan:</strong> ${r.tambahan}</p>` : '';
 
             body += `<li style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
-                <h3 style="color: #2a9d8f; margin-bottom: 10px;">${r.nama}</h3>
-                <p><strong>⏰ Jam:</strong> ${r.jam}</p>
-                <p><strong>📍 Tempat:</strong> ${r.tempat}</p>
-                <p><strong>👥 Jumlah:</strong> ${r.jumlah} orang</p>
+                <h3 style="color: #2a9d8f; margin-bottom: 10px;">${r.nama || 'Nama tidak ada'}</h3>
+                <p><strong>⏰ Jam:</strong> ${r.jam || '?'}</p>
+                <p><strong>📍 Tempat:</strong> ${r.tempat || '?'}</p>
+                <p><strong>👥 Jumlah:</strong> ${r.jumlah || '?'} orang</p>
                 <p><strong>🍽️ Pesanan Menu:</strong></p>
                 ${menuListHtml}
                 ${dpHtml}
@@ -1153,7 +1166,7 @@ div>
     }
     
     function executePrint() {
-        const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => a.jam.localeCompare(b.jam));
+        const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
         const title = document.getElementById('reservation-view-title').innerHTML;
         const dateString = `${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}`;
         const options = {
@@ -1166,13 +1179,13 @@ div>
         const itemsHtml = reservations.map((r, index) => {
             let menuList = '';
             if(options.showMenu) {
-                if (r.menus && r.menus.length > 0) {
+                if (Array.isArray(r.menus) && r.menus.length > 0) {
                     menuList = r.menus.map(item => {
                         const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
                         const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br>');
                         return `<strong>${item.quantity}x ${item.name}</strong><br>${detailString}`;
                     }).join('<br><br>');
-                } else if (r.menu) { // Fallback untuk data lama
+                } else if (r.menu) {
                     const details = detailMenu[r.menu] || [];
                     const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br>');
                     menuList = `<strong>${r.menu}</strong><br>${detailString}`;
@@ -1186,10 +1199,10 @@ div>
             const kontakInfo = options.showKontak && r.nomorHp ? `<p><i class="fas fa-phone"></i> <strong>Kontak:</strong> ${r.nomorHp}</p>` : '';
 
             return `<div class="print-item">
-                <h3><i class="fas fa-user-circle"></i> ${index + 1}. ${r.nama}</h3>
-                <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam}</p>
-                <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat}</p>
-                <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah} org</p>
+                <h3><i class="fas fa-user-circle"></i> ${index + 1}. ${r.nama || 'Nama tidak ada'}</h3>
+                <p><i class="far fa-clock"></i> <strong>Jam:</strong> ${r.jam || '?'}</p>
+                <p><i class="fas fa-map-marker-alt"></i> <strong>Tempat:</strong> ${r.tempat || '?'}</p>
+                <p><i class="fas fa-users"></i> <strong>Jumlah:</strong> ${r.jumlah || '?'} org</p>
                 ${kontakInfo}
                 ${options.showMenu ? `<p><i class="fas fa-utensils"></i> <strong>Pesanan:</strong></p><div class="menu-details-print">${menuList}</div>` : ''}
                 ${dpInfo}
@@ -1244,7 +1257,7 @@ div>
         const frequentCustomers = data.filter(r => r.nomorHp).reduce((acc, r) => { if (!acc[r.nomorHp]) acc[r.nomorHp] = { name: r.nama, count: 0, nomorHp: r.nomorHp }; acc[r.nomorHp].count++; return acc; }, {});
         const topSpenders = data.filter(r => r.nomorHp && r.dp > 0).reduce((acc, r) => { if (!acc[r.nomorHp]) acc[r.nomorHp] = { name: r.nama, totalDp: 0, nomorHp: r.nomorHp }; acc[r.nomorHp].totalDp += r.dp; return acc; }, {});
         const popularMenus = data.reduce((acc, r) => {
-            if (r.menus && r.menus.length > 0) r.menus.forEach(item => { acc[item.name] = (acc[item.name] || 0) + item.quantity; });
+            if (Array.isArray(r.menus)) r.menus.forEach(item => { acc[item.name] = (acc[item.name] || 0) + item.quantity; });
             else if (r.menu) acc[r.menu] = (acc[r.menu] || 0) + 1;
             return acc;
         }, {});
@@ -1282,7 +1295,7 @@ div>
     function setupReliableNotificationChecker() {
         if (notificationInterval) clearInterval(notificationInterval);
         runNotificationCheck(true);
-        notificationInterval = setInterval(() => runNotificationCheck(true), 2 * 60 * 1000); // Check every 2 minutes
+        notificationInterval = setInterval(() => runNotificationCheck(true), 2 * 60 * 1000);
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') runNotificationCheck(true); });
         document.addEventListener('click', () => runNotificationCheck(false));
     }
@@ -1337,7 +1350,7 @@ div>
     }
 
     // --- General Event Listeners ---
-    function forceSync() { showToast("Sinkronisasi data..."); loadReservationsForCurrentMonth(); }
+    function forceSync() { showToast("Sinkronisasi data..."); initializeApp(); }
     function toggleDetailSort(event) { event.stopPropagation(); const el = document.getElementById('sortOptionsDetail'); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
     function toggleWhatsAppOptions(event) { event.stopPropagation(); const el = document.getElementById('whatsappOptions'); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
     
