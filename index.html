@@ -327,6 +327,8 @@
           <button class="whatsapp" onclick="shareViaWhatsApp('month')">Kirim Rekap 1 Bulan</button>
         </div>
       </div>
+      <button class="info" onclick="showExportDataPopup()"><i class="fas fa-file-export"></i> Export Data ASCII</button>
+
       <button class="accent" onclick="forceSync()"><i class="fas fa-sync-alt"></i> Sinkronisasi</button>
     </div>
 
@@ -368,6 +370,15 @@
   <div id="locationManagementPopup" class="popup-form"></div>
   <div id="customerListPopup" class="popup-form"></div>
   <div id="analysisPopup" class="popup-form"></div>
+<div id="exportDataPopup" class="popup-form">
+    <h3><i class="fas fa-file-export"></i> Export Data ASCII untuk Viewer</h3>
+    <p>Salin kode di bawah ini dan tempelkan ke dalam kolom import di website kalender viewer.</p>
+    <textarea id="export-data-output" readonly style="height: 150px; font-family: monospace; font-size: 0.8rem; background-color: #f0f0f0; resize: vertical;"></textarea>
+    <div class="data-actions">
+        <button type="button" onclick="copyExportCode()"><i class="fas fa-copy"></i> Salin Kode</button>
+        <button type="button" class="danger" onclick="closePopup('exportDataPopup')"><i class="fas fa-times"></i> Tutup</button>
+    </div>
+</div>
 
   <div id="printOptionsPopup" class="popup-form">
     <h3><i class="fas fa-print"></i> Opsi Cetak</h3>
@@ -1201,7 +1212,76 @@
         body += `</ol>`;
         window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
+    // --- Export Data Functionality ---
+function showExportDataPopup() {
+    // Cek apakah ada data reservasi di bulan ini
+    if (Object.keys(dataReservasi).length === 0) {
+        showToast("Tidak ada data reservasi untuk diekspor di bulan ini.", "error");
+        return;
+    }
+
+    showLoader();
+    try {
+        const simplifiedData = {};
+        
+        // Loop melalui setiap tanggal di dataReservasi
+        for (const dateKey in dataReservasi) {
+            if (dataReservasi.hasOwnProperty(dateKey)) {
+                // Ambil data yang dibutuhkan oleh website viewer: nama, jumlah, jam, tempat
+                simplifiedData[dateKey] = dataReservasi[dateKey].map(res => ({
+                    nama: res.nama || 'Tanpa Nama',
+                    jumlah: res.jumlah || 0,
+                    jam: res.jam || '00:00',
+                    tempat: res.tempat || 'Tanpa Lokasi'
+                }));
+            }
+        }
+        
+        // Buat payload sesuai format yang diharapkan oleh importer di website kedua
+        const exportPayload = {
+            version: '5.2-export',
+            data: simplifiedData
+        };
+        
+        // Ubah menjadi string JSON
+        const jsonString = JSON.stringify(exportPayload);
+        
+        // Encode menjadi Base64 (ASCII)
+        const encodedData = btoa(unescape(encodeURIComponent(jsonString)));
+        
+        // Tampilkan di textarea
+        document.getElementById('export-data-output').value = encodedData;
+        
+        // Tampilkan popup
+        document.getElementById('exportDataPopup').style.display = 'block';
+        overlay.style.display = 'block';
+        
+    } catch (e) {
+        console.error("Export error:", e);
+        showToast("Terjadi kesalahan saat membuat kode ekspor.", "error");
+    } finally {
+        hideLoader();
+    }
+}
+
+function copyExportCode() {
+    const textarea = document.getElementById('export-data-output');
+    if (!textarea.value) {
+        showToast("Tidak ada kode untuk disalin.", "error");
+        return;
+    }
     
+    textarea.select();
+    textarea.setSelectionRange(0, 99999); // Untuk kompatibilitas mobile
+    
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        showToast("Kode berhasil disalin ke clipboard!");
+    }).catch(err => {
+        console.error('Gagal menyalin: ', err);
+        showToast("Gagal menyalin kode. Coba salin secara manual.", "error");
+    });
+}
+
     // --- Print Functionality ---
     function printData() {
       if (!tanggalDipilih) { showToast("Silakan pilih tanggal terlebih dahulu.", "error"); return; }
