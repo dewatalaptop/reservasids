@@ -683,24 +683,24 @@
     
     function sortReservations(sortBy) {
   if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
+
+  // Membuat salinan baru dari data asli untuk diurutkan, tanpa mengubah data induk
+  const reservationsToSort = [...dataReservasi[tanggalDipilih]]; 
   
-  // Buat salinan data asli untuk diurutkan
-  const originalData = dataReservasi[tanggalDipilih] || [];
-  const sorted = [...originalData].sort((a, b) => {
+  const sorted = reservationsToSort.sort((a, b) => {
       const valA = a[sortBy] || '';
       const valB = b[sortBy] || '';
       return valA.localeCompare(valB);
   });
   
-  // HAPUS BARIS INI: dataReservasi[tanggalDipilih] = sorted; 
-  
-  // Langsung perbarui tampilan dengan data yang sudah diurutkan
+  // Langsung perbarui tampilan dengan data yang sudah diurutkan (tanpa menyimpan kembali ke dataReservasi)
   updateReservationList(sorted);
   
   // Sembunyikan dropdown dan tampilkan notifikasi
   document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
   showToast(`Reservasi diurutkan berdasarkan ${sortBy}`);
 }
+
 
 
     // --- Add/Edit Reservation Logic ---
@@ -1335,37 +1335,41 @@
 
     async function checkThankYouNotifications() {
     const now = new Date();
+    
+    // PERBAIKAN 1: Menentukan rentang tanggal (7 hari terakhir hingga hari ini)
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Waktu 00:00 hari ini
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+
     const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const sevenDaysAgoString = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(sevenDaysAgo.getDate()).padStart(2, '0')}`;
 
     try {
-        // Optimasi: Hanya ambil yang tanggalnya hari ini dan belum dikirim ucapan
+        // PERBAIKAN 2: Query diubah untuk mencari data dalam rentang 7 hari terakhir
         const snapshot = await db.collection('reservations')
-            .where('date', '==', todayString)
+            .where('date', '>=', sevenDaysAgoString)
+            .where('date', '<=', todayString)
             .where('thankYouSent', '!=', true) 
             .get();
 
         const notificationListUl = document.getElementById('notification-list-ul');
-
-        // Buat array kosong untuk menampung notifikasi yang valid (sudah selesai & perlu ditindaklanjuti)
         const pendingNotifications = [];
 
         snapshot.forEach(doc => {
             const res = { id: doc.id, ...doc.data() };
-            if (!res.jam || !res.nomorHp) return; // Lewati jika data tidak lengkap
+            if (!res.jam || !res.nomorHp || !res.date) return;
 
-            const [hour, minute] = res.jam.split(':');
-            const reservationDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
+            // PERBAIKAN 3: Membuat objek Date yang akurat berdasarkan TANGGAL dan JAM asli reservasi
+            const reservationDateTime = new Date(res.date + 'T' + res.jam);
+            if (isNaN(reservationDateTime.getTime())) return; // Lewati jika format tanggal/jam tidak valid
 
-            // Waktu di mana acara dianggap selesai (Reservasi + 3 jam)
             const completionTriggerTime = new Date(reservationDateTime.getTime() + (3 * 60 * 60 * 1000));
 
-            // Logika penyaringan utama: Hanya tambahkan ke daftar jika acara SUDAH SELESAI
             if (now > completionTriggerTime) {
                 pendingNotifications.push(res);
             }
         });
 
-        // Update UI berdasarkan array yang sudah disaring
         const pendingCount = pendingNotifications.length;
         const badge = document.getElementById('notification-badge');
 
@@ -1373,20 +1377,20 @@
             notificationListUl.innerHTML = `<li style="padding:15px;text-align:center;color:#888;">Tidak ada pengingat saat ini.</li>`;
             badge.style.display = 'none';
         } else {
-            // Urutkan berdasarkan jam agar yang paling lama selesai muncul di atas
-            pendingNotifications.sort((a, b) => a.jam.localeCompare(b.jam));
+            pendingNotifications.sort((a, b) => (a.date + a.jam).localeCompare(b.date + b.jam));
 
             let listHtml = '';
             pendingNotifications.forEach(res => {
-                // Membuat estimasi waktu selesai untuk ditampilkan ke user
                 const estCompletionTime = new Date(new Date(res.date + 'T' + res.jam).getTime() + 3*60*60*1000);
                 const formattedTime = estCompletionTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                const formattedDate = new Date(res.date + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' });
+
 
                 listHtml += `
                     <li class="notification-item" id="notification-item-${res.id}">
                         <span class="info">
                             <i class="fas fa-check-circle status-icon" style="color:var(--accent);"></i>
-                            <strong>${res.nama}</strong> (Selesai sekitar jam ${formattedTime})
+                            <strong>${res.nama}</strong> (${formattedDate}, selesai sekitar jam ${formattedTime})
                         </span>
                         <button class="whatsapp" onclick="sendThankYouWhatsApp('${res.id}', '${res.nama}', '${res.nomorHp}')">
                             <i class="fab fa-whatsapp"></i> Kirim Ucapan
@@ -1401,10 +1405,10 @@
 
     } catch (e) {
         console.error("Error checking notifications: ", e);
-        // Sembunyikan badge jika terjadi error agar tidak menyesatkan
         document.getElementById('notification-badge').style.display = 'none';
     }
 }
+
 
 
     function toggleNotificationDropdown(event) {
