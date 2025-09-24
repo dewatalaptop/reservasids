@@ -1213,6 +1213,8 @@
         window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     }
     // --- Export Data Functionality ---
+// --- INI ADALAH KODE BARU YANG SUDAH DIPERBAIKI ---
+
 function showExportDataPopup() {
     // Cek apakah ada data reservasi di bulan ini
     if (Object.keys(dataReservasi).length === 0) {
@@ -1220,7 +1222,6 @@ function showExportDataPopup() {
         return;
     }
 
-    showLoader();
     try {
         const simplifiedData = {};
         
@@ -1259,10 +1260,9 @@ function showExportDataPopup() {
     } catch (e) {
         console.error("Export error:", e);
         showToast("Terjadi kesalahan saat membuat kode ekspor.", "error");
-    } finally {
-        hideLoader();
     }
 }
+
 
 function copyExportCode() {
     const textarea = document.getElementById('export-data-output');
