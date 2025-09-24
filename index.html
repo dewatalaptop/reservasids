@@ -624,7 +624,26 @@
         currentMonth = new Date().getMonth(); currentYear = new Date().getFullYear();
         kembaliKeKalender(); loadReservationsForCurrentMonth(); showToast("Kembali ke bulan ini");
     }
-    
+        function toggleDetailSort(event) {
+        event.stopPropagation(); // Mencegah event 'click' menyebar ke window
+        const sortOptions = document.getElementById('sortOptionsDetail');
+        if (sortOptions.style.display === 'block') {
+            sortOptions.style.display = 'none';
+        } else {
+            sortOptions.style.display = 'block';
+        }
+    }
+
+    // --- (OPSIONAL TAPI SANGAT DIREKOMENDASIKAN) ---
+    // Tambahkan ini untuk menutup dropdown saat mengklik di tempat lain
+    window.addEventListener('click', function(e) {
+        document.querySelectorAll('.sort-options-container').forEach(container => {
+            if (!container.contains(e.target)) {
+                container.querySelector('.sort-options').style.display = 'none';
+            }
+        });
+    });
+
     // --- Reservation Detail View ---
     function updateReservationList(reservations) {
         const container = document.getElementById('reservation-detail-list');
