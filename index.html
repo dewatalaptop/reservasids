@@ -655,7 +655,7 @@
         });
     });
 
-    // --- Reservation Detail View ---
+        // --- Reservation Detail View ---
     function updateReservationList(reservations) {
         const container = document.getElementById('reservation-detail-list');
         if (!reservations || reservations.length === 0) {
@@ -681,6 +681,17 @@
             const dpInfo = r.dp > 0 ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</div>` : '';
             const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> ${r.nomorHp}</div>` : '';
 
+            // --- KODE BARU DIMULAI DI SINI ---
+            let thankYouButtonHtml = '';
+            if (r.nomorHp) {
+                if (r.thankYouSent) {
+                    thankYouButtonHtml = `<button style="background-color: var(--success);" disabled><i class="fas fa-check-circle"></i> Terima Kasih Terkirim</button>`;
+                } else {
+                    thankYouButtonHtml = `<button class="accent" id="thank-you-btn-${r.id}" onclick="sendThankYouMessage('${r.id}', '${r.nama}', '${r.nomorHp}')"><i class="fas fa-gift"></i> Ucapkan Terima Kasih</button>`;
+                }
+            }
+            // --- KODE BARU BERAKHIR DI SINI ---
+
             return `
             <div class="reservation-item" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
                 <div class="reservation-details">
@@ -692,12 +703,14 @@
                 </div>
                 <div class="data-actions">
                 ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.id}')"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
+                ${thankYouButtonHtml} 
                 <button onclick="editReservasi('${r.id}')"><i class="fas fa-edit"></i> Edit</button>
                 <button class="danger" onclick="hapusReservasi('${r.id}')"><i class="fas fa-trash-alt"></i> Hapus</button>
                 </div>
             </div>`;
         }).join('');
     }
+
 
     function filterReservations(query) {
       if (!tanggalDipilih) return;
@@ -1115,6 +1128,42 @@
         const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
         openWhatsApp(res.nomorHp, res.nama, message);
     }
+    // --- TAMBAHKAN DUA FUNGSI BARU DI BAWAH INI ---
+
+/**
+ * Mengirim pesan terima kasih via WhatsApp dan memperbarui UI & database.
+ */
+function sendThankYouMessage(id, name, phone) {
+    // Teks pesan yang atraktif dan sopan
+    const message = `Halo Kak *${name}* 👋,\n\nKami dari *Dolan Sawah* ingin mengucapkan terima kasih banyak atas kunjungannya. 🙏\n\nKami harap Kakak dan rombongan menikmati hidangan serta suasana di tempat kami. 🌾😊\n\nMasukan dan saran dari Kakak sangat berarti bagi kami untuk menjadi lebih baik lagi. Jika berkenan, silakan balas pesan ini dengan kesan-kesan Kakak.\n\nKami tunggu kedatangannya kembali ya! ✨\n\nSalam hangat,\n*Tim Dolan Sawah* ❤️`;
+    
+    // Buka WhatsApp
+    openWhatsApp(phone, name, message);
+    
+    // Tandai di database bahwa ucapan sudah dikirim
+    markAsThankYouSent(id);
+
+    // Update UI secara langsung agar tombol berubah tanpa perlu refresh
+    const button = document.getElementById(`thank-you-btn-${id}`);
+    if (button) {
+        button.innerHTML = `<i class="fas fa-check-circle"></i> Terima Kasih Terkirim`;
+        button.style.backgroundColor = 'var(--success)';
+        button.disabled = true;
+    }
+}
+
+/**
+ * Menyimpan flag 'thankYouSent' ke Firestore.
+ */
+async function markAsThankYouSent(id) {
+    try {
+        await db.collection('reservations').doc(id).update({ thankYouSent: true });
+    } catch (e) {
+        console.error("Gagal menandai 'ucapan terima kasih terkirim': ", e);
+        showToast("Gagal memperbarui status di database.", "error");
+    }
+}
+
     
     function shareViaWhatsApp(scope) {
         let message = '';
