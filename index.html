@@ -26,6 +26,39 @@
       background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
       background-size: cover; background-attachment: fixed; background-position: center; min-height: 100vh;
     }
+    /* Style untuk Fitur Broadcast */
+.broadcast-customer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.broadcast-customer-item:last-child {
+  border-bottom: none;
+}
+.broadcast-customer-item .customer-info {
+  font-size: 0.95rem;
+}
+.broadcast-customer-item .customer-info small {
+  display: block;
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+.broadcast-customer-item .broadcast-btn {
+  background-color: var(--accent); /* Orange */
+  color: white;
+  padding: 8px 15px;
+  font-size: 0.85rem;
+  margin-top: 0;
+  min-width: 120px;
+  text-align: center;
+}
+.broadcast-customer-item .broadcast-btn.sent {
+  background-color: var(--success); /* Hijau */
+  cursor: default;
+}
+
     /* Tambahkan ini di mana saja di dalam tag <style> Anda */
 .notification-item.completed .info {
   text-decoration: line-through;
@@ -328,7 +361,7 @@
         </div>
       </div>
       <button class="info" onclick="showExportDataPopup()"><i class="fas fa-file-export"></i> Export Data ASCII</button>
-
+<button class="secondary" onclick="showBroadcastMain()"><i class="fas fa-bullhorn"></i> Broadcast Promo</button>
       <button class="accent" onclick="forceSync()"><i class="fas fa-sync-alt"></i> Sinkronisasi</button>
     </div>
 
@@ -398,6 +431,45 @@
   </div>
   
   <div class="overlay" id="overlay"></div>
+<div id="broadcastMainPopup" class="popup-form">
+    <h3><i class="fas fa-bullhorn"></i> Menu Broadcast Promo</h3>
+    <p>Gunakan fitur ini untuk mengirimkan promosi atau pengumuman ke semua pelanggan yang pernah reservasi.</p>
+    <div class="data-actions" style="margin-top: 20px;">
+        <button type="button" class="info" onclick="showBroadcastSettings()"><i class="fas fa-cog"></i> Atur Pesan Broadcast</button>
+        <button type="button" class="whatsapp" onclick="showBroadcastList()"><i class="fas fa-paper-plane"></i> Mulai Broadcast</button>
+    </div>
+    <div class="data-actions" style="margin-top: 10px;">
+        <button type="button" class="danger" onclick="closePopup('broadcastMainPopup')"><i class="fas fa-times"></i> Tutup</button>
+    </div>
+</div>
+
+<div id="broadcastSettingsPopup" class="popup-form">
+    <h3><i class="fas fa-cog"></i> Atur Pesan Broadcast</h3>
+    <p>Tulis pesan yang ingin Anda kirimkan. Anda bisa menggunakan *teks tebal* atau _miring_ untuk format WhatsApp.</p>
+    <form id="broadcast-settings-form">
+        <label for="broadcastMessage">Pesan Promo:</label>
+        <textarea id="broadcastMessage" placeholder="Contoh: Halo Kak! Ada promo spesial weekend ini di Dolan Sawah..." style="height: 150px;"></textarea>
+        <div class="data-actions" style="margin-top: 20px;">
+            <button type="button" onclick="saveBroadcastMessage()"><i class="fas fa-save"></i> Simpan Pesan</button>
+            <button type="button" class="secondary" onclick="closePopup('broadcastSettingsPopup'); showBroadcastMain();"><i class="fas fa-arrow-left"></i> Kembali</button>
+        </div>
+    </form>
+</div>
+
+<div id="broadcastListPopup" class="popup-form" style="max-width: 700px;">
+    <h3><i class="fas fa-users"></i> Daftar Penerima Broadcast</h3>
+    <p>Klik tombol "Broadcast" untuk mengirim pesan ke masing-masing customer via WhatsApp.</p>
+    <div class="search-container" style="margin-top: 15px;">
+        <i class="fas fa-search"></i>
+        <input type="text" id="broadcastCustomerSearch" oninput="filterBroadcastCustomers(this.value)" placeholder="Cari nama atau nomor HP...">
+    </div>
+    <div id="broadcast-customer-list" style="max-height: 40vh; overflow-y: auto; margin-top: 15px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 10px 0;">
+        <p style="text-align: center; color: #888;">Memuat daftar customer...</p>
+    </div>
+    <div class="data-actions" style="margin-top: 20px;">
+        <button type="button" class="danger" onclick="closePopup('broadcastListPopup')"><i class="fas fa-times"></i> Tutup</button>
+    </div>
+</div>
 
   <div id="reservation-view-container" style="display: none; background-color: #f5f5f5; padding: 20px;">
     <div class="reservation-view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--primary);">
@@ -1462,6 +1534,186 @@ function copyExportCode() {
             <button class="whatsapp" onclick="openWhatsApp('${nomorHp}', '${name}')" style="width:100%;margin-bottom:20px;">Hubungi via WhatsApp</button>
             <div class="profile-stats"><div class="stat-card"><div class="value">${customerReservations.length}</div><div class="label">Total Reservasi</div></div><div class="stat-card"><div class="value">Rp ${formatRupiah(totalDp)}</div><div class="label">Total DP</div></div><div class="stat-card"><div class="value">${totalPax}</div><div class="label">Total Tamu</div></div></div>
             <h5>Riwayat Reservasi:</h5><div class="profile-history">${historyHtml || '<p>Tidak ada riwayat.</p>'}</div></div>`;
+    }
+    // --- (Letakkan kode ini sebelum "Notification Bell Functionality") ---
+
+    // =====================================================
+    // =========== LOGIKA FITUR BROADCAST PROMO ============
+    // =====================================================
+
+    // Variabel global untuk menyimpan cache pesan dan daftar customer
+    let promoMessageCache = null;
+    let allCustomersCache = [];
+
+    // Fungsi untuk menampilkan pop-up menu utama broadcast
+    function showBroadcastMain() {
+        document.getElementById('broadcastMainPopup').style.display = 'block';
+        overlay.style.display = 'block';
+    }
+
+    // Fungsi untuk menampilkan pop-up pengaturan pesan
+    async function showBroadcastSettings() {
+        closePopup('broadcastMainPopup');
+        showLoader();
+        try {
+            // Ambil pesan yang sudah tersimpan dari database
+            const docRef = db.collection('settings').doc('broadcast');
+            const doc = await docRef.get();
+            if (doc.exists) {
+                document.getElementById('broadcastMessage').value = doc.data().promoMessage || '';
+            } else {
+                document.getElementById('broadcastMessage').value = '';
+            }
+            document.getElementById('broadcastSettingsPopup').style.display = 'block';
+            overlay.style.display = 'block';
+        } catch (error) {
+            console.error("Gagal mengambil pesan broadcast:", error);
+            showToast("Gagal memuat pesan.", "error");
+        } finally {
+            hideLoader();
+        }
+    }
+
+    // Fungsi untuk menyimpan pesan broadcast ke database
+    async function saveBroadcastMessage() {
+        const message = document.getElementById('broadcastMessage').value.trim();
+        if (!message) {
+            showToast("Pesan tidak boleh kosong.", "error");
+            return;
+        }
+        showLoader();
+        try {
+            // Simpan ke koleksi 'settings' dengan dokumen 'broadcast'
+            await db.collection('settings').doc('broadcast').set({
+                promoMessage: message,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            promoMessageCache = message; // Update cache
+            showToast("Pesan broadcast berhasil disimpan!");
+            closePopup('broadcastSettingsPopup');
+        } catch (error) {
+            console.error("Gagal menyimpan pesan broadcast:", error);
+            showToast("Terjadi kesalahan saat menyimpan.", "error");
+        } finally {
+            hideLoader();
+        }
+    }
+    
+    // Fungsi utama untuk menampilkan daftar customer untuk broadcast
+    async function showBroadcastList() {
+        closePopup('broadcastMainPopup');
+        showLoader();
+        const listContainer = document.getElementById('broadcast-customer-list');
+        listContainer.innerHTML = `<p style="text-align: center; color: #888;">Memuat data...</p>`;
+        
+        try {
+            // 1. Ambil pesan promo terlebih dahulu
+            const docRef = db.collection('settings').doc('broadcast');
+            const doc = await docRef.get();
+            if (!doc.exists || !doc.data().promoMessage) {
+                showToast("Pesan broadcast belum diatur!", "error");
+                // Tawarkan untuk mengatur pesan
+                listContainer.innerHTML = `<p style="text-align: center; color: var(--danger); padding: 20px;">
+                    Pesan broadcast belum diatur. Silakan atur pesan terlebih dahulu. <br><br>
+                    <button class='info' onclick='closePopup("broadcastListPopup"); showBroadcastSettings();'>Atur Pesan Sekarang</button>
+                </p>`;
+                document.getElementById('broadcastListPopup').style.display = 'block';
+                overlay.style.display = 'block';
+                hideLoader();
+                return; // Hentikan fungsi jika pesan kosong
+            }
+            promoMessageCache = doc.data().promoMessage;
+
+            // 2. Ambil semua data reservasi untuk mendapatkan daftar customer unik
+            const snapshot = await db.collection('reservations').orderBy('createdAt', 'desc').get();
+            const customers = new Map(); // Gunakan Map untuk handle duplikasi nomor HP
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // Hanya ambil customer yang punya nomor HP valid
+                if (data.nomorHp && isValidPhone(data.nomorHp)) {
+                    const cleanedPhone = cleanPhoneNumber(data.nomorHp);
+                    if (!customers.has(cleanedPhone)) {
+                        customers.set(cleanedPhone, {
+                            name: data.nama,
+                            phone: cleanedPhone // Simpan nomor yang sudah bersih
+                        });
+                    }
+                }
+            });
+
+            allCustomersCache = [...customers.values()].sort((a, b) => a.name.localeCompare(b.name));
+            
+            if (allCustomersCache.length === 0) {
+                 listContainer.innerHTML = `<p style="text-align: center; color: #888; padding: 20px;">Belum ada data customer dengan nomor HP valid.</p>`;
+            } else {
+                renderBroadcastCustomerList(allCustomersCache);
+            }
+            
+            // Reset input search
+            document.getElementById('broadcastCustomerSearch').value = '';
+            document.getElementById('broadcastListPopup').style.display = 'block';
+            overlay.style.display = 'block';
+
+        } catch (error) {
+            console.error("Gagal memuat daftar broadcast:", error);
+            showToast("Gagal memuat daftar customer.", "error");
+            listContainer.innerHTML = `<p style="text-align: center; color: var(--danger);">Terjadi kesalahan.</p>`;
+        } finally {
+            hideLoader();
+        }
+    }
+
+    // Fungsi untuk me-render daftar customer ke dalam HTML
+    function renderBroadcastCustomerList(customers) {
+        const listContainer = document.getElementById('broadcast-customer-list');
+        listContainer.innerHTML = customers.map(customer => `
+            <div class="broadcast-customer-item" data-name="${customer.name.toLowerCase()}" data-phone="${customer.phone}">
+                <div class="customer-info">
+                    <strong>${customer.name}</strong>
+                    <small>${customer.phone}</small>
+                </div>
+                <button 
+                    class="broadcast-btn" 
+                    id="promo-btn-${customer.phone}" 
+                    onclick="sendPromoBroadcast('${customer.phone}', '${customer.name}', this.id)">
+                    <i class="fab fa-whatsapp"></i> Broadcast
+                </button>
+            </div>
+        `).join('');
+    }
+
+    // Fungsi untuk filter customer di daftar broadcast
+    function filterBroadcastCustomers(query) {
+        const q = query.toLowerCase();
+        const filtered = allCustomersCache.filter(customer => 
+            customer.name.toLowerCase().includes(q) || 
+            customer.phone.includes(q)
+        );
+        renderBroadcastCustomerList(filtered);
+    }
+
+    // Fungsi yang dieksekusi saat tombol "Broadcast" per customer diklik
+    function sendPromoBroadcast(phone, name, buttonId) {
+        if (!promoMessageCache) {
+            showToast("Pesan promo tidak ditemukan. Coba buka ulang menu.", "error");
+            return;
+        }
+
+        const formattedPhone = phone.startsWith('62') ? phone : '62' + phone.substring(1);
+        const personalizedMessage = promoMessageCache.replace(/kak/gi, `Kak *${name}*`);
+        
+        // Buka WhatsApp di tab baru
+        window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(personalizedMessage)}`, '_blank');
+        
+        // Ubah tampilan tombol menjadi hijau (terkirim)
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.classList.add('sent');
+            button.innerHTML = `<i class="fas fa-check-circle"></i> Terkirim`;
+            // Nonaktifkan onclick untuk mencegah pengiriman ganda
+            button.onclick = null; 
+        }
     }
 
     // --- Notification Bell Functionality ---
