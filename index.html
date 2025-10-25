@@ -1544,6 +1544,9 @@ function copyExportCode() {
     // Variabel global untuk menyimpan cache pesan dan daftar customer
     let promoMessageCache = null;
     let allCustomersCache = [];
+    
+    // Definisikan kunci localStorage
+    const BROADCAST_MESSAGE_KEY = 'dolanSawahBroadcastMessage';
 
     // Fungsi untuk menampilkan pop-up menu utama broadcast
     function showBroadcastMain() {
@@ -1551,54 +1554,39 @@ function copyExportCode() {
         overlay.style.display = 'block';
     }
 
+    // --- FUNGSI DIMODIFIKASI ---
     // Fungsi untuk menampilkan pop-up pengaturan pesan
-    async function showBroadcastSettings() {
+    function showBroadcastSettings() {
         closePopup('broadcastMainPopup');
-        showLoader();
-        try {
-            // Ambil pesan yang sudah tersimpan dari database
-            const docRef = db.collection('settings').doc('broadcast');
-            const doc = await docRef.get();
-            if (doc.exists) {
-                document.getElementById('broadcastMessage').value = doc.data().promoMessage || '';
-            } else {
-                document.getElementById('broadcastMessage').value = '';
-            }
-            document.getElementById('broadcastSettingsPopup').style.display = 'block';
-            overlay.style.display = 'block';
-        } catch (error) {
-            console.error("Gagal mengambil pesan broadcast:", error);
-            showToast("Gagal memuat pesan.", "error");
-        } finally {
-            hideLoader();
-        }
+        
+        // Ambil pesan dari localStorage (bukan Firestore)
+        const savedMessage = localStorage.getItem(BROADCAST_MESSAGE_KEY);
+        document.getElementById('broadcastMessage').value = savedMessage || '';
+        
+        // Tampilkan popup (tidak perlu loader/async)
+        document.getElementById('broadcastSettingsPopup').style.display = 'block';
+        overlay.style.display = 'block';
     }
 
-    // Fungsi untuk menyimpan pesan broadcast ke database
-    async function saveBroadcastMessage() {
+    // --- FUNGSI DIMODIFIKASI ---
+    // Fungsi untuk menyimpan pesan broadcast ke localStorage
+    function saveBroadcastMessage() {
         const message = document.getElementById('broadcastMessage').value.trim();
         if (!message) {
             showToast("Pesan tidak boleh kosong.", "error");
             return;
         }
-        showLoader();
-        try {
-            // Simpan ke koleksi 'settings' dengan dokumen 'broadcast'
-            await db.collection('settings').doc('broadcast').set({
-                promoMessage: message,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            promoMessageCache = message; // Update cache
-            showToast("Pesan broadcast berhasil disimpan!");
-            closePopup('broadcastSettingsPopup');
-        } catch (error) {
-            console.error("Gagal menyimpan pesan broadcast:", error);
-            showToast("Terjadi kesalahan saat menyimpan.", "error");
-        } finally {
-            hideLoader();
-        }
+        
+        // Simpan ke localStorage (bukan Firestore)
+        localStorage.setItem(BROADCAST_MESSAGE_KEY, message);
+        
+        promoMessageCache = message; // Update cache
+        showToast("Pesan broadcast berhasil disimpan!");
+        closePopup('broadcastSettingsPopup');
+        // Tidak perlu loader/async
     }
     
+    // --- FUNGSI DIMODIFIKASI ---
     // Fungsi utama untuk menampilkan daftar customer untuk broadcast
     async function showBroadcastList() {
         closePopup('broadcastMainPopup');
@@ -1607,10 +1595,9 @@ function copyExportCode() {
         listContainer.innerHTML = `<p style="text-align: center; color: #888;">Memuat data...</p>`;
         
         try {
-            // 1. Ambil pesan promo terlebih dahulu
-            const docRef = db.collection('settings').doc('broadcast');
-            const doc = await docRef.get();
-            if (!doc.exists || !doc.data().promoMessage) {
+            // 1. Ambil pesan promo dari localStorage (bukan Firestore)
+            const savedMessage = localStorage.getItem(BROADCAST_MESSAGE_KEY);
+            if (!savedMessage) {
                 showToast("Pesan broadcast belum diatur!", "error");
                 // Tawarkan untuk mengatur pesan
                 listContainer.innerHTML = `<p style="text-align: center; color: var(--danger); padding: 20px;">
@@ -1622,9 +1609,9 @@ function copyExportCode() {
                 hideLoader();
                 return; // Hentikan fungsi jika pesan kosong
             }
-            promoMessageCache = doc.data().promoMessage;
+            promoMessageCache = savedMessage;
 
-            // 2. Ambil semua data reservasi untuk mendapatkan daftar customer unik
+            // 2. Ambil semua data reservasi untuk mendapatkan daftar customer unik (INI TETAP DARI FIRESTORE)
             const snapshot = await db.collection('reservations').orderBy('createdAt', 'desc').get();
             const customers = new Map(); // Gunakan Map untuk handle duplikasi nomor HP
             
@@ -1657,14 +1644,15 @@ function copyExportCode() {
 
         } catch (error) {
             console.error("Gagal memuat daftar broadcast:", error);
-            showToast("Gagal memuat daftar customer.", "error");
+            // Error ini kemungkinan besar dari pengambilan customer, bukan dari localStorage
+            showToast("Gagal memuat daftar customer.", "error"); 
             listContainer.innerHTML = `<p style="text-align: center; color: var(--danger);">Terjadi kesalahan.</p>`;
         } finally {
             hideLoader();
         }
     }
 
-    // Fungsi untuk me-render daftar customer ke dalam HTML
+    // Fungsi untuk me-render daftar customer ke dalam HTML (Tidak Berubah)
     function renderBroadcastCustomerList(customers) {
         const listContainer = document.getElementById('broadcast-customer-list');
         listContainer.innerHTML = customers.map(customer => `
@@ -1683,7 +1671,7 @@ function copyExportCode() {
         `).join('');
     }
 
-    // Fungsi untuk filter customer di daftar broadcast
+    // Fungsi untuk filter customer di daftar broadcast (Tidak Berubah)
     function filterBroadcastCustomers(query) {
         const q = query.toLowerCase();
         const filtered = allCustomersCache.filter(customer => 
@@ -1693,7 +1681,7 @@ function copyExportCode() {
         renderBroadcastCustomerList(filtered);
     }
 
-    // Fungsi yang dieksekusi saat tombol "Broadcast" per customer diklik
+    // Fungsi yang dieksekusi saat tombol "Broadcast" per customer diklik (Tidak Berubah)
     function sendPromoBroadcast(phone, name, buttonId) {
         if (!promoMessageCache) {
             showToast("Pesan promo tidak ditemukan. Coba buka ulang menu.", "error");
