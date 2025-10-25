@@ -1191,15 +1191,43 @@
         const message = messageTemplate || `Halo Kak *${name}*, kami dari Dolan Sawah ingin menyapa. Terima kasih telah menjadi pelanggan kami! 😊`;
         window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
     }
-    function contactViaWhatsApp(id) {
-        const res = findReservationById(id);
-        if (!res || !res.nomorHp) { showToast("Nomor HP tidak tersedia", "error"); return; }
-        const menuList = (Array.isArray(res.menus) && res.menus.length > 0) ? res.menus.map(item => `  - ${item.quantity}x ${item.name}`).join('\n') : "  - _Detail tidak tersedia_ -";
-        const tambahanInfo = res.tambahan ? `📝 *Request Tambahan:*\n${res.tambahan}\n\n` : '';
-        const dpInfo = res.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(res.dp)} ${res.tipeDp ? `(via ${res.tipeDp})` : ''} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
-        const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
-        openWhatsApp(res.nomorHp, res.nama, message);
+    // SALIN DAN TIMPA FUNGSI LAMA ANDA DENGAN YANG INI
+function contactViaWhatsApp(id) {
+    const res = findReservationById(id);
+    if (!res || !res.nomorHp) { showToast("Nomor HP tidak tersedia", "error"); return; }
+    
+    // --- PERBAIKAN DIMULAI DARI SINI ---
+    
+    // Logika baru untuk mengambil detail menu
+    let menuList = '  - _(Tidak ada detail menu)_';
+    if (Array.isArray(res.menus) && res.menus.length > 0) {
+        menuList = res.menus.map(item => {
+            const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
+            // Tambahkan format poin-poin untuk detail
+            const detailString = details.map(d => `    • ${d}`).join('\n');
+            return `  - *${item.quantity}x ${item.name}*\n${detailString}`;
+        }).join('\n');
+    } else if (res.menu) { // Ini adalah fallback untuk data lama jika 'menus' tidak ada
+        const details = detailMenu[res.menu] || [];
+        const detailString = details.map(d => `    • ${d}`).join('\n');
+        menuList = `  - *${res.menu}*\n${detailString}`;
     }
+    
+    // --- PERBAIKAN SELESAI DI SINI ---
+
+    const tambahanInfo = res.tambahan ? `📝 *Request Tambahan:*\n${res.tambahan}\n\n` : '';
+    const dpInfo = res.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(res.dp)} ${res.tipeDp ? `(via ${res.tipeDp})` : ''} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
+    
+    // Template pesan ini sekarang akan menggunakan 'menuList' yang sudah diformat dengan benar
+    const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
+    
+    openWhatsApp(res.nomorHp, res.nama, message);
+}
+
+    
+    // --- PERBAIKAN SELESAI DI SINI ---
+
+      
     // --- TAMBAHKAN DUA FUNGSI BARU DI BAWAH INI ---
 
 /**
