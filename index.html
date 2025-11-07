@@ -1389,8 +1389,9 @@ function showExportDataPopup() {
         
         // Buat payload sesuai format yang diharapkan oleh importer di website kedua
         const exportPayload = {
-            version: '5.2-export',
-            data: simplifiedData
+            version: '5.3-export', // <-- (Opsional) Ubah versi untuk penanda
+            data: simplifiedData,
+            locations: locationsData // <-- TAMBAHKAN SATU BARIS INI
         };
         
         // Ubah menjadi string JSON
