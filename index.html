@@ -1085,7 +1085,12 @@
         const name = document.getElementById('newLocationName').value.trim();
         const capacity = parseInt(document.getElementById('newLocationCapacity').value);
         if (!name || isNaN(capacity) || capacity < 1) { showToast("Nama dan kapasitas valid wajib diisi.", "error"); return; }
-        const docId = name.replace(/\s+/g, '-').toLowerCase();
+                // Membuat docId yang aman, mengganti spasi & karakter spesial dengan '-'
+        const docId = name.toLowerCase()
+                          .replace(/\s+/g, '-') // Ganti spasi dengan -
+                          .replace(/[^a-z0-9-]/g, '') // Hapus semua selain huruf, angka, dan -
+                          .replace(/--+/g, '-'); // Ganti -- jadi - (jika ada)
+
         if (Object.values(locationsData).some(loc => loc.name.toLowerCase() === name.toLowerCase())) {
              showToast("Tempat dengan nama tersebut sudah ada.", "error"); return;
         }
@@ -1126,7 +1131,12 @@
                 if (Object.values(locationsData).some(loc => loc.name.toLowerCase() === newName.toLowerCase())) {
                     showToast("Nama tempat sudah digunakan.", "error"); hideLoader(); return;
                 }
-                const newDocId = newName.replace(/\s+/g, '-').toLowerCase();
+                                // Membuat docId baru yang aman (sama seperti di addNewLocation)
+                const newDocId = newName.toLowerCase()
+                                       .replace(/\s+/g, '-') // Ganti spasi dengan -
+                                       .replace(/[^a-z0-9-]/g, '') // Hapus semua selain huruf, angka, dan -
+                                       .replace(/--+/g, '-'); // Ganti -- jadi - (jika ada)
+
                 await db.collection('locations').doc(newDocId).set({ name: newName, capacity: newCapacity });
                 await db.collection('locations').doc(originalDocId).delete();
             } else {
