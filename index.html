@@ -1387,21 +1387,22 @@ function showExportDataPopup() {
         // Loop melalui setiap tanggal di dataReservasi
         for (const dateKey in dataReservasi) {
             if (dataReservasi.hasOwnProperty(dateKey)) {
-                // Ambil data yang dibutuhkan oleh website viewer: nama, jumlah, jam, tempat
+                // Ambil data yang dibutuhkan oleh website viewer: nama, jumlah, jam, tempat, DAN MENUS
                 simplifiedData[dateKey] = dataReservasi[dateKey].map(res => ({
                     nama: res.nama || 'Tanpa Nama',
                     jumlah: res.jumlah || 0,
                     jam: res.jam || '00:00',
-                    tempat: res.tempat || 'Tanpa Lokasi'
+                    tempat: res.tempat || 'Tanpa Lokasi',
+                    menus: res.menus || [] // <-- TAMBAHKAN BARIS INI
                 }));
             }
         }
         
         // Buat payload sesuai format yang diharapkan oleh importer di website kedua
         const exportPayload = {
-            version: '5.3-export', // <-- (Opsional) Ubah versi untuk penanda
+            version: '5.4-export', // <-- GANTI VERSI
             data: simplifiedData,
-            locations: locationsData // <-- TAMBAHKAN SATU BARIS INI
+            locations: locationsData
         };
         
         // Ubah menjadi string JSON
