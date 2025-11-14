@@ -592,17 +592,28 @@
     }
     
     // --- Data Loading ---
+    
+    // =====================================================
+    // ================ PERBAIKAN DI SINI ================
+    // =====================================================
     async function loadMenus() {
       try {
-        const snapshot = await db.collection('menus').orderBy(firebase.firestore.FieldPath.documentId()).get();
+        // Menghapus .orderBy(firebase.firestore.FieldPath.documentId())
+        const snapshot = await db.collection('menus').get();
+        
         detailMenu = {};
         snapshot.forEach(doc => detailMenu[doc.id] = doc.data().details);
       } catch (e) { showToast("Gagal memuat daftar menu", "error"); }
     }
     
+    // =====================================================
+    // ================ PERBAIKAN DI SINI ================
+    // =====================================================
     async function loadLocations() {
         try {
-            const snapshot = await db.collection('locations').orderBy('name').get();
+            // Menghapus .orderBy('name')
+            const snapshot = await db.collection('locations').get();
+            
             locationsData = {};
             snapshot.forEach(doc => locationsData[doc.id] = doc.data());
         } catch (e) { showToast("Gagal memuat daftar lokasi", "error"); }
