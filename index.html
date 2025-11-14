@@ -1031,7 +1031,7 @@
       const container = document.getElementById('menu-list-container'); if (!container) return;
       container.innerHTML = Object.keys(detailMenu).sort().map(name => `<div class="menu-item"><span>${name}</span><div class="menu-item-actions"><button onclick="openEditMenuPopup('${name}')"><i class="fas fa-edit"></i></button><button class="danger" onclick="deleteMenu('${name}')"><i class="fas fa-trash-alt"></i></button></div></div>`).join('');
     }
-    async function addNewMenu() {
+        async function addNewMenu() {
       const name = document.getElementById('newMenuName').value.trim();
       const details = document.getElementById('newMenuDetails').value.split(',').map(s => s.trim()).filter(Boolean);
       if (!name) { showToast("Nama menu tidak boleh kosong", "error"); return; }
@@ -1042,8 +1042,16 @@
         showToast(`Menu "${name}" berhasil ditambahkan`);
         await loadMenus(); renderMenuList();
         document.getElementById('newMenuName').value = ''; document.getElementById('newMenuDetails').value = '';
-      } catch (e) { showToast("Gagal menambah menu", "error"); } finally { hideLoader(); }
+      } catch (e) { 
+        // --- MODIFIKASI ADA DI SINI ---
+        console.error("Error saat addNewMenu:", e); // Ini akan mencetak detail error di Console F12
+        showToast(`Gagal: ${e.message}`, "error"); // Ini akan menampilkan error spesifik di layar
+        // --- BATAS MODIFIKASI ---
+      } finally { 
+        hideLoader(); 
+      }
     }
+
     async function deleteMenu(name) {
       if (!confirm(`Yakin ingin menghapus menu "${name}"?`)) return;
       showLoader();
@@ -1092,7 +1100,7 @@
         const container = document.getElementById('location-list-container'); if (!container) return;
         container.innerHTML = Object.keys(locationsData).sort((a,b) => locationsData[a].name.localeCompare(locationsData[b].name)).map(docId => `<div class="menu-item"><span>${locationsData[docId].name}<br/><small>Kapasitas: ${locationsData[docId].capacity} org</small></span><div class="menu-item-actions"><button onclick="openEditLocationPopup('${docId}')"><i class="fas fa-edit"></i></button><button class="danger" onclick="deleteLocation('${docId}')"><i class="fas fa-trash-alt"></i></button></div></div>`).join('');
     }
-    async function addNewLocation() {
+        async function addNewLocation() {
         const name = document.getElementById('newLocationName').value.trim();
         const capacity = parseInt(document.getElementById('newLocationCapacity').value);
         if (!name || isNaN(capacity) || capacity < 1) { showToast("Nama dan kapasitas valid wajib diisi.", "error"); return; }
@@ -1111,8 +1119,16 @@
             showToast(`Tempat "${name}" berhasil ditambahkan.`);
             await loadLocations(); renderLocationList();
             document.getElementById('newLocationName').value = ''; document.getElementById('newLocationCapacity').value = '';
-        } catch (e) { showToast("Gagal menambah tempat.", "error"); } finally { hideLoader(); }
+        } catch (e) { 
+            // --- MODIFIKASI ADA DI SINI ---
+            console.error("Error saat addNewLocation:", e);
+            showToast(`Gagal: ${e.message}`, "error");
+            // --- BATAS MODIFIKASI ---
+        } finally { 
+            hideLoader(); 
+        }
     }
+
     async function deleteLocation(docId) {
         if (!confirm(`Yakin ingin menghapus tempat "${locationsData[docId].name}"?`)) return;
         showLoader();
