@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah - V5.4 (Full Feature + Analytics)</title>
+  <title>Sistem Reservasi Dolan Sawah - V5.6 (Full Features)</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -11,16 +11,15 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <style>
     :root {
-      --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; --accent: #f4a261; --danger: #e76f51; --light: #f8f9fa; --dark: #343a40; --success: #28a745; --whatsapp: #25D366; --info: #0077b6;
+      --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; 
+      --accent: #f4a261; --danger: #e76f51; --light: #f8f9fa; --dark: #343a40; 
+      --success: #28a745; --whatsapp: #25D366; --info: #0077b6;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -33,102 +32,91 @@
       background-color: rgba(255, 255, 255, 0.9); z-index: -1;
     }
 
-    /* --- HEADER & LAYOUT --- */
+    /* HEADER */
     header {
       background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; padding: 25px 20px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); position: relative; overflow: hidden;
     }
-    header h2 { font-size: 2.0rem; margin-bottom: 5px; font-weight: 600; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); }
+    header h2 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 600; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); }
     header small { display: block; font-size: 0.8rem; margin-top: 5px; color: rgba(255, 255, 255, 0.8); }
 
+    /* LAYOUT UTAMA */
     .container {
-      max-width: 1200px; margin: 30px auto; padding: 20px; background-color: white;
+      max-width: 1200px; margin: 30px auto; padding: 20px; background-color: rgba(255, 255, 255, 0.95);
       border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); display: none;
     }
+    #login-container {
+      max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid var(--primary);
+    }
 
-    /* --- BUTTONS --- */
-    button { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+    /* COMPONENTS: BUTTONS & INPUTS */
+    button { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 5px; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
     button:hover { background-color: var(--primary-dark); transform: translateY(-2px); }
     button.secondary { background-color: #6c757d; }
     button.danger { background-color: var(--danger); }
     button.whatsapp { background-color: var(--whatsapp); }
     button.accent { background-color: var(--accent); color: white; }
     button.info { background-color: var(--info); }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--primary-dark); margin-top: 10px; }
+    input, select, textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; font-family: 'Poppins', sans-serif; }
+    textarea { min-height: 80px; }
+    .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; display: block; }
 
-    /* --- CALENDAR --- */
+    /* KALENDER */
     .calendar-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
-    .month-year { font-size: 1.5rem; font-weight: 600; color: var(--primary-dark); text-align: center; margin-bottom: 10px; }
-    .calendar-nav button { margin: 0 5px; padding: 8px 15px; }
+    .month-year { font-size: 1.5rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 10px; }
+    .calendar-nav button { padding: 8px 15px; margin: 0 5px; }
     .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 10px; color: var(--primary-dark); }
     .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
     .calendar-day {
       min-height: 90px; padding: 5px; background-color: white; border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); position: relative;
-      border: 2px solid transparent; transition: all 0.2s ease-in-out; cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); position: relative; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
     }
-    .calendar-day:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .calendar-day:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     .calendar-day.today { border-color: var(--accent); background-color: #fffaf0; }
-    .day-number { font-weight: 600; font-size: 0.9rem; position: absolute; top: 6px; right: 8px; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; }
-    .today .day-number { background-color: var(--accent); color: white; border-radius: 50%; }
-    .selected { background-color: var(--primary) !important; color: white; }
-    .selected .day-number { color: white; }
+    .calendar-day.selected { background-color: var(--primary) !important; color: white; }
+    .day-number { font-weight: 600; position: absolute; top: 6px; right: 8px; }
     .reservation-count {
       position: absolute; bottom: 8px; left: 8px; background-color: rgba(42, 157, 143, 0.15);
       color: var(--primary-dark); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;
     }
     .selected .reservation-count { background-color: white; color: var(--primary); }
 
-    /* --- FORMS & POPUPS --- */
+    /* POPUPS & OVERLAYS */
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 999; display: none; }
     .popup-form { 
         display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-        z-index: 1000; width: 90%; max-width: 650px; max-height: 85vh; overflow-y: auto;
+        z-index: 1000; width: 90%; max-width: 700px; max-height: 90vh; overflow-y: auto;
         background-color: white; padding: 25px; border-radius: 8px; 
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); border-top: 5px solid var(--primary);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); border-top: 5px solid var(--primary);
     }
-    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 999; display: none; }
-    
-    label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--primary-dark); margin-top: 10px; }
-    input, select, textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; font-family: 'Poppins', sans-serif; }
-    .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 2px; }
-
-    /* --- ITEM LISTS (Menu, Location, Broadcast) --- */
-    .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-    .menu-item:last-child { border-bottom: none; }
-    .menu-item-actions button { padding: 5px 10px; font-size: 0.8rem; margin: 0 0 0 5px; }
-    
-    .broadcast-customer-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid #f0f0f0; }
-    .broadcast-customer-item .broadcast-btn.sent { background-color: var(--success); cursor: default; }
-    
-    /* --- NEW ANALYSIS DASHBOARD --- */
-    #analysisPopup { max-width: 900px !important; }
-    .analysis-filter-bar { display: flex; gap: 10px; background: #f1f3f5; padding: 10px; border-radius: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
-    .stat-card { background: white; padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
-    .stat-card .value { font-size: 1.5rem; font-weight: 700; color: var(--primary-dark); }
-    .stat-card h5 { color: #666; font-size: 0.8rem; margin: 0; }
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 20px; }
-    .chart-container { background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee; min-height: 250px; }
-
-    /* --- OTHERS --- */
-    #login-container { max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid var(--primary); }
     .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 2000; display: none; justify-content: center; align-items: center; }
     .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--dark); color: white; padding: 12px 24px; border-radius: 4px; z-index: 1001; display: none; }
     .toast.error { background-color: var(--danger); }
-    
-    .reservation-item { padding: 15px; margin-bottom: 15px; background-color: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
-    .menu-detail { background: #fff8e1; padding: 8px; border-radius: 4px; margin-top: 5px; font-size: 0.9rem; }
-    .menu-selection-row { display: flex; gap: 8px; margin-bottom: 8px; }
-    
-    #notification-bell-container { position: absolute; top: 50%; right: 70px; transform: translateY(-50%); cursor: pointer; color: white; font-size: 1.5rem; }
-    .notification-badge { position: absolute; top: -5px; right: -8px; background: var(--danger); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 50%; }
-    .notification-dropdown { display: none; position: absolute; top: 40px; right: 0; width: 300px; background: white; color: #333; z-index: 1500; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-    .notification-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
 
-    @media (max-width: 480px) {
-      .action-buttons button { width: 100%; margin-top: 5px; }
-      .menu-selection-row { flex-direction: column; }
-    }
+    /* LIST RESERVASI DETAIL */
+    .reservation-item { padding: 15px; margin-bottom: 15px; background-color: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); border-left: 5px solid var(--primary); }
+    .menu-detail { margin-top: 8px; font-size: 0.9rem; color: #555; background-color: #f8f9fa; padding: 10px; border-radius: 5px; border-left: 3px solid var(--secondary); }
+    .menu-selection-row { display: flex; gap: 10px; margin-bottom: 5px; }
+
+    /* ANALISA DATA (Baru) */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #eee; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--primary); }
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .chart-container { background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee; height: 300px; }
+
+    /* NOTIFIKASI & BROADCAST LIST */
+    #notification-bell-container { position: absolute; top: 50%; right: 70px; transform: translateY(-50%); cursor: pointer; color: white; font-size: 1.5rem; }
+    .notification-badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 50%; display: none; }
+    .notification-list-dropdown { display: none; position: absolute; top: 40px; right: 0; width: 320px; background: white; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1600; color: var(--dark); padding: 10px; }
+    
+    .broadcast-customer-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+    .broadcast-customer-item .broadcast-btn.sent { background-color: var(--success); cursor: default; }
+
+    @media (max-width: 480px) { .action-buttons button, .data-actions button { width: 100%; } .menu-selection-row { flex-direction: column; } }
   </style>
 </head>
 <body>
@@ -137,178 +125,181 @@
   <div class="toast" id="toast"></div>
 
   <header>
-    <h2><i class="fas fa-leaf"></i> Dolan Sawah Admin</h2>
-    <small>V5.4 - Ultimate Feature & Analytics</small>
+    <h2><i class="fas fa-leaf"></i> Dolan Sawah</h2>
+    <small>V5.6 Ultimate (Full Features + Analytics)</small>
     
-    <div id="notification-bell-container" onclick="toggleNotifications()">
+    <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
       <i class="fas fa-bell"></i>
-      <span class="notification-badge" id="notifBadge" style="display:none">0</span>
-      <div class="notification-dropdown" id="notifDropdown">
-        <h4 style="padding:10px; background:#f0f0f0; margin:0;">Pengingat</h4>
-        <div id="notifList" style="max-height:300px; overflow-y:auto;"></div>
+      <span id="notification-badge" class="notification-badge">0</span>
+      <div id="notification-dropdown" class="notification-list-dropdown">
+        <h4><i class="fas fa-bell"></i> Pengingat</h4>
+        <div id="notification-list-ul" style="max-height: 300px; overflow-y: auto;"></div>
       </div>
     </div>
-    
-    <button id="logout-button" onclick="handleLogout()" style="position: absolute; top: 20px; right: 15px; background:var(--danger); padding: 5px 10px; margin:0;"><i class="fas fa-sign-out-alt"></i></button>
+    <button id="logout-button" onclick="handleLogout()" style="position: absolute; top: 20px; right: 15px; padding: 5px 10px; background: var(--danger);"><i class="fas fa-sign-out-alt"></i></button>
   </header>
 
   <div id="login-container">
-    <h3>Login</h3>
-    <input type="email" id="loginEmail" placeholder="Email" style="margin-bottom:10px;">
-    <input type="password" id="loginPassword" placeholder="Password">
-    <button onclick="handleLogin()" style="width:100%;">Masuk</button>
-    <p id="login-error" style="display:none; color:red; margin-top:10px;"></p>
+    <h3><i class="fas fa-lock"></i> Login Admin</h3>
+    <label>Email: <input type="email" id="loginEmail" /></label>
+    <label>Password: <input type="password" id="loginPassword" /></label>
+    <button onclick="handleLogin()" style="width:100%; margin-top:20px;">Masuk</button>
+    <p id="login-error" style="color:red; display:none; margin-top:10px;"></p>
   </div>
 
   <div class="container" id="main-container">
     <div class="calendar-header">
-      <h3 class="month-year" id="monthYear"></h3>
+      <div class="month-year" id="monthYear"></div>
       <div class="calendar-nav">
-        <button onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+        <button onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
         <button class="secondary" onclick="goToToday()">Hari Ini</button>
-        <button onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+        <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
       </div>
     </div>
     
-    <div class="calendar-weekdays">
-      <div>Min</div><div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div>Sab</div>
-    </div>
+    <div class="calendar-weekdays"><div>Mgg</div> <div>Sen</div> <div>Sel</div> <div>Rab</div> <div>Kam</div> <div>Jum</div> <div>Sab</div></div>
     <div class="calendar-days" id="calendar"></div>
 
-    <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:20px;">
-      <button onclick="showCustomerMenu()"><i class="fas fa-users"></i> Data Customer</button>
-      <button onclick="showMenuManagement()"><i class="fas fa-utensils"></i> Kelola Menu</button>
+    <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:20px;">
+      <button onclick="showCustomerMenu()"><i class="fas fa-address-book"></i> Customer</button>
+      <button onclick="showMenuManagement()"><i class="fas fa-book-open"></i> Kelola Menu</button>
       <button onclick="showLocationManagement()"><i class="fas fa-map-marker-alt"></i> Kelola Tempat</button>
-      <button class="info" onclick="showAnalysis()"><i class="fas fa-chart-line"></i> Analisa Data</button>
-      <button class="whatsapp" onclick="showBroadcastMain()"><i class="fas fa-bullhorn"></i> Broadcast Promo</button>
+      <button class="info" onclick="showAnalysis()"><i class="fas fa-chart-pie"></i> Analisa Data</button>
+      <button class="whatsapp" onclick="showBroadcastMain()"><i class="fab fa-whatsapp"></i> Broadcast Promo</button>
       <button class="secondary" onclick="showExportDataPopup()"><i class="fas fa-file-export"></i> Export Data</button>
-      <div style="position:relative; display:inline-block;">
-          <button class="whatsapp" onclick="toggleWaShare()"><i class="fab fa-whatsapp"></i> Share Laporan</button>
-          <div id="waShareMenu" style="display:none; position:absolute; bottom:100%; left:0; background:white; padding:10px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.1); width:200px;">
-              <button onclick="shareViaWhatsApp('day')" style="width:100%; font-size:0.8rem;">Laporan Harian</button>
-              <button onclick="shareViaWhatsApp('month')" style="width:100%; font-size:0.8rem;">Rekap Bulanan</button>
-          </div>
-      </div>
     </div>
   </div>
 
-  <div class="container" id="reservation-view-container" style="display:none;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid var(--primary); padding-bottom:10px;">
-      <h3 id="resViewTitle">Detail</h3>
-      <div>
-        <button class="secondary" onclick="backToCalendar()">Kembali</button>
-        <button onclick="showAddForm()">Tambah Baru</button>
-        <button class="info" onclick="printData()">Print</button>
-      </div>
+  <div class="container" id="reservation-view-container" style="display:none; border-top: 5px solid var(--secondary);">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:15px;">
+        <h3 id="reservation-view-title" style="color:var(--primary-dark)">Detail</h3>
+        <div class="header-actions">
+            <button class="secondary" onclick="kembaliKeKalender()"><i class="fas fa-arrow-left"></i> Kembali</button>
+            <button onclick="showAddForm()"><i class="fas fa-plus"></i> Tambah</button>
+            <button class="info" onclick="printData()"><i class="fas fa-print"></i> Print</button>
+            <div style="display:inline-block; position:relative;">
+                <button class="whatsapp" onclick="document.getElementById('waShareOpts').style.display='block'"><i class="fab fa-whatsapp"></i> Share Laporan</button>
+                <div id="waShareOpts" style="display:none; position:absolute; top:100%; right:0; background:white; border:1px solid #ccc; width:200px; padding:10px; z-index:10;">
+                    <button class="whatsapp" style="width:100%; font-size:0.8rem;" onclick="shareViaWhatsApp('day')">Laporan Harian Ini</button>
+                    <button class="whatsapp" style="width:100%; font-size:0.8rem;" onclick="shareViaWhatsApp('month')">Rekap Bulan Ini</button>
+                    <button class="danger" style="width:100%; font-size:0.8rem;" onclick="document.getElementById('waShareOpts').style.display='none'">Tutup</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <input type="text" id="detailSearchInput" placeholder="Cari nama..." oninput="filterReservations(this.value)" style="margin-bottom:15px;">
-    <div id="reservation-detail-list"></div>
+    <input type="text" id="detailSearchInput" oninput="filterReservations(this.value)" placeholder="Cari nama pemesan..." style="margin-bottom:20px;">
+    <div id="reservation-detail-list" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:15px;"></div>
   </div>
 
+  <div class="overlay" id="overlay"></div>
   <div id="addFormPopup" class="popup-form">
-    <h3><i class="fas fa-calendar-check"></i> Form Reservasi</h3>
+    <h3 id="formTitle"><i class="fas fa-calendar-plus"></i> Input Reservasi</h3>
     <form id="reservation-form">
-      <input type="hidden" id="editId">
-      <label>Nama: <input type="text" id="nama" required></label>
-      <label>No HP: <input type="tel" id="nomorHp" placeholder="08..."></label>
+      <input type="hidden" id="editReservationId">
+      <label>Nama: <input type="text" id="nama" required /><span class="error-message" id="nama-error"></span></label>
+      <label>Nomor HP: <input type="tel" id="nomorHp" placeholder="08..." /><span class="error-message" id="nomorHp-error"></span></label>
       <div style="display:flex; gap:10px;">
-        <div style="flex:1"><label>Jam: <input type="time" id="jam" required></label></div>
-        <div style="flex:1"><label>Jml Orang: <input type="number" id="jumlah" min="1" required></label></div>
+        <div style="flex:1"><label>Jam: <input type="time" id="jam" required /></label></div>
+        <div style="flex:1"><label>Jumlah: <input type="number" id="jumlah" min="1" required /></label></div>
       </div>
-      <label>Tempat: <select id="tempat" onchange="updateCapacityInfo()"></select> <small id="capInfo"></small></label>
       
-      <label style="border-top:1px dashed #ccc; padding-top:10px; margin-top:10px;">Menu Pesanan:</label>
+      <label>Tempat: <select id="tempat" required onchange="updateCapacityInfo()"></select> <small id="capacity-info"></small></label>
+      
+      <label style="border-top:1px dashed #ccc; padding-top:10px; margin-top:10px;">Paket Menu Dipesan:</label>
       <div id="selected-menus-container"></div>
-      <button type="button" class="secondary" onclick="addMenuRow()" style="padding:5px 10px; font-size:0.8rem;">+ Tambah Menu</button>
+      <button type="button" class="secondary" onclick="addMenuSelectionRow()" style="font-size:0.8rem; padding:5px 10px;">+ Tambah Menu</button>
+      <span class="error-message" id="menus-error"></span>
 
-      <label>DP (Rp): <input type="number" id="dp" value="0"></label>
-      <label>Tipe DP: <select id="tipeDp"><option value="">-</option><option>Transfer BCA</option><option>Transfer BRI</option><option>Transfer Mandiri</option><option>QRIS</option><option>Cash</option></select></label>
-      <label>Catatan: <textarea id="tambahan"></textarea></label>
-
-      <div style="display:flex; gap:10px; margin-top:15px;">
-        <button type="button" onclick="saveReservation()" style="flex:1">Simpan</button>
+      <label style="margin-top:15px;">DP (Rupiah): <input type="number" id="dp" value="0" /></label>
+      <label>Tipe Pembayaran DP: 
+        <select id="tipeDp">
+          <option value="">- Tanpa DP -</option><option>Cash</option><option>QRIS</option><option>Transfer BCA</option><option>Transfer Mandiri</option><option>Transfer BRI</option>
+        </select>
+      </label>
+      <label>Request Tambahan: <textarea id="tambahan"></textarea></label>
+      
+      <div class="data-actions" style="margin-top:20px; display:flex; gap:10px;">
+        <button type="button" onclick="simpanReservasi()" style="flex:2">Simpan</button>
         <button type="button" class="danger" onclick="closePopup('addFormPopup')" style="flex:1">Batal</button>
       </div>
     </form>
   </div>
 
-  <div id="menuManagementPopup" class="popup-form">
-    <h3>Kelola Menu</h3>
-    <div id="menu-list-container" style="max-height:300px; overflow-y:auto; margin-bottom:15px;"></div>
-    <div style="border-top:2px solid #eee; padding-top:10px;">
-      <h4>Tambah Menu Baru</h4>
-      <input type="text" id="newMenuName" placeholder="Nama Menu">
-      <textarea id="newMenuDetails" placeholder="Detail (pisahkan dengan koma)" style="margin-top:5px;"></textarea>
-      <button onclick="addNewMenu()">Simpan Menu</button>
-    </div>
-    <button class="danger" onclick="closePopup('menuManagementPopup')" style="margin-top:20px; width:100%;">Tutup</button>
-  </div>
-
-  <div id="locationManagementPopup" class="popup-form">
-    <h3>Kelola Tempat</h3>
-    <div id="location-list-container" style="max-height:300px; overflow-y:auto; margin-bottom:15px;"></div>
-    <div style="border-top:2px solid #eee; padding-top:10px;">
-      <h4>Tambah Tempat Baru</h4>
-      <input type="text" id="newLocName" placeholder="Nama Tempat">
-      <input type="number" id="newLocCap" placeholder="Kapasitas (Angka)" style="margin-top:5px;">
-      <button onclick="addNewLocation()">Simpan Tempat</button>
-    </div>
-    <button class="danger" onclick="closePopup('locationManagementPopup')" style="margin-top:20px; width:100%;">Tutup</button>
-  </div>
-
-  <div id="customerListPopup" class="popup-form">
-    <h3>Data Customer</h3>
-    <input type="text" id="custSearch" placeholder="Cari nama/HP..." oninput="filterCustomerList(this.value)">
-    <div id="customer-list-content" style="max-height:400px; overflow-y:auto; margin-top:10px;"></div>
-    <button class="danger" onclick="closePopup('customerListPopup')" style="width:100%;">Tutup</button>
-  </div>
-
-  <div id="broadcastMainPopup" class="popup-form">
-    <h3>Broadcast Promo</h3>
-    <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <button class="info" onclick="showBroadcastSettings()" style="flex:1;">Atur Pesan</button>
-        <button class="whatsapp" onclick="showBroadcastList()" style="flex:1;">Mulai Kirim</button>
-    </div>
-    <div id="broadcast-content" style="border:1px solid #eee; padding:10px; border-radius:5px; min-height:100px;">
-        <p style="text-align:center; color:#888;">Pilih menu di atas</p>
-    </div>
-    <button class="danger" onclick="closePopup('broadcastMainPopup')" style="margin-top:15px; width:100%;">Tutup</button>
-  </div>
-  
-  <div id="analysisPopup" class="popup-form">
-    <h3>Analisa Data Bisnis</h3>
-    <div class="analysis-filter-bar">
-        <select id="anFilterType" onchange="runAnalysis()">
+  <div id="analysisPopup" class="popup-form" style="max-width:900px;">
+    <h3><i class="fas fa-chart-line"></i> Analisa Bisnis</h3>
+    <div style="background:#f0f0f0; padding:10px; border-radius:8px; margin-bottom:20px;">
+        <select id="analysisFilterType" onchange="runFilteredAnalysis()" style="width:auto; display:inline-block;">
             <option value="month">Bulan Ini</option>
             <option value="year">Tahun Ini</option>
             <option value="all">Semua Data</option>
         </select>
-        <button onclick="runAnalysis()" style="margin:0; padding:5px 15px;">Refresh</button>
+        <button onclick="runFilteredAnalysis()" style="margin:0; padding:6px 15px;">Refresh</button>
     </div>
-    
     <div class="stats-grid">
-        <div class="stat-card"><h5>Total Reservasi</h5><div class="value" id="stRes">-</div></div>
-        <div class="stat-card"><h5>Total Tamu</h5><div class="value" id="stPax">-</div></div>
-        <div class="stat-card"><h5>Total DP</h5><div class="value" id="stDp" style="color:var(--success)">-</div></div>
+        <div class="stat-card"><h5>Total Reservasi</h5><div class="stat-value" id="anTotalRes">0</div></div>
+        <div class="stat-card"><h5>Total Tamu</h5><div class="stat-value" id="anTotalPax">0</div></div>
+        <div class="stat-card"><h5>Total DP</h5><div class="stat-value" id="anTotalDP" style="color:var(--success); font-size:1.4rem;">0</div></div>
     </div>
-    
     <div class="charts-grid">
-        <div class="chart-container"><canvas id="chartTrend"></canvas></div>
-        <div class="chart-container"><canvas id="chartMenu"></canvas></div>
-        <div class="chart-container"><canvas id="chartHour"></canvas></div>
+        <div class="chart-container"><canvas id="trendChart"></canvas></div>
+        <div class="chart-container"><canvas id="menuChart"></canvas></div>
+        <div class="chart-container"><canvas id="hourChart"></canvas></div>
     </div>
-    <button class="danger" onclick="closePopup('analysisPopup')" style="width:100%;">Tutup Analisa</button>
+    <button class="danger" onclick="closePopup('analysisPopup')" style="width:100%; margin-top:20px;">Tutup</button>
+  </div>
+
+  <div id="menuManagementPopup" class="popup-form">
+    <h3>Kelola Menu</h3>
+    <div id="menu-list-container" style="max-height:300px; overflow-y:auto; border:1px solid #eee; padding:5px; margin-bottom:15px;"></div>
+    <div style="background:#f9f9f9; padding:15px; border-radius:8px;">
+        <h4>Tambah Menu Baru</h4>
+        <input type="text" id="newMenuName" placeholder="Nama Menu">
+        <textarea id="newMenuDetails" placeholder="Detail (pisahkan koma)" style="margin-top:5px; height:60px;"></textarea>
+        <button onclick="addNewMenu()">Simpan Menu</button>
+    </div>
+    <button class="danger" onclick="closePopup('menuManagementPopup')" style="width:100%; margin-top:10px;">Tutup</button>
+  </div>
+
+  <div id="locationManagementPopup" class="popup-form">
+    <h3>Kelola Tempat</h3>
+    <div id="location-list-container" style="max-height:300px; overflow-y:auto; border:1px solid #eee; padding:5px; margin-bottom:15px;"></div>
+    <div style="background:#f9f9f9; padding:15px; border-radius:8px;">
+        <h4>Tambah Tempat Baru</h4>
+        <input type="text" id="newLocationName" placeholder="Nama Tempat">
+        <input type="number" id="newLocationCapacity" placeholder="Kapasitas (Angka)" style="margin-top:5px;">
+        <button onclick="addNewLocation()">Simpan Tempat</button>
+    </div>
+    <button class="danger" onclick="closePopup('locationManagementPopup')" style="width:100%; margin-top:10px;">Tutup</button>
+  </div>
+
+  <div id="customerListPopup" class="popup-form">
+    <h3>Data Pelanggan</h3>
+    <input type="text" id="customerSearch" placeholder="Cari nama / HP..." oninput="renderCustomerList(this.value)">
+    <div id="customer-list" style="max-height:400px; overflow-y:auto; margin-top:10px;"></div>
+    <button class="danger" onclick="closePopup('customerListPopup')" style="width:100%; margin-top:10px;">Tutup</button>
+  </div>
+
+  <div id="broadcastMainPopup" class="popup-form">
+    <h3>Broadcast Promo</h3>
+    <label>Pesan Promo (gunakan kata 'kak' untuk nama otomatis):</label>
+    <textarea id="broadcastMessage" style="height:100px;"></textarea>
+    <button class="info" onclick="saveBroadcastSettings()">Simpan Template</button>
+    <hr>
+    <label>Daftar Target:</label>
+    <input type="text" placeholder="Filter nama..." oninput="filterBroadcastList(this.value)">
+    <div id="broadcast-customer-list" style="max-height:250px; overflow-y:auto; margin-top:10px; border:1px solid #eee;"></div>
+    <button class="danger" onclick="closePopup('broadcastMainPopup')" style="width:100%; margin-top:10px;">Tutup</button>
   </div>
 
   <div id="exportDataPopup" class="popup-form">
     <h3>Export Data</h3>
-    <textarea id="export-output" readonly style="height:150px; background:#f0f0f0;"></textarea>
-    <button onclick="copyExport()">Salin Kode</button>
+    <textarea id="export-data-output" readonly style="height:150px; background:#eee;"></textarea>
+    <button onclick="copyExportCode()">Salin Kode</button>
     <button class="danger" onclick="closePopup('exportDataPopup')">Tutup</button>
   </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
+    // --- 1. KONFIGURASI FIREBASE ---
     const firebaseConfig = {
       apiKey: "AIzaSyA_c1tU70FM84Qi_f_aSaQ-YVLo_18lCkI",
       authDomain: "reservasi-dolan-sawah.firebaseapp.com",
@@ -317,304 +308,371 @@
       messagingSenderId: "213151400721",
       appId: "1:213151400721:web:e51b0d8cdd24206cf682b0"
     };
-    firebase.initializeApp(firebaseConfig);
+    
+    // Inisialisasi Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // --- VARIABLES ---
+    // --- 2. VARIABEL GLOBAL ---
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
     const monthNames = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-    let dataReservasi = {}; // Format: {'YYYY-MM-DD': [array of obj]}
+    
+    // Cache Data
+    let dataReservasi = {}; // Data per tanggal
+    let allReservations = []; // Semua data (untuk analisa & broadcast)
     let detailMenu = {};
     let locationsData = {};
     let tanggalDipilih = '';
-    let allReservationsRaw = []; // Cache for analysis & customer list
-    let chartInstances = {};
 
-    // --- AUTH ---
+    // --- 3. SISTEM AUTH (LOGIN) ---
     auth.onAuthStateChanged(user => {
-        if(user) {
-            document.getElementById('login-container').style.display='none';
-            document.getElementById('main-container').style.display='block';
-            document.getElementById('logout-button').style.display='block';
-            initApp();
+        if (user) {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('main-container').style.display = 'block';
+            document.getElementById('logout-button').style.display = 'block';
+            initializeSystem(); // Mulai aplikasi setelah login
         } else {
-            document.getElementById('login-container').style.display='block';
-            document.getElementById('main-container').style.display='none';
-            document.getElementById('logout-button').style.display='none';
+            document.getElementById('login-container').style.display = 'block';
+            document.getElementById('main-container').style.display = 'none';
+            document.getElementById('logout-button').style.display = 'none';
         }
     });
-    
+
     function handleLogin() {
         showLoader(true);
-        const e = document.getElementById('loginEmail').value;
-        const p = document.getElementById('loginPassword').value;
-        auth.signInWithEmailAndPassword(e,p).catch(err => {
-            document.getElementById('login-error').innerText = err.message;
-            document.getElementById('login-error').style.display='block';
-        }).finally(()=>showLoader(false));
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPassword').value;
+        auth.signInWithEmailAndPassword(email, pass)
+            .catch(err => {
+                document.getElementById('login-error').innerText = "Gagal: " + err.message;
+                document.getElementById('login-error').style.display = 'block';
+            })
+            .finally(() => showLoader(false));
     }
-    function handleLogout() { auth.signOut(); }
+    function handleLogout() {
+        if(confirm("Keluar dari sistem?")) auth.signOut();
+    }
 
-    // --- INITIALIZATION ---
-    async function initApp() {
+    // --- 4. INISIALISASI DATA ---
+    async function initializeSystem() {
         showLoader(true);
         await Promise.all([loadMenus(), loadLocations()]);
-        loadReservationsByMonth();
+        loadReservationsForCurrentMonth();
         
-        // Background fetch all for analysis/customer list
+        // Listener Global untuk Analisa & Notifikasi (Background)
         db.collection('reservations').onSnapshot(snap => {
-            allReservationsRaw = snap.docs.map(d => ({id:d.id, ...d.data()}));
-            checkNotifications();
+            allReservations = [];
+            snap.forEach(doc => {
+                allReservations.push({id: doc.id, ...doc.data()});
+            });
+            // Update notifikasi jika ada perubahan data
+            if(typeof checkNotifications === 'function') checkNotifications(); 
         });
         showLoader(false);
     }
 
-    // --- DATA LOADERS ---
+    // Load Data Menu
     async function loadMenus() {
         const snap = await db.collection('menus').get();
         detailMenu = {};
         snap.forEach(doc => detailMenu[doc.id] = doc.data().details || []);
     }
-    
+    // Load Data Lokasi
     async function loadLocations() {
         const snap = await db.collection('locations').get();
         locationsData = {};
         snap.forEach(doc => locationsData[doc.id] = doc.data());
     }
 
-    function loadReservationsByMonth() {
-        const mStr = String(currentMonth+1).padStart(2,'0');
-        const start = `${currentYear}-${mStr}-01`;
-        const end = `${currentYear}-${mStr}-31`;
-        
+    // Load Data Reservasi (Hanya Bulan Ini - Efisiensi)
+    function loadReservationsForCurrentMonth() {
+        const strMonth = String(currentMonth + 1).padStart(2, '0');
+        const startDate = `${currentYear}-${strMonth}-01`;
+        const endDate = `${currentYear}-${strMonth}-31`;
+
+        // Realtime Listener
         db.collection('reservations')
-          .where('date', '>=', start).where('date', '<=', end)
-          .onSnapshot(snap => {
+          .where('date', '>=', startDate)
+          .where('date', '<=', endDate)
+          .onSnapshot(snapshot => {
               dataReservasi = {};
-              snap.forEach(doc => {
-                  const d = doc.data();
-                  if(!dataReservasi[d.date]) dataReservasi[d.date] = [];
-                  dataReservasi[d.date].push({id:doc.id, ...d});
+              snapshot.forEach(doc => {
+                  const r = { id: doc.id, ...doc.data() };
+                  if (!dataReservasi[r.date]) dataReservasi[r.date] = [];
+                  dataReservasi[r.date].push(r);
               });
-              renderCalendar();
-              if(tanggalDipilih) showDailyView(tanggalDipilih);
+              buatKalender(); // Refresh Kalender
+              if (tanggalDipilih) showDailyView(tanggalDipilih); // Refresh View Harian jika terbuka
           });
     }
 
-    // --- CALENDAR LOGIC ---
-    function renderCalendar() {
-        document.getElementById('monthYear').innerText = `${monthNames[currentMonth]} ${currentYear}`;
+    // --- 5. LOGIKA KALENDER ---
+    function buatKalender() {
         const cal = document.getElementById('calendar');
+        document.getElementById('monthYear').innerText = `${monthNames[currentMonth]} ${currentYear}`;
         cal.innerHTML = '';
+
         const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-        const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
-        
-        for(let i=0; i<firstDay; i++) cal.innerHTML += `<div></div>`;
-        for(let i=1; i<=daysInMonth; i++) {
-            const dStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-            const count = dataReservasi[dStr] ? dataReservasi[dStr].length : 0;
-            const isToday = new Date().toISOString().split('T')[0] === dStr ? 'today' : '';
-            const isSel = dStr === tanggalDipilih ? 'selected' : '';
-            
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        // Slot Kosong
+        for (let i = 0; i < firstDay; i++) cal.innerHTML += `<div></div>`;
+
+        // Render Tanggal
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const count = dataReservasi[dateStr] ? dataReservasi[dateStr].length : 0;
+            const isToday = new Date().toISOString().split('T')[0] === dateStr ? 'today' : '';
+            const isSel = dateStr === tanggalDipilih ? 'selected' : '';
+
             cal.innerHTML += `
-                <div class="calendar-day ${isToday} ${isSel}" onclick="selectDate('${dStr}')">
-                    <div class="day-number">${i}</div>
-                    ${count > 0 ? `<div class="reservation-count">${count}</div>` : ''}
-                </div>`;
+            <div class="calendar-day ${isToday} ${isSel}" onclick="pilihTanggal('${dateStr}')">
+                <span class="day-number">${i}</span>
+                ${count > 0 ? `<div class="reservation-count">${count}</div>` : ''}
+            </div>`;
         }
     }
-    
-    function changeMonth(d) {
-        currentMonth += d;
-        if(currentMonth > 11) { currentMonth=0; currentYear++; }
-        if(currentMonth < 0) { currentMonth=11; currentYear--; }
-        loadReservationsByMonth();
+
+    function previousMonth() { changeMonth(-1); }
+    function nextMonth() { changeMonth(1); }
+    function changeMonth(dir) {
+        currentMonth += dir;
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        loadReservationsForCurrentMonth();
     }
     function goToToday() {
-        currentMonth = new Date().getMonth();
-        currentYear = new Date().getFullYear();
-        loadReservationsByMonth();
-    }
-    
-    function selectDate(date) {
-        tanggalDipilih = date;
-        document.getElementById('main-container').style.display = 'none';
-        document.getElementById('reservation-view-container').style.display = 'block';
-        showDailyView(date);
-    }
-    function backToCalendar() {
-        tanggalDipilih = '';
-        document.getElementById('main-container').style.display = 'block';
-        document.getElementById('reservation-view-container').style.display = 'none';
-        renderCalendar();
+        const now = new Date();
+        currentMonth = now.getMonth(); currentYear = now.getFullYear();
+        loadReservationsForCurrentMonth();
     }
 
-    // --- DAILY VIEW & CRUD ---
-    function showDailyView(date) {
-        const list = dataReservasi[date] || [];
-        const dateObj = new Date(date);
-        document.getElementById('resViewTitle').innerText = `Reservasi ${dateObj.getDate()} ${monthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    // --- 6. LOGIKA VIEW HARIAN ---
+    function pilihTanggal(dateStr) {
+        tanggalDipilih = dateStr;
+        document.getElementById('main-container').style.display = 'none';
+        document.getElementById('reservation-view-container').style.display = 'block';
+        showDailyView(dateStr);
+    }
+
+    function kembaliKeKalender() {
+        tanggalDipilih = '';
+        document.getElementById('reservation-view-container').style.display = 'none';
+        document.getElementById('main-container').style.display = 'block';
+        buatKalender(); // Refresh seleksi warna
+    }
+
+    function showDailyView(dateStr) {
+        const d = new Date(dateStr);
+        document.getElementById('reservation-view-title').innerText = `Data: ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+        const list = dataReservasi[dateStr] || [];
         renderReservationList(list);
     }
-    
+
     function renderReservationList(list) {
         const container = document.getElementById('reservation-detail-list');
-        if(list.length === 0) { container.innerHTML = '<p style="text-align:center; padding:20px;">Belum ada reservasi.</p>'; return; }
-        
-        list.sort((a,b) => a.jam.localeCompare(b.jam));
-        
+        if (list.length === 0) {
+            container.innerHTML = '<p style="text-align:center; padding:20px; color:#999; grid-column:1/-1;">Belum ada reservasi.</p>';
+            return;
+        }
+
+        // Urutkan berdasarkan Jam
+        list.sort((a, b) => a.jam.localeCompare(b.jam));
+
         container.innerHTML = list.map(r => {
-            let menusHtml = '';
-            if(r.menus && r.menus.length) {
-                menusHtml = r.menus.map(m => {
-                   const dets = detailMenu[m.name] ? detailMenu[m.name].join(', ') : '';
-                   return `<div><b>${m.quantity}x ${m.name}</b><br><small style="color:#666">${dets}</small></div>`;
-                }).join('');
-            } else if(r.menu) {
-                menusHtml = `<b>${r.menu}</b>`;
-            } else { menusHtml = '-'; }
-            
-            const dpInfo = r.dp > 0 ? `<span style="color:var(--success); font-weight:bold;"><i class="fas fa-money-bill"></i> DP: Rp${r.dp.toLocaleString()} (${r.tipeDp})</span>` : '';
-            
+            // Logic Display Menu (Mendukung format lama & baru)
+            let menuDisplay = '';
+            if (r.menus && r.menus.length > 0) {
+                // Format Baru (Array Object)
+                menuDisplay = r.menus.map(m => {
+                    const dets = detailMenu[m.name] ? `<br><small style="color:#777; font-size:0.8rem;">• ${detailMenu[m.name].join(', ')}</small>` : '';
+                    return `<div><b>${m.quantity}x ${m.name}</b>${dets}</div>`;
+                }).join('<hr style="margin:5px 0; border:0; border-top:1px dashed #eee;">');
+            } else if (r.menu) {
+                // Format Lama (String tunggal)
+                const dets = detailMenu[r.menu] ? `<br><small style="color:#777;">• ${detailMenu[r.menu].join(', ')}</small>` : '';
+                menuDisplay = `<div><b>${r.menu}</b>${dets}</div>`;
+            } else {
+                menuDisplay = '-';
+            }
+
             // Logic Tombol Thank You
-            let tyBtn = '';
+            let btnThanks = '';
             if(r.nomorHp) {
-                if(r.thankYouSent) tyBtn = `<button disabled style="background:#ddd; color:#555; font-size:0.75rem;">Thanks Terkirim</button>`;
-                else tyBtn = `<button class="accent" style="font-size:0.75rem;" onclick="sendThankYou('${r.id}','${r.nama}','${r.nomorHp}')">Ucapkan Thanks</button>`;
+                if(r.thankYouSent) btnThanks = `<button class="secondary" style="font-size:0.75rem; padding:4px 8px; opacity:0.7;" disabled><i class="fas fa-check"></i> Thanks Terkirim</button>`;
+                else btnThanks = `<button class="accent" style="font-size:0.75rem; padding:4px 8px;" onclick="sendThanks('${r.id}', '${r.nama}', '${r.nomorHp}')"><i class="fas fa-heart"></i> Ucapkan Thanks</button>`;
             }
 
             return `
             <div class="reservation-item">
                 <div style="display:flex; justify-content:space-between;">
-                    <h4 style="color:var(--primary-dark)">${r.nama}</h4>
-                    <small>${r.jam} WIB</small>
+                    <h4 style="color:var(--primary-dark); margin-bottom:5px;">${r.nama}</h4>
+                    <span style="font-weight:bold; color:var(--primary);">${r.tempat}</span>
                 </div>
-                <div style="margin:5px 0;">
-                    <i class="fas fa-users"></i> ${r.jumlah} Org | <i class="fas fa-map-marker-alt"></i> ${r.tempat}
+                <div style="color:#555; font-size:0.9rem; margin-bottom:8px;">
+                    <i class="far fa-clock"></i> ${r.jam} WIB &nbsp;|&nbsp; <i class="fas fa-users"></i> ${r.jumlah} Orang
                 </div>
-                <div class="menu-detail">${menusHtml}</div>
-                ${r.tambahan ? `<div style="font-size:0.9rem; margin-top:5px; color:#d63384;">Note: ${r.tambahan}</div>` : ''}
-                <div style="margin-top:5px;">${dpInfo}</div>
                 
-                <div style="margin-top:10px; display:flex; gap:5px; flex-wrap:wrap;">
-                    ${r.nomorHp ? `<button class="whatsapp" style="font-size:0.75rem;" onclick="waLink('${r.nomorHp}','${r.nama}')"><i class="fab fa-whatsapp"></i> Chat</button>` : ''}
-                    ${tyBtn}
-                    <button class="secondary" style="font-size:0.75rem;" onclick="editReservation('${r.id}')"><i class="fas fa-edit"></i></button>
-                    <button class="danger" style="font-size:0.75rem;" onclick="deleteReservation('${r.id}')"><i class="fas fa-trash"></i></button>
+                <div class="menu-detail">${menuDisplay}</div>
+                
+                ${r.tambahan ? `<div style="margin-top:8px; color:#d63384; font-size:0.9rem;"><b>Note:</b> ${r.tambahan}</div>` : ''}
+                ${r.dp > 0 ? `<div style="margin-top:5px; color:var(--success); font-weight:600; font-size:0.9rem;">DP: Rp ${parseInt(r.dp).toLocaleString()} (${r.tipeDp})</div>` : ''}
+                
+                <div class="data-actions" style="margin-top:15px; display:flex; gap:5px; flex-wrap:wrap;">
+                    ${r.nomorHp ? `<button class="whatsapp" style="font-size:0.75rem; padding:4px 8px;" onclick="contactViaWhatsApp('${r.id}')"><i class="fab fa-whatsapp"></i> Chat</button>` : ''}
+                    ${btnThanks}
+                    <button class="secondary" style="font-size:0.75rem; padding:4px 8px;" onclick="editReservasi('${r.id}')"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="danger" style="font-size:0.75rem; padding:4px 8px;" onclick="hapusReservasi('${r.id}')"><i class="fas fa-trash"></i> Hapus</button>
                 </div>
             </div>`;
         }).join('');
     }
-    
-    function filterReservations(q) {
-        if(!tanggalDipilih) return;
+
+    function filterReservations(query) {
+        if (!tanggalDipilih) return;
         const list = dataReservasi[tanggalDipilih] || [];
-        const filtered = list.filter(r => r.nama.toLowerCase().includes(q.toLowerCase()));
+        const filtered = list.filter(r => r.nama.toLowerCase().includes(query.toLowerCase()));
         renderReservationList(filtered);
     }
 
-    // --- FORM ACTIONS ---
+    // --- 7. CRUD RESERVASI (TAMBAH, EDIT, HAPUS) ---
     function showAddForm() {
-        if(!tanggalDipilih) return showToast("Pilih tanggal dulu!", "error");
+        if (!tanggalDipilih) { showToast("Pilih tanggal dulu!", "error"); return; }
+        
         document.getElementById('reservation-form').reset();
-        document.getElementById('editId').value = '';
+        document.getElementById('editReservationId').value = '';
+        document.getElementById('formTitle').innerText = "Input Reservasi Baru";
         document.getElementById('selected-menus-container').innerHTML = '';
         
         populateLocationDropdown();
-        addMenuRow(); // Add 1 empty row
+        addMenuSelectionRow(); // Default 1 baris menu kosong
         updateCapacityInfo();
         
-        document.getElementById('addFormPopup').style.display='block';
-        document.querySelector('.overlay').style.display='block';
+        openPopup('addFormPopup');
     }
-    
-    function populateLocationDropdown(selected) {
+
+    function populateLocationDropdown(selectedVal) {
         const sel = document.getElementById('tempat');
-        sel.innerHTML = '<option value="">Pilih Tempat...</option>';
-        Object.values(locationsData).sort((a,b)=>a.name.localeCompare(b.name)).forEach(l => {
-            sel.innerHTML += `<option value="${l.name}" ${selected===l.name?'selected':''}>${l.name} (Max ${l.capacity})</option>`;
+        sel.innerHTML = '<option value="">-- Pilih Tempat --</option>';
+        Object.values(locationsData).sort((a,b) => a.name.localeCompare(b.name)).forEach(loc => {
+            sel.innerHTML += `<option value="${loc.name}" ${selectedVal === loc.name ? 'selected' : ''}>${loc.name} (Max ${loc.capacity})</option>`;
         });
     }
-    
+
     function updateCapacityInfo() {
         const val = document.getElementById('tempat').value;
         const loc = Object.values(locationsData).find(l => l.name === val);
-        document.getElementById('capInfo').innerText = loc ? `Max: ${loc.capacity} org` : '';
-    }
-    
-    function addMenuRow(name='', qty=1) {
-        const cont = document.getElementById('selected-menus-container');
-        const div = document.createElement('div');
-        div.className = 'menu-selection-row';
-        let opts = '<option value="">Pilih Menu...</option>';
-        Object.keys(detailMenu).sort().forEach(m => opts += `<option value="${m}" ${m===name?'selected':''}>${m}</option>`);
-        div.innerHTML = `<select style="flex:2">${opts}</select><input type="number" value="${qty}" min="1" style="flex:1"><button type="button" class="danger" onclick="this.parentElement.remove()">X</button>`;
-        cont.appendChild(div);
+        document.getElementById('capacity-info').innerText = loc ? `Kapasitas: ${loc.capacity} org` : '';
     }
 
-    async function saveReservation() {
-        const id = document.getElementById('editId').value;
+    function addMenuSelectionRow(name = '', qty = 1) {
+        const container = document.getElementById('selected-menus-container');
+        const row = document.createElement('div');
+        row.className = 'menu-selection-row';
+        
+        let opts = '<option value="">Pilih Menu...</option>';
+        Object.keys(detailMenu).sort().forEach(m => {
+            opts += `<option value="${m}" ${m === name ? 'selected' : ''}>${m}</option>`;
+        });
+
+        row.innerHTML = `
+            <select class="menu-select" style="flex:2;">${opts}</select>
+            <input type="number" class="menu-qty" value="${qty}" min="1" style="flex:1;">
+            <button type="button" class="danger" onclick="this.parentElement.remove()" style="padding:0 10px;">x</button>
+        `;
+        container.appendChild(row);
+    }
+
+    async function simpanReservasi() {
+        const id = document.getElementById('editReservationId').value;
         const nama = document.getElementById('nama').value;
         const jam = document.getElementById('jam').value;
-        const jumlah = parseInt(document.getElementById('jumlah').value);
+        const jumlah = document.getElementById('jumlah').value;
         const tempat = document.getElementById('tempat').value;
-        
-        if(!nama || !jam || !jumlah || !tempat) return showToast("Data wajib belum lengkap!", "error");
-        
+
+        // Validasi
+        if (!nama || !jam || !jumlah || !tempat) {
+            showToast("Nama, Jam, Jumlah, dan Tempat wajib diisi!", "error");
+            return;
+        }
+
+        // Ambil Data Menu
         const menus = [];
         document.querySelectorAll('.menu-selection-row').forEach(row => {
-            const m = row.querySelector('select').value;
-            const q = parseInt(row.querySelector('input').value);
-            if(m && q>0) menus.push({name:m, quantity:q});
+            const mName = row.querySelector('.menu-select').value;
+            const mQty = row.querySelector('.menu-qty').value;
+            if (mName && mQty > 0) menus.push({ name: mName, quantity: parseInt(mQty) });
         });
-        
+
         const data = {
-            date: tanggalDipilih, nama, nomorHp: document.getElementById('nomorHp').value, jam, jumlah, tempat,
-            dp: parseInt(document.getElementById('dp').value)||0, tipeDp: document.getElementById('tipeDp').value,
-            tambahan: document.getElementById('tambahan').value, menus,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            date: tanggalDipilih,
+            nama: nama,
+            nomorHp: document.getElementById('nomorHp').value,
+            jam: jam,
+            jumlah: parseInt(jumlah),
+            tempat: tempat,
+            dp: parseInt(document.getElementById('dp').value) || 0,
+            tipeDp: document.getElementById('tipeDp').value,
+            tambahan: document.getElementById('tambahan').value,
+            menus: menus,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
+
         showLoader(true);
         try {
-            if(id) await db.collection('reservations').doc(id).update(data);
-            else await db.collection('reservations').add(data);
-            showToast("Berhasil disimpan!");
+            if (id) {
+                await db.collection('reservations').doc(id).update(data);
+                showToast("Data diperbarui");
+            } else {
+                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('reservations').add(data);
+                showToast("Data disimpan");
+            }
             closePopup('addFormPopup');
-        } catch(e) { showToast("Gagal: "+e.message, "error"); }
-        finally { showLoader(false); }
+        } catch (e) {
+            showToast("Gagal menyimpan: " + e.message, "error");
+        } finally {
+            showLoader(false);
+        }
     }
-    
-    function editReservation(id) {
+
+    function editReservasi(id) {
         const r = dataReservasi[tanggalDipilih].find(x => x.id === id);
-        if(!r) return;
-        
-        document.getElementById('editId').value = id;
+        if (!r) return;
+
+        document.getElementById('editReservationId').value = id;
+        document.getElementById('formTitle').innerText = "Edit Reservasi";
         document.getElementById('nama').value = r.nama;
-        document.getElementById('nomorHp').value = r.nomorHp;
+        document.getElementById('nomorHp').value = r.nomorHp || '';
         document.getElementById('jam').value = r.jam;
         document.getElementById('jumlah').value = r.jumlah;
-        document.getElementById('dp').value = r.dp;
-        document.getElementById('tipeDp').value = r.tipeDp;
-        document.getElementById('tambahan').value = r.tambahan;
+        document.getElementById('tempat').value = r.tempat;
+        document.getElementById('dp').value = r.dp || 0;
+        document.getElementById('tipeDp').value = r.tipeDp || '';
+        document.getElementById('tambahan').value = r.tambahan || '';
         
         populateLocationDropdown(r.tempat);
         updateCapacityInfo();
-        
-        const cont = document.getElementById('selected-menus-container');
-        cont.innerHTML = '';
-        if(r.menus) r.menus.forEach(m => addMenuRow(m.name, m.quantity));
-        else if(r.menu) addMenuRow(r.menu, 1);
-        else addMenuRow();
-        
-        document.getElementById('addFormPopup').style.display='block';
-        document.querySelector('.overlay').style.display='block';
+
+        const container = document.getElementById('selected-menus-container');
+        container.innerHTML = '';
+        if (r.menus && r.menus.length > 0) {
+            r.menus.forEach(m => addMenuSelectionRow(m.name, m.quantity));
+        } else if (r.menu) {
+            addMenuSelectionRow(r.menu, 1);
+        } else {
+            addMenuSelectionRow();
+        }
+
+        openPopup('addFormPopup');
     }
-    
-    async function deleteReservation(id) {
-        if(confirm("Hapus data ini?")) {
+
+    async function hapusReservasi(id) {
+        if (confirm("Yakin ingin menghapus reservasi ini?")) {
             showLoader(true);
             await db.collection('reservations').doc(id).delete();
             showLoader(false);
@@ -622,306 +680,435 @@
         }
     }
 
-    // --- FITUR MANAGEMENT (MENU & LOCATION) - FULL CRUD ---
+    // --- 8. MANAJEMEN MENU & TEMPAT ---
     function showMenuManagement() {
         renderMenuList();
-        document.getElementById('menuManagementPopup').style.display='block';
-        document.querySelector('.overlay').style.display='block';
+        openPopup('menuManagementPopup');
     }
     function renderMenuList() {
         const c = document.getElementById('menu-list-container');
         c.innerHTML = Object.keys(detailMenu).sort().map(m => `
-            <div class="menu-item">
-                <span>${m}</span>
-                <div class="menu-item-actions">
-                    <button class="danger" onclick="deleteMenu('${m}')"><i class="fas fa-trash"></i></button>
-                </div>
+            <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
+                <span><b>${m}</b></span>
+                <button class="danger" style="padding:2px 8px; font-size:0.8rem; margin:0;" onclick="deleteMenu('${m}')">Hapus</button>
             </div>`).join('');
     }
     async function addNewMenu() {
         const n = document.getElementById('newMenuName').value.trim();
-        const d = document.getElementById('newMenuDetails').value.split(',').map(s=>s.trim());
-        if(!n) return;
+        const d = document.getElementById('newMenuDetails').value;
+        if (!n) return;
         showLoader(true);
-        await db.collection('menus').doc(n).set({details:d});
-        await loadMenus();
-        renderMenuList();
-        document.getElementById('newMenuName').value='';
+        await db.collection('menus').doc(n).set({ details: d.split(',').map(s=>s.trim()) });
+        await loadMenus(); renderMenuList();
+        document.getElementById('newMenuName').value = '';
         showLoader(false);
     }
     async function deleteMenu(n) {
-        if(confirm(`Hapus menu ${n}?`)) {
-            showLoader(true);
+        if(confirm("Hapus menu ini?")) {
             await db.collection('menus').doc(n).delete();
-            await loadMenus();
-            renderMenuList();
-            showLoader(false);
+            await loadMenus(); renderMenuList();
         }
     }
 
     function showLocationManagement() {
-        renderLocList();
-        document.getElementById('locationManagementPopup').style.display='block';
-        document.querySelector('.overlay').style.display='block';
+        renderLocationList();
+        openPopup('locationManagementPopup');
     }
-    function renderLocList() {
+    function renderLocationList() {
         const c = document.getElementById('location-list-container');
         c.innerHTML = Object.values(locationsData).sort((a,b)=>a.name.localeCompare(b.name)).map(l => `
-            <div class="menu-item">
-                <span>${l.name} (Max ${l.capacity})</span>
-                <div class="menu-item-actions">
-                    <button class="danger" onclick="deleteLocation('${l.name}')"><i class="fas fa-trash"></i></button>
-                </div>
+            <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
+                <span>${l.name} (${l.capacity} org)</span>
+                <button class="danger" style="padding:2px 8px; font-size:0.8rem; margin:0;" onclick="deleteLocation('${l.name}')">Hapus</button>
             </div>`).join('');
     }
     async function addNewLocation() {
-        const n = document.getElementById('newLocName').value.trim();
-        const c = parseInt(document.getElementById('newLocCap').value);
-        if(!n || !c) return;
+        const n = document.getElementById('newLocationName').value.trim();
+        const c = document.getElementById('newLocationCapacity').value;
+        if (!n || !c) return;
         const id = n.replace(/\s+/g, '-').toLowerCase();
         showLoader(true);
-        await db.collection('locations').doc(id).set({name:n, capacity:c});
-        await loadLocations();
-        renderLocList();
-        document.getElementById('newLocName').value='';
+        await db.collection('locations').doc(id).set({ name: n, capacity: parseInt(c) });
+        await loadLocations(); renderLocationList();
+        document.getElementById('newLocationName').value = '';
         showLoader(false);
     }
     async function deleteLocation(n) {
-        if(confirm("Hapus lokasi ini?")) {
+        if(confirm("Hapus tempat ini?")) {
             const id = Object.keys(locationsData).find(k => locationsData[k].name === n);
-            if(id) {
-                showLoader(true);
-                await db.collection('locations').doc(id).delete();
-                await loadLocations();
-                renderLocList();
-                showLoader(false);
-            }
+            if(id) await db.collection('locations').doc(id).delete();
+            await loadLocations(); renderLocationList();
         }
     }
 
-    // --- CUSTOMER LIST ---
+    // --- 9. CUSTOMER LIST ---
     function showCustomerMenu() {
-        const unique = {};
-        allReservationsRaw.forEach(r => {
-            if(r.nomorHp && !unique[r.nomorHp]) unique[r.nomorHp] = r.nama;
-        });
-        
-        window.customerListCache = Object.entries(unique).map(([hp, nm]) => ({hp, nm})).sort((a,b)=>a.nm.localeCompare(b.nm));
-        filterCustomerList('');
-        document.getElementById('customerListPopup').style.display='block';
-        document.querySelector('.overlay').style.display='block';
+        renderCustomerList('');
+        openPopup('customerListPopup');
     }
-    function filterCustomerList(q) {
-        const c = document.getElementById('customer-list-content');
-        const f = window.customerListCache.filter(x => x.nm.toLowerCase().includes(q.toLowerCase()) || x.hp.includes(q));
-        c.innerHTML = f.map(x => `
-            <div class="menu-item">
-                <span>${x.nm}<br><small>${x.hp}</small></span>
-                <button class="whatsapp" onclick="waLink('${x.hp}','${x.nm}')"><i class="fab fa-whatsapp"></i> Hubungi</button>
+    function renderCustomerList(q) {
+        const unique = {};
+        allReservations.forEach(r => { if(r.nomorHp) unique[r.nomorHp] = r.nama; });
+        
+        const filtered = Object.entries(unique).filter(([hp, nm]) => 
+            nm.toLowerCase().includes(q.toLowerCase()) || hp.includes(q)
+        );
+        
+        document.getElementById('customer-list').innerHTML = filtered.map(([hp, nm]) => `
+            <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
+                <span><b>${nm}</b><br><small>${hp}</small></span>
+                <button class="whatsapp" style="font-size:0.8rem;" onclick="waDirect('${hp}')">Chat</button>
             </div>`).join('');
     }
 
-    // --- BROADCAST PROMO ---
-    function showBroadcastMain() {
-        document.getElementById('broadcastMainPopup').style.display='block';
-        document.querySelector('.overlay').style.display='block';
+    // --- HELPER UI ---
+    function showLoader(show) { document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none'; }
+    function openPopup(id) { document.getElementById(id).style.display = 'block'; document.getElementById('overlay').style.display = 'block'; }
+    function closePopup(id) { document.getElementById(id).style.display = 'none'; document.getElementById('overlay').style.display = 'none'; }
+    function showToast(msg, type='success') { 
+        const t = document.getElementById('toast');
+        t.innerText = msg; t.className = `toast ${type}`; 
+        t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); 
     }
-    function showBroadcastSettings() {
-        const msg = localStorage.getItem('promoMsg') || '';
-        document.getElementById('broadcast-content').innerHTML = `
-            <label>Pesan Promo (Gunakan 'kak' untuk nama otomatis):</label>
-            <textarea id="promoMsgInput" style="height:100px;">${msg}</textarea>
-            <button onclick="savePromoMsg()">Simpan Pesan</button>`;
+    function waDirect(hp) {
+        window.open(`https://wa.me/${hp.replace(/^0/, '62').replace(/[^0-9]/g, '')}`, '_blank');
     }
-    function savePromoMsg() {
-        localStorage.setItem('promoMsg', document.getElementById('promoMsgInput').value);
-        showToast("Pesan tersimpan");
-    }
-    function showBroadcastList() {
-        const msg = localStorage.getItem('promoMsg');
-        if(!msg) return alert("Atur pesan dulu!");
-        
-        const unique = {};
-        allReservationsRaw.forEach(r => { if(r.nomorHp) unique[r.nomorHp] = r.nama; });
-        
-        let html = '<div style="max-height:300px; overflow-y:auto">';
-        Object.entries(unique).forEach(([hp, nm]) => {
-            html += `
-            <div class="broadcast-customer-item">
-                <div><b>${nm}</b><br><small>${hp}</small></div>
-                <button class="broadcast-btn" onclick="sendPromo(this, '${hp}', '${nm}')">Kirim</button>
-            </div>`;
-        });
-        html += '</div>';
-        document.getElementById('broadcast-content').innerHTML = html;
-    }
-    function sendPromo(btn, hp, nm) {
-        let msg = localStorage.getItem('promoMsg');
-        msg = msg.replace(/kak/gi, `Kak *${nm}*`);
-        waLink(hp, '', msg);
-        btn.classList.add('sent');
-        btn.innerText = 'Terkirim';
-        btn.disabled = true;
+</script>
+<script>
+    // --- 10. FITUR WHATSAPP DETAIL (SANGAT PENTING) ---
+    function contactViaWhatsApp(id) {
+        // Cari data reservasi berdasarkan ID
+        const r = dataReservasi[tanggalDipilih].find(x => x.id === id);
+        if (!r) return;
+
+        // 1. Format Header
+        let msg = `Halo Kak *${r.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Kakak:\n\n`;
+        msg += `🗓 Tanggal: *${r.date}*\n`;
+        msg += `⏰ Jam: *${r.jam} WIB*\n`;
+        msg += `📍 Tempat: *${r.tempat}*\n`;
+        msg += `👥 Jumlah: *${r.jumlah} Orang*\n\n`;
+
+        // 2. Format Menu (Detail)
+        msg += `🍽 *Pesanan Menu:*\n`;
+        if (r.menus && r.menus.length > 0) {
+            r.menus.forEach(m => {
+                // Ambil detail menu dari database
+                const details = detailMenu[m.name] ? `   _(${detailMenu[m.name].join(', ')})_` : '';
+                msg += `• ${m.quantity}x ${m.name}${details}\n`;
+            });
+        } else if (r.menu) {
+            msg += `• ${r.menu}\n`;
+        } else {
+            msg += `_Belum ada menu yang dipesan_\n`;
+        }
+
+        // 3. Format Tambahan & DP
+        if (r.tambahan) msg += `\n📝 *Catatan:* ${r.tambahan}`;
+        if (r.dp > 0) msg += `\n💰 *DP Masuk:* Rp ${parseInt(r.dp).toLocaleString()} (${r.tipeDp})`;
+
+        // 4. Footer
+        msg += `\n\nMohon dicek kembali ya Kak. Kami tunggu kedatangannya! 🙏😊`;
+
+        // Buka WhatsApp
+        const hp = r.nomorHp.replace(/^0/, '62').replace(/[^0-9]/g, '');
+        window.open(`https://wa.me/${hp}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    // --- NEW ANALYSIS (CHART.JS) ---
-    function showAnalysis() {
-        runAnalysis();
-        document.getElementById('analysisPopup').style.display='block';
-        document.querySelector('.overlay').style.display='block';
+    // Share Laporan Harian/Bulanan ke Owner via WA
+    function shareViaWhatsApp(type) {
+        let msg = '';
+        if (type === 'day') {
+            if (!tanggalDipilih) { showToast("Pilih tanggal dulu!", "error"); return; }
+            const list = dataReservasi[tanggalDipilih] || [];
+            msg = `*LAPORAN HARIAN DOLAN SAWAH*\n📅 Tanggal: ${tanggalDipilih}\n📊 Total: ${list.length} Reservasi\n\n`;
+            
+            list.sort((a,b) => a.jam.localeCompare(b.jam)).forEach((r, i) => {
+                msg += `${i+1}. *${r.nama}* (${r.jumlah} pax) - ⏰ ${r.jam}\n   📍 ${r.tempat}\n`;
+                if(r.dp > 0) msg += `   💰 DP: ${parseInt(r.dp).toLocaleString()}\n`;
+                msg += `\n`;
+            });
+        } else {
+            // Laporan Bulanan
+            const monthStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
+            const filtered = allReservations.filter(r => r.date.startsWith(monthStr));
+            const totalPax = filtered.reduce((acc, r) => acc + parseInt(r.jumlah||0), 0);
+            const totalDP = filtered.reduce((acc, r) => acc + parseInt(r.dp||0), 0);
+            
+            msg = `*REKAP BULAN ${monthNames[currentMonth].toUpperCase()} ${currentYear}*\n\n`;
+            msg += `✅ Total Reservasi: ${filtered.length}\n`;
+            msg += `👥 Total Tamu: ${totalPax} orang\n`;
+            msg += `💰 Total DP: Rp ${totalDP.toLocaleString()}\n`;
+        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        document.getElementById('waShareOpts').style.display='none';
     }
-    function runAnalysis() {
-        const type = document.getElementById('anFilterType').value;
+
+    // --- 11. ANALISA DATA & GRAFIK (CHART.JS) ---
+    function showAnalysis() {
+        runFilteredAnalysis();
+        openPopup('analysisPopup');
+    }
+
+    function runFilteredAnalysis() {
+        const type = document.getElementById('analysisFilterType').value;
         const now = new Date();
         let filtered = [];
-        
-        if(type === 'month') {
-            const ym = now.toISOString().slice(0,7); // YYYY-MM
-            filtered = allReservationsRaw.filter(r => r.date.startsWith(ym));
+        let dateKeyLen = 10; // Default grouping key length
+
+        // Filter Data
+        if (type === 'month') {
+            const ym = now.toISOString().slice(0, 7); // YYYY-MM
+            filtered = allReservations.filter(r => r.date.startsWith(ym));
+            dateKeyLen = 10; // Group by YYYY-MM-DD
         } else if (type === 'year') {
             const y = String(now.getFullYear());
-            filtered = allReservationsRaw.filter(r => r.date.startsWith(y));
+            filtered = allReservations.filter(r => r.date.startsWith(y));
+            dateKeyLen = 7; // Group by YYYY-MM
         } else {
-            filtered = allReservationsRaw;
+            filtered = allReservations; // All time
+            dateKeyLen = 7; // Group by YYYY-MM
         }
-        
-        // Stats
-        let tPax = 0, tDp = 0;
-        let menus = {}, hours = {};
-        let trend = {}; 
+
+        // Kalkulasi Statistik
+        let totalPax = 0;
+        let totalDP = 0;
+        let menuCounts = {};
+        let hourCounts = {};
+        let trendCounts = {}; 
 
         filtered.forEach(r => {
-            tPax += parseInt(r.jumlah||0);
-            tDp += parseInt(r.dp||0);
-            
-            // Menu
-            if(r.menus) r.menus.forEach(m => menus[m.name] = (menus[m.name]||0) + m.quantity);
-            else if(r.menu) menus[r.menu] = (menus[r.menu]||0) + 1;
-            
-            // Hour
-            if(r.jam) { const h = r.jam.split(':')[0]; hours[h] = (hours[h]||0) + parseInt(r.jumlah); }
-            
-            // Trend
-            const k = type === 'month' ? r.date.split('-')[2] : r.date.slice(0,7);
-            trend[k] = (trend[k]||0) + parseInt(r.jumlah);
+            totalPax += parseInt(r.jumlah || 0);
+            totalDP += parseInt(r.dp || 0);
+
+            // 1. Hitung Menu
+            if (r.menus) {
+                r.menus.forEach(m => menuCounts[m.name] = (menuCounts[m.name] || 0) + parseInt(m.quantity));
+            } else if (r.menu) {
+                menuCounts[r.menu] = (menuCounts[r.menu] || 0) + 1;
+            }
+
+            // 2. Hitung Jam Sibuk
+            if (r.jam) {
+                const h = r.jam.split(':')[0];
+                hourCounts[h] = (hourCounts[h] || 0) + parseInt(r.jumlah);
+            }
+
+            // 3. Tren Kunjungan
+            const key = r.date.substring(0, dateKeyLen);
+            trendCounts[key] = (trendCounts[key] || 0) + parseInt(r.jumlah);
         });
 
-        document.getElementById('stRes').innerText = filtered.length;
-        document.getElementById('stPax').innerText = tPax;
-        document.getElementById('stDp').innerText = 'Rp ' + (tDp/1000).toLocaleString() + 'k';
+        // Update Angka di Box
+        document.getElementById('anTotalRes').innerText = filtered.length;
+        document.getElementById('anTotalPax').innerText = totalPax;
+        document.getElementById('anTotalDP').innerText = "Rp " + (totalDP/1000).toLocaleString() + "k";
 
-        // Charts
-        renderChart('chartTrend', 'line', 'Tren Tamu', Object.keys(trend).sort(), Object.keys(trend).sort().map(k=>trend[k]), '#2a9d8f');
-        
-        const topMenu = Object.entries(menus).sort((a,b)=>b[1]-a[1]).slice(0,5);
-        renderChart('chartMenu', 'bar', 'Top 5 Menu', topMenu.map(x=>x[0]), topMenu.map(x=>x[1]), '#e9c46a');
-        
-        const sortHours = Object.keys(hours).sort();
-        renderChart('chartHour', 'line', 'Jam Sibuk', sortHours, sortHours.map(k=>hours[k]), '#e76f51');
+        // Render Grafik 1: Tren
+        renderChart('trendChart', 'line', 'Jumlah Pengunjung', Object.keys(trendCounts).sort(), Object.values(trendCounts), '#2a9d8f');
+
+        // Render Grafik 2: Menu Terlaris (Top 5)
+        const sortedMenu = Object.entries(menuCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+        renderChart('menuChart', 'bar', 'Porsi Terjual', sortedMenu.map(x=>x[0]), sortedMenu.map(x=>x[1]), '#e9c46a');
+
+        // Render Grafik 3: Jam Sibuk
+        const sortedHour = Object.keys(hourCounts).sort();
+        renderChart('hourChart', 'line', 'Kepadatan Tamu', sortedHour.map(h=>h+":00"), sortedHour.map(h=>hourCounts[h]), '#e76f51');
     }
-    
-    function renderChart(id, type, label, labels, data, color) {
-        if(chartInstances[id]) chartInstances[id].destroy();
-        const ctx = document.getElementById(id).getContext('2d');
-        chartInstances[id] = new Chart(ctx, {
+
+    function renderChart(canvasId, type, label, labels, data, color) {
+        // Hancurkan chart lama jika ada agar tidak menumpuk
+        if (chartInstances[canvasId]) {
+            chartInstances[canvasId].destroy();
+        }
+        
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        chartInstances[canvasId] = new Chart(ctx, {
             type: type,
             data: {
                 labels: labels,
-                datasets: [{ label: label, data: data, backgroundColor: color, borderColor: color, tension: 0.3 }]
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: color,
+                    borderColor: color,
+                    borderWidth: 2,
+                    tension: 0.3, // Membuat garis sedikit melengkung (halus)
+                    fill: type === 'line' // Isi warna di bawah garis
+                }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
         });
     }
 
-    // --- UTILS (WA, Notification, Export) ---
-    function waLink(hp, nm, msgOverride=null) {
-        hp = hp.replace(/^0/, '62').replace(/[^0-9]/g,'');
-        const msg = msgOverride || `Halo Kak *${nm}*, kami dari Dolan Sawah...`;
-        window.open(`https://wa.me/${hp}?text=${encodeURIComponent(msg)}`, '_blank');
+    // --- 12. FITUR BROADCAST PROMO ---
+    function showBroadcastMain() {
+        document.getElementById('broadcastMessage').value = localStorage.getItem('broadcastMsg') || '';
+        filterBroadcastList(''); // Load list awal
+        openPopup('broadcastMainPopup');
     }
-    
-    function sendThankYou(id, nm, hp) {
-        const msg = `Halo Kak *${nm}*,\nTerima kasih sudah berkunjung ke *Dolan Sawah*. Semoga puas dengan hidangan kami. Ditunggu kedatangannya kembali! 🙏😊`;
-        waLink(hp, nm, msg);
-        db.collection('reservations').doc(id).update({thankYouSent:true});
+
+    function saveBroadcastSettings() {
+        const msg = document.getElementById('broadcastMessage').value;
+        if(!msg) return showToast("Pesan tidak boleh kosong", "error");
+        localStorage.setItem('broadcastMsg', msg);
+        showToast("Template pesan tersimpan!");
     }
-    
-    function checkNotifications() {
-        const list = document.getElementById('notifList');
-        const badge = document.getElementById('notifBadge');
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        
-        // Filter: Hari ini, sudah lewat 2 jam dari jam reservasi, belum dikirim thanks
-        const pending = allReservationsRaw.filter(r => {
-            if(r.date !== todayStr || !r.jam || r.thankYouSent) return false;
-            const [h,m] = r.jam.split(':');
-            const rTime = new Date(); rTime.setHours(h,m,0);
-            const diffHr = (now - rTime) / 36e5;
-            return diffHr >= 2 && diffHr <= 8; 
+
+    function filterBroadcastList(query) {
+        const unique = {};
+        // Ambil customer unik dari semua reservasi
+        allReservations.forEach(r => {
+            if (r.nomorHp && !unique[r.nomorHp]) unique[r.nomorHp] = r.nama;
         });
-        
-        badge.innerText = pending.length;
-        badge.style.display = pending.length ? 'block' : 'none';
-        
-        list.innerHTML = pending.length ? pending.map(r => `
-            <div class="notification-item">
-                <b>${r.nama}</b> (Jam ${r.jam})<br>
-                <button class="whatsapp" style="font-size:0.7rem; padding:2px 5px;" onclick="sendThankYou('${r.id}','${r.nama}','${r.nomorHp}')">Kirim Thanks</button>
-            </div>`).join('') : '<div style="padding:10px; color:#888; text-align:center">Tidak ada notifikasi</div>';
+
+        const q = query.toLowerCase();
+        const filtered = Object.entries(unique).filter(([hp, nm]) => 
+            nm.toLowerCase().includes(q) || hp.includes(q)
+        );
+
+        const container = document.getElementById('broadcast-customer-list');
+        if(filtered.length === 0) {
+            container.innerHTML = '<p style="padding:10px; text-align:center;">Tidak ditemukan</p>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(([hp, nm]) => `
+            <div class="broadcast-customer-item">
+                <div>
+                    <strong>${nm}</strong><br>
+                    <small>${hp}</small>
+                </div>
+                <button class="broadcast-btn" onclick="sendBroadcast(this, '${hp}', '${nm}')">
+                    <i class="fab fa-whatsapp"></i> Kirim
+                </button>
+            </div>
+        `).join('');
     }
-    function toggleNotifications() {
-        const d = document.getElementById('notifDropdown');
-        d.style.display = d.style.display==='block' ? 'none' : 'block';
+
+    function sendBroadcast(btn, hp, nm) {
+        let msg = document.getElementById('broadcastMessage').value;
+        if (!msg) { alert("Harap isi/simpan pesan template dulu!"); return; }
+        
+        // Ganti variabel nama otomatis
+        msg = msg.replace(/kak/gi, `Kak *${nm}*`);
+        
+        // Kirim
+        const formattedHp = hp.replace(/^0/, '62').replace(/[^0-9]/g, '');
+        window.open(`https://wa.me/${formattedHp}?text=${encodeURIComponent(msg)}`, '_blank');
+        
+        // Ubah tombol jadi terkirim
+        btn.classList.add('sent');
+        btn.innerHTML = '<i class="fas fa-check"></i> Terkirim';
+        btn.disabled = true;
+    }
+
+    // --- 13. PRINT & EXPORT ---
+    function printData() {
+        if (!tanggalDipilih) return showToast("Pilih tanggal dulu", "error");
+        
+        // Buat jendela baru untuk print
+        const printWindow = window.open('', '', 'height=600,width=800');
+        const content = document.getElementById('reservation-detail-list').innerHTML;
+        const title = document.getElementById('reservation-view-title').innerText;
+        
+        printWindow.document.write('<html><head><title>Cetak Reservasi</title>');
+        printWindow.document.write('<style>');
+        printWindow.document.write('body{font-family:sans-serif; padding:20px;}');
+        printWindow.document.write('.reservation-item{border:1px solid #000; padding:10px; margin-bottom:10px; page-break-inside:avoid;}');
+        printWindow.document.write('.data-actions, button, .whatsapp, .danger, .secondary {display:none;}'); // Sembunyikan tombol
+        printWindow.document.write('.menu-detail {font-size:0.9rem; margin-left:10px;}');
+        printWindow.document.write('</style></head><body>');
+        printWindow.document.write(`<h2>${title}</h2>`);
+        printWindow.document.write(content);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
     }
 
     function showExportDataPopup() {
-        const exportData = {
-            version: '5.4',
-            reservations: allReservationsRaw,
+        // Ekspor semua data penting
+        const exportObj = {
+            reservations: allReservations,
             menus: detailMenu,
-            locations: locationsData
+            locations: locationsData,
+            date: new Date().toISOString()
         };
-        document.getElementById('export-output').value = btoa(JSON.stringify(exportData));
-        document.getElementById('exportDataPopup').style.display='block';
-        document.querySelector('.overlay').style.display='block';
-    }
-    function copyExport() {
-        const t = document.getElementById('export-output');
-        t.select(); navigator.clipboard.writeText(t.value);
-        showToast("Disalin ke clipboard!");
+        const str = JSON.stringify(exportObj);
+        // Encode ke Base64 agar rapi
+        document.getElementById('export-data-output').value = btoa(unescape(encodeURIComponent(str)));
+        openPopup('exportDataPopup');
     }
 
-    function toggleWaShare() {
-        const m = document.getElementById('waShareMenu');
-        m.style.display = m.style.display==='block' ? 'none' : 'block';
+    function copyExportCode() {
+        const el = document.getElementById('export-data-output');
+        el.select();
+        document.execCommand('copy'); // Fallback copy
+        showToast("Kode berhasil disalin!");
     }
-    
-    function shareViaWhatsApp(type) {
-        if(!tanggalDipilih && type==='day') return showToast("Pilih tanggal dulu", "error");
-        let msg = '';
-        if(type==='day') {
-            const list = dataReservasi[tanggalDipilih] || [];
-            msg = `*LAPORAN HARIAN (${tanggalDipilih})*\nTotal: ${list.length} Reservasi\n\n`;
-            list.forEach((r,i) => {
-                msg += `${i+1}. ${r.nama} (${r.jumlah} org) - ${r.jam}\n`;
-            });
+
+    // --- 14. NOTIFIKASI OTOMATIS ---
+    function checkNotifications() {
+        // Logika: Cari reservasi HARI INI yang sudah lewat jamnya tapi belum di-followup
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        
+        const pending = allReservations.filter(r => {
+            // Filter: Hari ini + Ada Jam + Belum dikirim Thanks
+            if (r.date !== todayStr || !r.jam || r.thankYouSent) return false;
+            
+            const [h, m] = r.jam.split(':');
+            const rTime = new Date(); 
+            rTime.setHours(h, m, 0);
+            
+            // Hitung selisih jam
+            const diffHours = (now - rTime) / (1000 * 60 * 60);
+            
+            // Tampilkan notif jika sudah lewat 2 jam s/d 8 jam setelah reservasi
+            return diffHours >= 2 && diffHours <= 8; 
+        });
+
+        // Update Badge Lonceng
+        const badge = document.getElementById('notification-badge');
+        const listContainer = document.getElementById('notification-list-ul');
+        
+        if (pending.length > 0) {
+            badge.style.display = 'flex';
+            badge.innerText = pending.length;
+            
+            listContainer.innerHTML = pending.map(r => `
+                <div style="padding:10px; border-bottom:1px solid #eee;">
+                    <b>${r.nama}</b> (Jam ${r.jam})<br>
+                    <small>Sudah selesai makan? Kirim ucapan sekarang.</small>
+                    <button class="whatsapp" style="margin-top:5px; width:100%; font-size:0.75rem;" 
+                        onclick="sendThanks('${r.id}', '${r.nama}', '${r.nomorHp}')">
+                        Kirim Ucapan
+                    </button>
+                </div>
+            `).join('');
         } else {
-            msg = `*REKAP BULAN INI*\nTotal Data: ${allReservationsRaw.filter(r=>r.date.startsWith(currentYear+'-'+String(currentMonth+1).padStart(2,'0'))).length} Reservasi`;
+            badge.style.display = 'none';
+            listContainer.innerHTML = '<div style="padding:15px; color:#999; text-align:center;">Tidak ada notifikasi</div>';
         }
-        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-        document.getElementById('waShareMenu').style.display='none';
     }
 
-    // Close overlays & dropdowns on click outside
-    document.getElementById('overlay').onclick = function() {
-        document.querySelectorAll('.popup-form').forEach(p => p.style.display='none');
-        this.style.display='none';
-    };
-    function showLoader(show) { document.getElementById('loadingOverlay').style.display = show ? 'flex':'none'; }
-    function closePopup(id) { document.getElementById(id).style.display='none'; document.querySelector('.overlay').style.display='none'; }
-    function showToast(m,t='success') { const x = document.getElementById('toast'); x.className = 'toast '+t; x.innerText=m; x.style.display='block'; setTimeout(()=>x.style.display='none', 3000); }
-</script>
+    function toggleNotificationDropdown(e) {
+        e.stopPropagation();
+        const d = document.getElementById('notification-dropdown');
+        d.style.display = d.style.display === 'block' ? 'none' : 'block';
+    }
 
+    // Event Listener untuk menutup dropdown jika klik di luar
+    window.onclick = function(event) {
+        if (!event.target.closest('#notification-bell-container')) {
+            document.getElementById('notification-dropdown').style.display = 'none';
+        }
+    }
+</script>
 </body>
 </html>
