@@ -546,7 +546,7 @@
       showToast("Mode offline tidak tersedia", "error");
     });
 
-    // --- Global State Variables ---
+        // --- Global State Variables ---
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     let dataReservasi = {};
     let detailMenu = {};
@@ -557,9 +557,16 @@
     let unsubscribeReservations = null;
     let allReservationsCache = null;
     let lastAnalysisPeriod = 'month';
+    
+    // Variabel state untuk Auto Open (Hanya satu kali deklarasi)
+    let hasAutoOpened = false; 
+
     // Notification variables
     let notificationInterval = null;
     let lastNotificationCheck = 0;
+
+
+
 
     // --- DOM Elements ---
     const mainContainer = document.getElementById('main-container');
@@ -600,13 +607,25 @@
     function handleLogout() { if (confirm("Yakin ingin logout?")) auth.signOut(); }
 
     // --- App Initialization ---
-    async function initializeApp() { 
-      showLoader(); // Tampilkan loader selama proses inisialisasi
+        async function initializeApp() { 
+      showLoader();
       try {
+        // 1. CEK URL PARAMETER DULU (LOGIKA BARU)
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramDate = urlParams.get('date');
+
+        // Jika ada tanggal di URL, paksa kalender buka bulan & tahun tanggal tersebut
+        if (paramDate) {
+            const d = new Date(paramDate);
+            if (!isNaN(d.getTime())) {
+                currentMonth = d.getMonth();
+                currentYear = d.getFullYear();
+            }
+        }
+
         await loadMenus();
         await loadLocations();
-        // Setelah data menu dan lokasi pasti siap, baru jalankan pengambilan data reservasi
-        loadReservationsForCurrentMonth(); // Fungsi ini akan menyembunyikan loader saat datanya siap
+        loadReservationsForCurrentMonth(); 
         setupReliableNotificationChecker();
       } catch (e) {
         console.error("Gagal melakukan inisialisasi:", e);
@@ -614,6 +633,7 @@
         hideLoader();
       }
     }
+
     
     // --- Data Loading ---
     
@@ -643,13 +663,12 @@
         } catch (e) { showToast("Gagal memuat daftar lokasi", "error"); }
     }
     
-    function loadReservationsForCurrentMonth() {
+        function loadReservationsForCurrentMonth() {
       if (unsubscribeReservations) unsubscribeReservations();
       const monthStr = String(currentMonth + 1).padStart(2, '0');
       const startDate = `${currentYear}-${monthStr}-01`;
       const endDate = `${currentYear}-${monthStr}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`;
       
-      // Don't show loader here, as it's already shown in initializeApp
       unsubscribeReservations = db.collection('reservations')
         .where('date', '>=', startDate).where('date', '<=', endDate)
         .onSnapshot( snapshot => {
@@ -660,8 +679,44 @@
               if (!dataReservasi[dateKey]) dataReservasi[dateKey] = [];
               dataReservasi[dateKey].push(r);
             });
+            
             buatKalender();
-            if (tanggalDipilih) {
+
+            // --- LOGIKA AUTO OPEN (BARU) ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoOpen = urlParams.get('autoOpen');
+            const paramDate = urlParams.get('date');
+            const paramSearch = urlParams.get('search');
+
+            // Cek apakah ada perintah autoOpen dan belum pernah dijalankan (hasAutoOpened = false)
+            if (autoOpen && paramDate && !hasAutoOpened) {
+                const d = new Date(paramDate);
+                // Pastikan kita berada di bulan yang benar sebelum klik
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    const day = d.getDate();
+                    
+                    // 1. Otomatis Klik Tanggal di Kalender
+                    pilihTanggal(day);
+                    
+                    // 2. Otomatis Isi Search dan Filter
+                    if (paramSearch) {
+                        const searchInput = document.getElementById('detailSearchInput');
+                        if (searchInput) {
+                            searchInput.value = paramSearch;
+                            filterReservations(paramSearch); // Jalankan filter
+                            showToast(`Membuka reservasi: ${paramSearch}`, "info");
+                        }
+                    }
+                    
+                    hasAutoOpened = true; // Tandai sudah dibuka agar tidak loop
+                    
+                    // Bersihkan URL agar terlihat rapi kembali
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+            // -------------------------------
+
+            if (tanggalDipilih && !hasAutoOpened) {
                 const reservations = dataReservasi[tanggalDipilih] || [];
                 updateReservationList(reservations);
             }
@@ -670,6 +725,7 @@
           err => { showToast("Gagal memuat data reservasi", "error"); hideLoader(); }
         );
     }
+
     
     // --- UI Helpers & Utilities ---
     function showLoader() { loadingOverlay.style.display = 'flex'; }
