@@ -663,7 +663,7 @@
         } catch (e) { showToast("Gagal memuat daftar lokasi", "error"); }
     }
     
-        function loadReservationsForCurrentMonth() {
+            function loadReservationsForCurrentMonth() {
       if (unsubscribeReservations) unsubscribeReservations();
       const monthStr = String(currentMonth + 1).padStart(2, '0');
       const startDate = `${currentYear}-${monthStr}-01`;
@@ -682,40 +682,56 @@
             
             buatKalender();
 
-            // --- LOGIKA AUTO OPEN (BARU) ---
+            // --- LOGIKA AUTO OPEN (DIPERBAIKI: MENUNGGU DATA MUNCUL) ---
             const urlParams = new URLSearchParams(window.location.search);
             const autoOpen = urlParams.get('autoOpen');
             const paramDate = urlParams.get('date');
             const paramSearch = urlParams.get('search');
 
-            // Cek apakah ada perintah autoOpen dan belum pernah dijalankan (hasAutoOpened = false)
-            if (autoOpen && paramDate && !hasAutoOpened) {
+            // Cek jika mode Auto Open aktif dan script belum berhasil membukanya (!hasAutoOpened)
+            if (autoOpen && paramDate && paramSearch && !hasAutoOpened) {
                 const d = new Date(paramDate);
-                // Pastikan kita berada di bulan yang benar sebelum klik
+                
+                // Pastikan kita berada di bulan/tahun yang sesuai dengan URL
                 if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-                    const day = d.getDate();
                     
-                    // 1. Otomatis Klik Tanggal di Kalender
-                    pilihTanggal(day);
-                    
-                    // 2. Otomatis Isi Search dan Filter
-                    if (paramSearch) {
+                    // Cek apakah data reservasi untuk tanggal tersebut sudah masuk?
+                    const checkDateKey = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    const dailyData = dataReservasi[checkDateKey] || [];
+
+                    // Cek apakah NAMA TAMU sudah ada di dalam data yang baru ditarik?
+                    const dataFound = dailyData.some(r => r.nama.toLowerCase().includes(paramSearch.toLowerCase()));
+
+                    if (dataFound) {
+                        // DATA KETEMU! Eksekusi klik dan pencarian
+                        const day = d.getDate();
+                        
+                        // 1. Klik Tanggal
+                        pilihTanggal(day);
+                        
+                        // 2. Isi Search dan Filter
                         const searchInput = document.getElementById('detailSearchInput');
                         if (searchInput) {
                             searchInput.value = paramSearch;
-                            filterReservations(paramSearch); // Jalankan filter
-                            showToast(`Membuka reservasi: ${paramSearch}`, "info");
+                            filterReservations(paramSearch); 
+                            showToast(`Data baru ditemukan: ${paramSearch}`, "success");
                         }
+                        
+                        // 3. Kunci agar tidak refresh lagi
+                        hasAutoOpened = true; 
+                        
+                        // 4. Bersihkan URL agar terlihat rapi
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    } else {
+                        // JIKA BELUM KETEMU: Jangan lakukan apa-apa.
+                        // Script akan diam menunggu update database berikutnya (biasanya 0.5 detik kemudian)
+                        console.log("Menunggu sinkronisasi data baru...");
                     }
-                    
-                    hasAutoOpened = true; // Tandai sudah dibuka agar tidak loop
-                    
-                    // Bersihkan URL agar terlihat rapi kembali
-                    window.history.replaceState({}, document.title, window.location.pathname);
                 }
             }
-            // -------------------------------
+            // -----------------------------------------------------------
 
+            // Update list standar jika tidak sedang menunggu auto open
             if (tanggalDipilih && !hasAutoOpened) {
                 const reservations = dataReservasi[tanggalDipilih] || [];
                 updateReservationList(reservations);
@@ -725,6 +741,7 @@
           err => { showToast("Gagal memuat data reservasi", "error"); hideLoader(); }
         );
     }
+
 
     
     // --- UI Helpers & Utilities ---
