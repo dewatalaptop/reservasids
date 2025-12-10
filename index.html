@@ -11,7 +11,8 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -303,6 +304,29 @@
       .action-buttons, .data-actions { flex-direction: column; } 
       .action-buttons button, .data-actions button { width: 100%; }
     }
+        /* Style Baru untuk Analisis Data V2 */
+    .analysis-controls {
+      display: flex; gap: 10px; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;
+    }
+    .analysis-controls select { margin-top: 0; border: 1px solid #ccc; }
+    .chart-container {
+      background: white; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; height: 300px; position: relative;
+    }
+    .insight-box {
+      background-color: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5;
+    }
+    .insight-box h5 { color: #0d47a1; margin-bottom: 8px; font-size: 1rem; }
+    .insight-box ul { padding-left: 20px; margin: 0; }
+    .insight-box li { margin-bottom: 5px; }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px;
+    }
+    .mini-stat {
+      background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 3px solid var(--primary);
+    }
+    .mini-stat .val { font-size: 1.4rem; font-weight: 700; color: var(--dark); }
+    .mini-stat .lbl { font-size: 0.8rem; color: #666; }
+
   </style>
 </head>
 <body>
@@ -522,7 +546,7 @@
       showToast("Mode offline tidak tersedia", "error");
     });
 
-    // --- Global State Variables ---
+        // --- Global State Variables ---
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     let dataReservasi = {};
     let detailMenu = {};
@@ -533,9 +557,16 @@
     let unsubscribeReservations = null;
     let allReservationsCache = null;
     let lastAnalysisPeriod = 'month';
+    
+    // Variabel state untuk Auto Open (Hanya satu kali deklarasi)
+    let hasAutoOpened = false; 
+
     // Notification variables
     let notificationInterval = null;
     let lastNotificationCheck = 0;
+
+
+
 
     // --- DOM Elements ---
     const mainContainer = document.getElementById('main-container');
@@ -576,13 +607,25 @@
     function handleLogout() { if (confirm("Yakin ingin logout?")) auth.signOut(); }
 
     // --- App Initialization ---
-    async function initializeApp() { 
-      showLoader(); // Tampilkan loader selama proses inisialisasi
+        async function initializeApp() { 
+      showLoader();
       try {
+        // 1. CEK URL PARAMETER DULU (LOGIKA BARU)
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramDate = urlParams.get('date');
+
+        // Jika ada tanggal di URL, paksa kalender buka bulan & tahun tanggal tersebut
+        if (paramDate) {
+            const d = new Date(paramDate);
+            if (!isNaN(d.getTime())) {
+                currentMonth = d.getMonth();
+                currentYear = d.getFullYear();
+            }
+        }
+
         await loadMenus();
         await loadLocations();
-        // Setelah data menu dan lokasi pasti siap, baru jalankan pengambilan data reservasi
-        loadReservationsForCurrentMonth(); // Fungsi ini akan menyembunyikan loader saat datanya siap
+        loadReservationsForCurrentMonth(); 
         setupReliableNotificationChecker();
       } catch (e) {
         console.error("Gagal melakukan inisialisasi:", e);
@@ -590,6 +633,7 @@
         hideLoader();
       }
     }
+
     
     // --- Data Loading ---
     
@@ -619,13 +663,12 @@
         } catch (e) { showToast("Gagal memuat daftar lokasi", "error"); }
     }
     
-    function loadReservationsForCurrentMonth() {
+        function loadReservationsForCurrentMonth() {
       if (unsubscribeReservations) unsubscribeReservations();
       const monthStr = String(currentMonth + 1).padStart(2, '0');
       const startDate = `${currentYear}-${monthStr}-01`;
       const endDate = `${currentYear}-${monthStr}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`;
       
-      // Don't show loader here, as it's already shown in initializeApp
       unsubscribeReservations = db.collection('reservations')
         .where('date', '>=', startDate).where('date', '<=', endDate)
         .onSnapshot( snapshot => {
@@ -636,8 +679,44 @@
               if (!dataReservasi[dateKey]) dataReservasi[dateKey] = [];
               dataReservasi[dateKey].push(r);
             });
+            
             buatKalender();
-            if (tanggalDipilih) {
+
+            // --- LOGIKA AUTO OPEN (BARU) ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoOpen = urlParams.get('autoOpen');
+            const paramDate = urlParams.get('date');
+            const paramSearch = urlParams.get('search');
+
+            // Cek apakah ada perintah autoOpen dan belum pernah dijalankan (hasAutoOpened = false)
+            if (autoOpen && paramDate && !hasAutoOpened) {
+                const d = new Date(paramDate);
+                // Pastikan kita berada di bulan yang benar sebelum klik
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    const day = d.getDate();
+                    
+                    // 1. Otomatis Klik Tanggal di Kalender
+                    pilihTanggal(day);
+                    
+                    // 2. Otomatis Isi Search dan Filter
+                    if (paramSearch) {
+                        const searchInput = document.getElementById('detailSearchInput');
+                        if (searchInput) {
+                            searchInput.value = paramSearch;
+                            filterReservations(paramSearch); // Jalankan filter
+                            showToast(`Membuka reservasi: ${paramSearch}`, "info");
+                        }
+                    }
+                    
+                    hasAutoOpened = true; // Tandai sudah dibuka agar tidak loop
+                    
+                    // Bersihkan URL agar terlihat rapi kembali
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+            // -------------------------------
+
+            if (tanggalDipilih && !hasAutoOpened) {
                 const reservations = dataReservasi[tanggalDipilih] || [];
                 updateReservationList(reservations);
             }
@@ -646,6 +725,7 @@
           err => { showToast("Gagal memuat data reservasi", "error"); hideLoader(); }
         );
     }
+
     
     // --- UI Helpers & Utilities ---
     function showLoader() { loadingOverlay.style.display = 'flex'; }
@@ -1536,45 +1616,207 @@ function copyExportCode() {
     }
     
     // --- Data Analysis Functionality ---
+        // --- Data Analysis V2 (Advanced) ---
+    let analysisChartInstance = null; // Variabel global untuk grafik
+
     async function showAnalysis() {
         const popup = document.getElementById('analysisPopup');
-        popup.innerHTML = `<h3><i class="fas fa-chart-pie"></i> Analisis Data</h3><div id="analysis-filters">
-                <button class="secondary" id="filter-week" onclick="runFilteredAnalysis('week')">Minggu Ini</button>
-                <button class="secondary" id="filter-month" onclick="runFilteredAnalysis('month')">Bulan Ini</button>
-                <button class="secondary" id="filter-all" onclick="runFilteredAnalysis('all')">Semua</button>
-            </div><div id="analysis-content"><div class="spinner" style="margin:20px auto;"></div></div>
-            <div class="data-actions"><button class="danger" onclick="closePopup('analysisPopup')">Tutup</button></div>`;
-        popup.style.display = 'block'; overlay.style.display = 'block';
+        
+        // Setup HTML Struktur Baru
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth(); // 0-11
+        
+        // Generate Opsi Tahun (3 tahun ke belakang)
+        let yearOptions = '';
+        for(let y = currentYear; y >= currentYear - 2; y--) {
+            yearOptions += `<option value="${y}">${y}</option>`;
+        }
+
+        // Generate Opsi Bulan
+        let monthOptions = `<option value="all">-- Satu Tahun Penuh --</option>`;
+        monthNames.forEach((m, index) => {
+            const selected = index === currentMonth ? 'selected' : '';
+            monthOptions += `<option value="${index}" ${selected}>${m}</option>`;
+        });
+
+        popup.innerHTML = `
+            <h3><i class="fas fa-chart-line"></i> Analisis & Wawasan Bisnis</h3>
+            
+            <div class="analysis-controls">
+                <div style="flex:1">
+                    <label style="font-size:0.8rem; margin-bottom:2px;">Tahun</label>
+                    <select id="anl-year">${yearOptions}</select>
+                </div>
+                <div style="flex:2">
+                     <label style="font-size:0.8rem; margin-bottom:2px;">Bulan / Periode</label>
+                    <select id="anl-month">${monthOptions}</select>
+                </div>
+                <button onclick="runAdvancedAnalysis()" style="margin-top:20px; height: 42px;"><i class="fas fa-filter"></i> Terapkan</button>
+            </div>
+
+            <div id="analysis-loading" style="display:none; text-align:center; padding:20px;"><div class="spinner"></div></div>
+            
+            <div id="analysis-result" style="display:none;">
+                <div class="stats-grid" id="anl-stats-grid"></div>
+
+                <div class="chart-container">
+                    <canvas id="analysisChart"></canvas>
+                </div>
+
+                <div class="insight-box" id="anl-insights"></div>
+
+                <div id="anl-details"></div>
+            </div>
+            
+            <div class="data-actions">
+                <button class="danger" onclick="closePopup('analysisPopup')">Tutup</button>
+            </div>`;
+        
+        popup.style.display = 'block'; 
+        overlay.style.display = 'block';
+
+        // Load data jika belum ada cache
         if (!allReservationsCache) {
             try {
                 const snapshot = await db.collection('reservations').get();
                 allReservationsCache = snapshot.docs.map(doc => doc.data());
             } catch (e) {
-                document.getElementById('analysis-content').innerHTML = `<p style="color:var(--danger);">Gagal memuat data.</p>`;
+                showToast("Gagal memuat data analisis.", "error");
                 return;
             }
-        } runFilteredAnalysis(lastAnalysisPeriod);
+        }
+        
+        // Jalankan analisis default (bulan ini)
+        runAdvancedAnalysis();
     }
-    function runFilteredAnalysis(period) {
-        lastAnalysisPeriod = period;
-        document.querySelectorAll('#analysis-filters button').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`filter-${period}`).classList.add('active');
-        const now = new Date(); let startDate;
-        if (period === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay()));
-        else if (period === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        const filteredData = period === 'all' ? allReservationsCache : allReservationsCache.filter(r => new Date(r.date) >= startDate);
-        renderAnalysis(analyzeData(filteredData), period);
+
+    function runAdvancedAnalysis() {
+        const year = parseInt(document.getElementById('anl-year').value);
+        const monthVal = document.getElementById('anl-month').value;
+        const resultContainer = document.getElementById('analysis-result');
+        const loading = document.getElementById('analysis-loading');
+
+        resultContainer.style.display = 'none';
+        loading.style.display = 'block';
+
+        setTimeout(() => { // Timeout kecil agar UI rendering terasa smooth
+            // 1. Filter Data
+            let filteredData = [];
+            let labels = [];
+            let chartData = [];
+            let xLabel = '';
+
+            if (monthVal === 'all') {
+                // Analisis 1 Tahun Penuh
+                const startDate = new Date(year, 0, 1);
+                const endDate = new Date(year, 11, 31);
+                filteredData = allReservationsCache.filter(r => {
+                    const d = new Date(r.date);
+                    return d >= startDate && d <= endDate;
+                });
+                
+                // Siapkan Data Grafik per Bulan
+                xLabel = 'Bulan';
+                labels = monthNames.map(m => m.substring(0, 3)); // Jan, Feb, dst
+                chartData = new Array(12).fill(0);
+                filteredData.forEach(r => {
+                    const mIndex = new Date(r.date).getMonth();
+                    chartData[mIndex]++;
+                });
+
+            } else {
+                // Analisis Bulan Tertentu
+                const mIndex = parseInt(monthVal);
+                const startDate = new Date(year, mIndex, 1);
+                const endDate = new Date(year, mIndex + 1, 0); // Akhir bulan
+                
+                filteredData = allReservationsCache.filter(r => {
+                    const d = new Date(r.date);
+                    return d >= startDate && d <= endDate;
+                });
+
+                // Siapkan Data Grafik per Tanggal
+                xLabel = 'Tanggal';
+                const daysInMonth = endDate.getDate();
+                labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+                chartData = new Array(daysInMonth).fill(0);
+                filteredData.forEach(r => {
+                    const dIndex = new Date(r.date).getDate() - 1;
+                    chartData[dIndex]++;
+                });
+            }
+
+            // 2. Hitung Statistik Detail
+            const stats = analyzeData(filteredData); // Menggunakan fungsi analyzeData yang sudah ada
+            const totalPax = filteredData.reduce((sum, r) => sum + parseInt(r.jumlah||0), 0);
+            const totalRevenueDP = filteredData.reduce((sum, r) => sum + parseInt(r.dp||0), 0);
+            const totalReservations = filteredData.length;
+
+            // 3. Render Ringkasan Angka
+            document.getElementById('anl-stats-grid').innerHTML = `
+                <div class="mini-stat"><div class="val">${totalReservations}</div><div class="lbl">Total Reservasi</div></div>
+                <div class="mini-stat"><div class="val">${totalPax}</div><div class="lbl">Total Tamu</div></div>
+                <div class="mini-stat"><div class="val">Rp ${formatK(totalRevenueDP)}</div><div class="lbl">Omzet DP Masuk</div></div>
+            `;
+
+            // 4. Render Grafik
+            renderChart(labels, chartData, xLabel);
+
+            // 5. Generate Saran & Insight
+            generateAutomatedInsights(filteredData, stats, monthVal, year);
+
+            // 6. Render List Detail (Pelanggan & Menu)
+            renderAnalysisLists(stats);
+
+            loading.style.display = 'none';
+            resultContainer.style.display = 'block';
+
+        }, 300);
     }
+
+    function formatK(num) {
+        if(num >= 1000000) return (num/1000000).toFixed(1) + 'jt';
+        if(num >= 1000) return (num/1000).toFixed(0) + 'rb';
+        return num;
+    }
+    // --- FUNGSI YANG HILANG (WAJIB DITAMBAHKAN) ---
     function analyzeData(data) {
-        const frequentCustomers = data.filter(r => r.nomorHp).reduce((acc, r) => { if (!acc[r.nomorHp]) acc[r.nomorHp] = { name: r.nama, count: 0, nomorHp: r.nomorHp }; acc[r.nomorHp].count++; return acc; }, {});
-        const topSpenders = data.filter(r => r.nomorHp && r.dp > 0).reduce((acc, r) => { if (!acc[r.nomorHp]) acc[r.nomorHp] = { name: r.nama, totalDp: 0, nomorHp: r.nomorHp }; acc[r.nomorHp].totalDp += r.dp; return acc; }, {});
+        // Analisis Pelanggan Sering Datang
+        const frequentCustomers = data.filter(r => r.nomorHp).reduce((acc, r) => { 
+            if (!acc[r.nomorHp]) acc[r.nomorHp] = { name: r.nama, count: 0, nomorHp: r.nomorHp }; 
+            acc[r.nomorHp].count++; 
+            return acc; 
+        }, {});
+
+        // Analisis Top Spender (DP Tertinggi)
+        const topSpenders = data.filter(r => r.nomorHp && r.dp > 0).reduce((acc, r) => { 
+            if (!acc[r.nomorHp]) acc[r.nomorHp] = { name: r.nama, totalDp: 0, nomorHp: r.nomorHp }; 
+            acc[r.nomorHp].totalDp += parseInt(r.dp); 
+            return acc; 
+        }, {});
+
+        // Analisis Menu Terpopuler
         const popularMenus = data.reduce((acc, r) => {
-            if (Array.isArray(r.menus)) r.menus.forEach(item => { acc[item.name] = (acc[item.name] || 0) + item.quantity; });
-            else if (r.menu) acc[r.menu] = (acc[r.menu] || 0) + 1;
+            if (Array.isArray(r.menus)) {
+                r.menus.forEach(item => { acc[item.name] = (acc[item.name] || 0) + item.quantity; });
+            } else if (r.menu) { // Fallback data lama
+                acc[r.menu] = (acc[r.menu] || 0) + 1;
+            }
             return acc;
         }, {});
+
+        // Analisis Hari Teramai
         const dayOfWeek = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-        const busiestDays = data.reduce((acc, r) => { const day = dayOfWeek[new Date(r.date).getDay()]; acc[day] = (acc[day] || 0) + 1; return acc; }, {});
+        const busiestDays = data.reduce((acc, r) => { 
+            const d = new Date(r.date);
+            // Cek validitas tanggal
+            if(!isNaN(d.getTime())){
+                const day = dayOfWeek[d.getDay()]; 
+                acc[day] = (acc[day] || 0) + 1; 
+            }
+            return acc; 
+        }, {});
+
         return {
             frequentCustomers: Object.values(frequentCustomers).sort((a, b) => b.count - a.count).slice(0, 5),
             topSpenders: Object.values(topSpenders).sort((a, b) => b.totalDp - a.totalDp).slice(0, 5),
@@ -1582,15 +1824,116 @@ function copyExportCode() {
             busiestDays: Object.entries(busiestDays).sort((a, b) => b[1] - a[1])
         };
     }
-    function renderAnalysis(results, period) {
-        const contentEl = document.getElementById('analysis-content');
-        const periodText = { week: 'Minggu Ini', month: 'Bulan Ini', all: 'Semua' }[period];
-        contentEl.innerHTML = `
-            <div class="analysis-section"><h4><i class="fas fa-crown"></i> Pelanggan Paling Setia (${periodText})</h4><ul class="analysis-list">${results.frequentCustomers.map(c => `<li class="analysis-item"><span class="name-clickable" onclick="showCustomerProfile('${c.nomorHp}', '${c.name}')">${c.name}</span><span class="value">${c.count}x</span></li>`).join('') || '<li>-</li>'}</ul></div>
-            <div class="analysis-section"><h4><i class="fas fa-wallet"></i> DP Teratas (${periodText})</h4><ul class="analysis-list">${results.topSpenders.map(c => `<li class="analysis-item"><span class="name-clickable" onclick="showCustomerProfile('${c.nomorHp}', '${c.name}')">${c.name}</span><span class="value">Rp ${formatRupiah(c.totalDp)}</span></li>`).join('') || '<li>-</li>'}</ul></div>
-            <div class="analysis-section"><h4><i class="fas fa-star"></i> Menu Terpopuler (${periodText})</h4><ul class="analysis-list">${results.popularMenus.map(([name, count]) => `<li class="analysis-item"><span class="name">${name}</span><span class="value">${count}x</span></li>`).join('') || '<li>-</li>'}</ul></div>
-            <div class="analysis-section"><h4><i class="fas fa-calendar-alt"></i> Hari Paling Ramai (${periodText})</h4><ul class="analysis-list">${results.busiestDays.map(([day, count]) => `<li class="analysis-item"><span class="name">${day}</span><span class="value">${count}x</span></li>`).join('') || '<li>-</li>'}</ul></div>`;
+    // --- AKHIR FUNGSI ---
+
+    function renderChart(labels, data, labelName) {
+        const ctx = document.getElementById('analysisChart').getContext('2d');
+        
+        // Hapus chart lama jika ada agar tidak menumpuk
+        if (analysisChartInstance) {
+            analysisChartInstance.destroy();
+        }
+
+        analysisChartInstance = new Chart(ctx, {
+            type: 'line', // Bisa diganti 'bar' jika suka diagram batang
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Jumlah Reservasi',
+                    data: data,
+                    borderColor: '#2a9d8f',
+                    backgroundColor: 'rgba(42, 157, 143, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3 // Membuat garis agak melengkung
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: `Tren Reservasi per ${labelName}` }
+                }
+            }
+        });
     }
+
+    function generateAutomatedInsights(data, stats, monthVal, year) {
+        const container = document.getElementById('anl-insights');
+        if (data.length === 0) {
+            container.innerHTML = `<h5><i class="fas fa-lightbulb"></i> Analisis Data Kosong</h5><p>Belum ada data reservasi pada periode ini. Silakan pilih periode lain atau input data reservasi.</p>`;
+            return;
+        }
+
+        const busiestDayName = stats.busiestDays.length > 0 ? stats.busiestDays[0][0] : '-';
+        const topMenu = stats.popularMenus.length > 0 ? stats.popularMenus[0][0] : '-';
+        const totalPax = data.reduce((sum, r) => sum + parseInt(r.jumlah||0), 0);
+        const avgPax = (totalPax / data.length).toFixed(1);
+
+        let suggestions = [];
+        let trendText = "";
+
+        // Logika Saran Berdasarkan Data
+        if (monthVal === 'all') {
+            trendText = `Dalam tahun ${year}, total reservasi mencapai <strong>${data.length} transaksi</strong>.`;
+        } else {
+            trendText = `Pada bulan ${monthNames[monthVal]}, rata-rata tamu per reservasi adalah <strong>${avgPax} orang</strong>.`;
+        }
+
+        // Saran 1: Berdasarkan Hari Ramai
+        if (busiestDayName === 'Sabtu' || busiestDayName === 'Minggu') {
+            suggestions.push(`Hari tersibuk adalah <strong>${busiestDayName}</strong>. Pertimbangkan membuat <em>Promo Weekday</em> (Senin-Kamis) untuk meratakan keramaian.`);
+        } else {
+            suggestions.push(`Unik! Hari tersibuk Anda adalah <strong>${busiestDayName}</strong>. Pastikan stok bahan baku siap di hari kerja tersebut.`);
+        }
+
+        // Saran 2: Berdasarkan Menu
+        suggestions.push(`Menu andalan bulan ini adalah <strong>${topMenu}</strong>. Anda bisa membuat paket bundling dengan menu ini untuk menaikkan penjualan menu lain.`);
+
+        // Saran 3: Berdasarkan Jumlah Tamu (Grup vs Couple)
+        if (avgPax > 5) {
+            suggestions.push(`Mayoritas tamu datang rombongan (Avg: ${avgPax}). Fokuskan promosi "Paket Keluarga" atau "Paket Gathering".`);
+        } else {
+            suggestions.push(`Banyak tamu datang dalam grup kecil (Avg: ${avgPax}). Cocok untuk promosi "Paket Couple" atau "Makan Hemat Berdua".`);
+        }
+
+        container.innerHTML = `
+            <h5><i class="fas fa-robot"></i> Saran Pengembangan Bisnis (AI Simple Logic)</h5>
+            <p>${trendText}</p>
+            <ul>
+                ${suggestions.map(s => `<li>${s}</li>`).join('')}
+            </ul>
+        `;
+    }
+
+    function renderAnalysisLists(results) {
+        const container = document.getElementById('anl-details');
+        container.innerHTML = `
+            <div class="analysis-section">
+                <h4><i class="fas fa-crown"></i> Pelanggan Setia (Top Frequency)</h4>
+                <ul class="analysis-list">
+                    ${results.frequentCustomers.map(c => `<li class="analysis-item"><span class="name-clickable" onclick="showCustomerProfile('${c.nomorHp}', '${c.name}')">${c.name}</span><span class="value">${c.count}x</span></li>`).join('') || '<li>Belum ada data</li>'}
+                </ul>
+            </div>
+            <div class="analysis-section">
+                <h4><i class="fas fa-utensils"></i> Menu Paling Laris</h4>
+                <ul class="analysis-list">
+                    ${results.popularMenus.map(([name, count]) => `<li class="analysis-item"><span class="name">${name}</span><span class="value">${count} porsi</span></li>`).join('') || '<li>Belum ada data</li>'}
+                </ul>
+            </div>
+            <div class="analysis-section">
+                <h4><i class="fas fa-wallet"></i> Pelanggan "Sultan" (Top Spender DP)</h4>
+                <ul class="analysis-list">
+                    ${results.topSpenders.map(c => `<li class="analysis-item"><span class="name-clickable" onclick="showCustomerProfile('${c.nomorHp}', '${c.name}')">${c.name}</span><span class="value">Rp ${formatRupiah(c.totalDp)}</span></li>`).join('') || '<li>Belum ada data</li>'}
+                </ul>
+            </div>
+        `;
+    }
+
     function showCustomerProfile(nomorHp, name) {
         const customerReservations = allReservationsCache.filter(r => r.nomorHp === nomorHp).sort((a,b) => b.date.localeCompare(a.date));
         const totalDp = customerReservations.reduce((sum, r) => sum + (r.dp || 0), 0);
