@@ -640,28 +640,43 @@
     // =====================================================
     // ================ PERBAIKAN DI SINI ================
     // =====================================================
-    async function loadMenus() {
+        async function loadMenus() {
       try {
-        // Menghapus .orderBy(firebase.firestore.FieldPath.documentId())
+        // Kita gunakan .get() polos agar tidak perlu setting Index di Firebase
         const snapshot = await db.collection('menus').get();
         
         detailMenu = {};
-        snapshot.forEach(doc => detailMenu[doc.id] = doc.data().details);
-      } catch (e) { showToast("Gagal memuat daftar menu", "error"); }
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // Tambahkan pengaman: Jika field 'details' tidak ada, isi dengan array kosong
+            // Ini mencegah error "undefined" yang bikin macet
+            detailMenu[doc.id] = data.details || []; 
+        });
+        console.log("Menu berhasil dimuat:", Object.keys(detailMenu).length);
+      } catch (e) { 
+        console.error("Error Lengkap Menu:", e); // Cek Console (F12) untuk detail
+        showToast("Gagal memuat menu: " + e.message, "error"); 
+      }
     }
+
     
     // =====================================================
     // ================ PERBAIKAN DI SINI ================
     // =====================================================
-    async function loadLocations() {
+        async function loadLocations() {
         try {
-            // Menghapus .orderBy('name')
             const snapshot = await db.collection('locations').get();
             
             locationsData = {};
-            snapshot.forEach(doc => locationsData[doc.id] = doc.data());
-        } catch (e) { showToast("Gagal memuat daftar lokasi", "error"); }
+            snapshot.forEach(doc => {
+                locationsData[doc.id] = doc.data();
+            });
+        } catch (e) { 
+            console.error("Error Lengkap Lokasi:", e);
+            showToast("Gagal memuat lokasi: " + e.message, "error"); 
+        }
     }
+
     
             function loadReservationsForCurrentMonth() {
       if (unsubscribeReservations) unsubscribeReservations();
