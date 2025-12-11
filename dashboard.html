@@ -1,248 +1,281 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dolan Sawah Central Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Dashboard Pusat - Dolan Sawah</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* --- MENGAMBIL VARIABEL DARI WEBSITE ANDA --- */
+    :root {
+      --primary: #2a9d8f; 
+      --primary-dark: #203a43; 
+      --secondary: #e9c46a; 
+      --highlight: #d35400; 
+      --bg-body: #f4f6f8; 
+      --bg-card: #ffffff; 
+      --text-main: #2d3436; 
+      --text-muted: #636e72;
+      --shadow-soft: 0 10px 40px rgba(0,0,0,0.08);
+      --shadow-hover: 0 15px 50px rgba(42, 157, 143, 0.2);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
-    <style>
-        :root {
-            --primary-color: #2d6a4f; /* Hijau Sawah Tua */
-            --accent-color: #d8f3dc; /* Hijau Muda Segar */
-            --gold: #d4a373; /* Warna Kayu/Emas */
-            --glass-bg: rgba(255, 255, 255, 0.15);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --text-light: #ffffff;
-        }
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      margin: 0; 
+      background-color: var(--bg-body); 
+      color: var(--text-main); 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* --- HEADER --- */
+    header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary)); 
+      padding: 30px 20px 60px; 
+      color: white;
+      border-bottom-left-radius: 35px; 
+      border-bottom-right-radius: 35px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Outfit', sans-serif;
-        }
+    .greeting { font-size: 1.5rem; font-weight: 700; margin-bottom: 5px; }
+    .date-display { font-size: 0.9rem; opacity: 0.9; font-weight: 300; letter-spacing: 0.5px; }
+    .clock-badge {
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(5px);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: inline-block;
+        margin-top: 10px;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
 
-        body {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
-                        url('https://images.unsplash.com/photo-1543265103-6058d94e2225?q=80&w=2070&auto=format&fit=crop'); /* Gambar Sawah Estetik */
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--text-light);
-            padding: 20px;
-        }
+    /* --- MAIN CONTAINER --- */
+    .dashboard-container { 
+        max-width: 1000px; 
+        margin: -40px auto 0; 
+        padding: 0 20px 40px; 
+        position: relative; 
+        z-index: 10; 
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
 
-        /* --- Header Section --- */
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            margin-top: 20px;
-            animation: fadeInDown 1s ease;
-        }
+    /* --- GRID LINKS --- */
+    .link-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
 
-        .brand {
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--gold);
-            margin-bottom: 5px;
-        }
+    .card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 25px;
+        text-decoration: none;
+        color: var(--text-main);
+        box-shadow: var(--shadow-soft);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 1px solid white;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+    }
 
-        .greeting {
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
+    .card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary);
+    }
 
-        .clock {
-            font-size: 1.2rem;
-            background: var(--glass-bg);
-            padding: 8px 20px;
-            border-radius: 50px;
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            display: inline-block;
-        }
+    .card-icon {
+        width: 50px; height: 50px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        transition: 0.3s;
+    }
 
-        /* --- Grid Container --- */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            width: 100%;
-            max-width: 1200px;
-            padding: 10px;
-        }
+    /* Warna Icon Berbeda tiap kartu */
+    .card-1 .card-icon { background: rgba(42, 157, 143, 0.15); color: var(--primary); }
+    .card-2 .card-icon { background: rgba(233, 196, 106, 0.2); color: #d4a373; }
+    .card-3 .card-icon { background: rgba(32, 58, 67, 0.1); color: var(--primary-dark); }
+    .card-4 .card-icon { background: rgba(211, 84, 0, 0.1); color: var(--highlight); }
 
-        /* --- Cards --- */
-        .card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 30px;
-            text-decoration: none;
-            color: var(--text-light);
-            transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: space-between;
-            height: 200px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
+    .card h3 { margin: 0 0 5px; font-size: 1.1rem; color: var(--primary-dark); }
+    .card p { margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+    
+    .card-arrow {
+        position: absolute; bottom: 25px; right: 25px;
+        opacity: 0; transform: translateX(-10px);
+        transition: 0.3s; color: var(--primary);
+    }
+    .card:hover .card-arrow { opacity: 1; transform: translateX(0); }
 
-        .card:hover {
-            transform: translateY(-10px);
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 15px 40px 0 rgba(0, 0, 0, 0.4);
-            border-color: var(--gold);
-        }
+    /* --- QUICK TOOLS SECTION --- */
+    .tools-section {
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: var(--shadow-soft);
+    }
+    .section-title { font-size: 0.95rem; font-weight: 600; color: var(--text-muted); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .tools-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+    
+    .btn-tool {
+        flex: 1;
+        min-width: 140px;
+        padding: 12px;
+        border: 1px solid #eee;
+        background: #fafafa;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex; align-items: center; gap: 10px;
+        font-family: inherit; font-size: 0.85rem; color: var(--text-main);
+        transition: 0.2s;
+    }
+    .btn-tool:hover { background: #f0f0f0; border-color: #ddd; }
+    .btn-tool i { color: var(--primary); }
 
-        .card-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: var(--accent-color);
-            transition: 0.4s;
-        }
+    /* Toast Notification */
+    .toast {
+        position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+        background: var(--primary-dark); color: white; padding: 12px 25px;
+        border-radius: 30px; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        opacity: 0; transition: 0.4s; z-index: 100; display: flex; align-items: center; gap: 10px;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-        .card:hover .card-icon {
-            color: var(--gold);
-            transform: scale(1.1);
-        }
+    /* Footer */
+    footer { margin-top: auto; padding: 20px; text-align: center; font-size: 0.8rem; color: var(--text-muted); }
 
-        .card-title {
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .card-desc {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            font-weight: 300;
-        }
-
-        .card-arrow {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            font-size: 1.2rem;
-            opacity: 0;
-            transform: translateX(-20px);
-            transition: 0.4s;
-            color: var(--gold);
-        }
-
-        .card:hover .card-arrow {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        /* --- Footer --- */
-        footer {
-            margin-top: auto;
-            padding: 20px;
-            font-size: 0.8rem;
-            opacity: 0.7;
-            text-align: center;
-        }
-
-        /* --- Animations --- */
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Mobile Adjustments */
-        @media (max-width: 600px) {
-            .greeting { font-size: 1.8rem; }
-            .card { height: 160px; }
-            .card-icon { font-size: 2.5rem; }
-        }
-    </style>
+  </style>
 </head>
 <body>
 
-    <header>
-        <div class="brand"><i class="fas fa-leaf"></i> Dolan Sawah Dashboard</div>
-        <div class="greeting" id="greetingText">Halo, Owner</div>
-        <div class="clock" id="clock">00:00:00 WIB</div>
-    </header>
+  <header>
+    <div class="greeting" id="greeting">Halo, Admin</div>
+    <div class="date-display" id="dateDisplay">Senin, 1 Januari 2025</div>
+    <div class="clock-badge"><i class="far fa-clock"></i> <span id="clock">00:00:00</span> WIB</div>
+  </header>
 
-    <main class="dashboard-grid">
-
-        <a href="https://www.dolansawah.my.id/reservasimandiri.html" target="_blank" class="card">
-            <i class="fas fa-mobile-screen-button card-icon"></i>
-            <div>
-                <div class="card-title">Reservasi Mandiri</div>
-                <div class="card-desc">Halaman reservasi untuk pelanggan (Public)</div>
-            </div>
+  <div class="dashboard-container">
+    
+    <div class="link-grid">
+        
+        <a href="https://www.dolansawah.my.id/reservasimandiri.html" target="_blank" class="card card-1">
+            <div class="card-icon"><i class="fas fa-mobile-alt"></i></div>
+            <h3>Reservasi Mandiri</h3>
+            <p>Halaman form reservasi untuk customer (Public).</p>
             <i class="fas fa-arrow-right card-arrow"></i>
         </a>
 
-        <a href="https://www.dolansawah.my.id/5672231.html" target="_blank" class="card">
-            <i class="fas fa-user-shield card-icon"></i>
-            <div>
-                <div class="card-title">Admin Self-Service</div>
-                <div class="card-desc">Kelola data reservasi mandiri</div>
-            </div>
+        <a href="https://www.dolansawah.my.id/5672231.html" target="_blank" class="card card-2">
+            <div class="card-icon"><i class="fas fa-user-cog"></i></div>
+            <h3>Admin Self-Service</h3>
+            <p>Kelola data masuk dari reservasi mandiri.</p>
             <i class="fas fa-arrow-right card-arrow"></i>
         </a>
 
-        <a href="https://dewatalaptop.github.io/reservasids" target="_blank" class="card">
-            <i class="fas fa-database card-icon"></i>
-            <div>
-                <div class="card-title">Master Admin</div>
-                <div class="card-desc">Pusat kendali utama reservasi (Github)</div>
-            </div>
+        <a href="https://dewatalaptop.github.io/reservasids" target="_blank" class="card card-3">
+            <div class="card-icon"><i class="fas fa-database"></i></div>
+            <h3>Master Admin (Utama)</h3>
+            <p>Pusat kendali database utama (GitHub).</p>
             <i class="fas fa-arrow-right card-arrow"></i>
         </a>
 
-        <a href="https://dewatalaptop.github.io/checkerds/" target="_blank" class="card">
-            <i class="fas fa-desktop card-icon"></i>
-            <div>
-                <div class="card-title">Viewer / Checker</div>
-                <div class="card-desc">Tampilan layar untuk dapur atau display</div>
-            </div>
+        <a href="https://dewatalaptop.github.io/checkerds/" target="_blank" class="card card-4">
+            <div class="card-icon"><i class="fas fa-desktop"></i></div>
+            <h3>Viewer / Checker</h3>
+            <p>Tampilan kalender & denah untuk operasional.</p>
             <i class="fas fa-arrow-right card-arrow"></i>
         </a>
 
-    </main>
+    </div>
 
-    <footer>
-        &copy; 2025 Dolan Sawah Management System. All Rights Reserved.
-    </footer>
+    <div class="tools-section">
+        <div class="section-title"><i class="fas fa-bolt"></i> Aksi Cepat</div>
+        <div class="tools-grid">
+            <button class="btn-tool" onclick="copyLink('https://www.dolansawah.my.id/reservasimandiri.html')">
+                <i class="far fa-copy"></i> Salin Link Reservasi
+            </button>
+            <button class="btn-tool" onclick="copyLink('https://dewatalaptop.github.io/checkerds/')">
+                <i class="far fa-copy"></i> Salin Link Viewer
+            </button>
+            <button class="btn-tool" onclick="window.open('https://wa.me/', '_blank')">
+                <i class="fab fa-whatsapp"></i> Buka WhatsApp
+            </button>
+        </div>
+    </div>
 
-    <script>
-        // Fungsi Update Jam
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            document.getElementById('clock').innerText = timeString + ' WIB';
-            
-            // Update Greeting Berdasarkan Jam
-            const hour = now.getHours();
-            let greeting = 'Selamat Malam';
-            if (hour >= 4 && hour < 11) greeting = 'Selamat Pagi';
-            else if (hour >= 11 && hour < 15) greeting = 'Selamat Siang';
-            else if (hour >= 15 && hour < 18) greeting = 'Selamat Sore';
-            
-            // Ganti teks "Halo, Owner" hanya saat load pertama kali atau biarkan dinamis
-            document.getElementById('greetingText').innerText = greeting + ", Dolan Sawah";
-        }
+  </div>
 
-        setInterval(updateTime, 1000);
-        updateTime(); // Jalankan langsung
-    </script>
+  <footer>
+    &copy; 2025 Dolan Sawah Management System.
+  </footer>
+
+  <div class="toast" id="toast">
+      <i class="fas fa-check-circle"></i> Link berhasil disalin!
+  </div>
+
+  <script>
+    // 1. Waktu & Tanggal Realtime
+    function updateTime() {
+        const now = new Date();
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        
+        // Update Jam
+        document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour12: false});
+        
+        // Update Tanggal
+        document.getElementById('dateDisplay').innerText = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+        // Update Sapaan
+        const h = now.getHours();
+        let greet = 'Selamat Malam';
+        if(h >= 4 && h < 11) greet = 'Selamat Pagi';
+        else if(h >= 11 && h < 15) greet = 'Selamat Siang';
+        else if(h >= 15 && h < 18) greet = 'Selamat Sore';
+        document.getElementById('greeting').innerText = `${greet}, Dolan Sawah`;
+    }
+    
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // 2. Fungsi Copy Link
+    function copyLink(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast();
+        }).catch(err => {
+            console.error('Gagal menyalin', err);
+        });
+    }
+
+    // 3. Toast Animation
+    function showToast() {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+  </script>
+
 </body>
 </html>
