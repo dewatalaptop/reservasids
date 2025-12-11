@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah (Firebase) - V5.3 Final</title>
+  <title>Sistem Reservasi Dolan Sawah (Firebase) - V5.3 Full Detail</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -186,7 +186,7 @@
             <span id="header-req-badge" class="req-badge">0</span>
         </div>
     </div>
-  </header>
+</header>
   
   <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
   <div class="toast" id="toast"></div>
@@ -907,12 +907,30 @@
 
     function contactViaWhatsApp(id) {
         const r = (dataReservasi[tanggalDipilih] || []).find(x => x.id === id);
-        if(!r) return;
-        let mList = '';
-        if (Array.isArray(r.menus) && r.menus.length > 0) mList = r.menus.map(item => `  - *${item.quantity}x ${item.name}*`).join('\n');
-        const msg = `Halo Kak *${r.nama}* 👋,\nKonfirmasi Reservasi:\n🗓️ *${r.date}* jam *${r.jam}*\n📍 *${r.tempat}* (${r.jumlah} org)\n🍽️ Pesanan:\n${mList}\n\nNote: ${r.tambahan || '-'}\nDP: Rp${formatRupiah(r.dp)}`;
-        openWhatsApp(r.nomorHp, r.nama, msg);
+        if (!r) return;
+        
+        // --- RESTORED: Full Detailed Menu Logic from V5.2 ---
+        let menuList = '  - _(Tidak ada detail menu)_';
+        if (Array.isArray(r.menus) && r.menus.length > 0) {
+            menuList = r.menus.map(item => {
+                const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
+                const detailString = details.map(d => `    • ${d}`).join('\n');
+                return `  - *${item.quantity}x ${item.name}*\n${detailString}`;
+            }).join('\n');
+        } else if (r.menu) { // Fallback data lama
+            const details = detailMenu[r.menu] || [];
+            const detailString = details.map(d => `    • ${d}`).join('\n');
+            menuList = `  - *${r.menu}*\n${detailString}`;
+        }
+
+        const tambahanInfo = r.tambahan ? `📝 *Request Tambahan:*\n${r.tambahan}\n\n` : '';
+        const dpInfo = r.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(r.dp)} ${r.tipeDp ? `(via ${r.tipeDp})` : ''} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
+        
+        const message = `Halo Kak *${r.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${r.date}\n⏰ *Jam:* ${r.jam}\n📍 *Tempat:* ${r.tempat}\n👥 *Jumlah:* ${r.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
+        
+        openWhatsApp(r.nomorHp, r.nama, message);
     }
+
     function sendThankYouMessage(id, name, phone) {
         openWhatsApp(phone, name, `Halo Kak *${name}*, Terima kasih sudah berkunjung ke Dolan Sawah! 🙏\nKami harap Kakak menikmati hidangan kami. Ditunggu kedatangannya kembali! 😊`);
         db.collection('reservations').doc(id).update({ thankYouSent: true });
@@ -925,7 +943,7 @@
         window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`, '_blank');
     }
     
-    function toggleNotificationDropdown(e) { e.stopPropagation(); } // Empty but kept for safety
+    function toggleNotificationDropdown(e) { e.stopPropagation(); } 
 
     // MANAJEMEN MENU & LOKASI
     function showMenuManagement() { 
@@ -980,13 +998,21 @@
 
     async function showCustomerMenu() {
         showLoader();
-        const snap = await db.collection('reservations').orderBy('createdAt','desc').limit(300).get();
-        const custs = new Map();
-        snap.forEach(d => { const v=d.data(); if(v.nomorHp) custs.set(v.nomorHp, v.nama); });
-        const list = [...custs.entries()].map(([hp,nm]) => `<div class="menu-item"><span>${nm}<br><small>${hp}</small></span><button class="whatsapp" onclick="openWhatsApp('${hp}','${nm}','')">WA</button></div>`).join('');
-        document.getElementById('customerListPopup').innerHTML = `<h3>Customer</h3><div style="max-height:400px;overflow:auto;">${list||'Kosong'}</div><button class="danger" onclick="closePopup('customerListPopup')">Tutup</button>`;
-        document.getElementById('customerListPopup').style.display='block'; overlay.style.display='block';
-        hideLoader();
+        try {
+            const snap = await db.collection('reservations').orderBy('createdAt','desc').limit(300).get();
+            const custs = new Map();
+            snap.forEach(d => { const v=d.data(); if(v.nomorHp) custs.set(cleanPhoneNumber(v.nomorHp), v.nama); });
+            
+            // Fix: Render list with try-catch logic protection from previous request
+            const sortedCusts = [...custs.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+            let list = '';
+            if(sortedCusts.length === 0) list = '<div style="text-align:center;">Kosong</div>';
+            else {
+                list = sortedCusts.map(([hp,nm]) => `<div class="menu-item"><span>${nm}<br><small>${hp}</small></span><button class="whatsapp" onclick="openWhatsApp('${hp}','${nm.replace(/'/g, "\\'") }','')">WA</button></div>`).join('');
+            }
+            document.getElementById('customerListPopup').innerHTML = `<h3>Customer (${custs.size})</h3><div style="max-height:400px;overflow:auto;">${list}</div><button class="danger" onclick="closePopup('customerListPopup')">Tutup</button>`;
+            document.getElementById('customerListPopup').style.display='block'; overlay.style.display='block';
+        } catch(e) { console.error(e); } finally { hideLoader(); }
     }
 
     async function showAnalysis() {
@@ -1040,10 +1066,46 @@
     function doBroadcast(hp, name, btn) { const msg = promoMessageCache.replace(/kak/gi, `Kak *${name}*`); openWhatsApp(hp, name, msg); btn.classList.add('sent'); btn.textContent = 'Terkirim'; }
 
     function forceSync() { window.location.reload(); }
+    
     function shareViaWhatsApp(type) {
-        if(type==='day') { const res = dataReservasi[tanggalDipilih]||[]; const txt = `*Laporan ${tanggalDipilih}*\n` + res.map(r=>`${r.jam} ${r.nama} (${r.jumlah})`).join('\n'); window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`); } 
-        else { let total=0; for(let k in dataReservasi) total+=dataReservasi[k].length; window.open(`https://wa.me/?text=${encodeURIComponent('Total Reservasi Bulan Ini: '+total)}`); }
+        if(type==='day') {
+            // --- RESTORED: Full Detailed Day Report Logic from V5.2 ---
+            const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
+            let message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
+            
+            if (reservations.length === 0) {
+                message += `_Tidak ada reservasi untuk tanggal ini._`;
+            } else {
+                reservations.forEach((r, i) => {
+                    let menuList = '  - _(Tidak ada detail menu)_';
+                    if (Array.isArray(r.menus) && r.menus.length > 0) {
+                        menuList = r.menus.map(item => {
+                            const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
+                            const detailString = details.map(d => `      • ${d}`).join('\n');
+                            return `  - *${item.quantity}x ${item.name}*\n${detailString}`;
+                        }).join('\n');
+                    } else if (r.menu) {
+                        const details = detailMenu[r.menu] || [];
+                        const detailString = details.map(d => `      • ${d}`).join('\n');
+                        menuList = `  - *${r.menu}*\n${detailString}`;
+                    }
+
+                    message += `*${i + 1}. ${r.nama || 'Nama tidak ada'}*\n`;
+                    message += `⏰ Jam: *${r.jam || '?'}* | 📍 Tempat: *${r.tempat || '?'}* | 👥 Jumlah: *${r.jumlah || '?'} org*\n`;
+                    message += `🍽️ *Pesanan Menu:*\n${menuList}\n`;
+                    if (r.dp > 0) message += `💰 DP: *Rp ${formatRupiah(r.dp)}* ${r.tipeDp ? `(${r.tipeDp})` : ''}\n`;
+                    if (r.tambahan) message += `📝 Tambahan: *${r.tambahan}*\n`;
+                    message += `-------------------------\n\n`;
+                });
+            }
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        } else { 
+            // Month report simplified logic remains
+            let total=0; for(let k in dataReservasi) total+=dataReservasi[k].length; 
+            window.open(`https://wa.me/?text=${encodeURIComponent('Total Reservasi Bulan Ini: '+total)}`); 
+        }
     }
+    
     function shareViaEmail() { window.location.href=`mailto:?subject=Laporan&body=Cek lampiran`; }
 </script>
 </body>
