@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dolan Sawah Central Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #2d6a4f; /* Hijau Sawah Tua */
+            --accent-color: #d8f3dc; /* Hijau Muda Segar */
+            --gold: #d4a373; /* Warna Kayu/Emas */
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-light: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                        url('https://images.unsplash.com/photo-1543265103-6058d94e2225?q=80&w=2070&auto=format&fit=crop'); /* Gambar Sawah Estetik */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-light);
+            padding: 20px;
+        }
+
+        /* --- Header Section --- */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            margin-top: 20px;
+            animation: fadeInDown 1s ease;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+
+        .greeting {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .clock {
+            font-size: 1.2rem;
+            background: var(--glass-bg);
+            padding: 8px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            display: inline-block;
+        }
+
+        /* --- Grid Container --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+            padding: 10px;
+        }
+
+        /* --- Cards --- */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            text-decoration: none;
+            color: var(--text-light);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: space-between;
+            height: 200px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 15px 40px 0 rgba(0, 0, 0, 0.4);
+            border-color: var(--gold);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+            transition: 0.4s;
+        }
+
+        .card:hover .card-icon {
+            color: var(--gold);
+            transform: scale(1.1);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        .card-arrow {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            font-size: 1.2rem;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: 0.4s;
+            color: var(--gold);
+        }
+
+        .card:hover .card-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* --- Footer --- */
+        footer {
+            margin-top: auto;
+            padding: 20px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-align: center;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            .greeting { font-size: 1.8rem; }
+            .card { height: 160px; }
+            .card-icon { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand"><i class="fas fa-leaf"></i> Dolan Sawah Dashboard</div>
+        <div class="greeting" id="greetingText">Halo, Owner</div>
+        <div class="clock" id="clock">00:00:00 WIB</div>
+    </header>
+
+    <main class="dashboard-grid">
+
+        <a href="https://www.dolansawah.my.id/reservasimandiri.html" target="_blank" class="card">
+            <i class="fas fa-mobile-screen-button card-icon"></i>
+            <div>
+                <div class="card-title">Reservasi Mandiri</div>
+                <div class="card-desc">Halaman reservasi untuk pelanggan (Public)</div>
+            </div>
+            <i class="fas fa-arrow-right card-arrow"></i>
+        </a>
+
+        <a href="https://www.dolansawah.my.id/5672231.html" target="_blank" class="card">
+            <i class="fas fa-user-shield card-icon"></i>
+            <div>
+                <div class="card-title">Admin Self-Service</div>
+                <div class="card-desc">Kelola data reservasi mandiri</div>
+            </div>
+            <i class="fas fa-arrow-right card-arrow"></i>
+        </a>
+
+        <a href="https://dewatalaptop.github.io/reservasids" target="_blank" class="card">
+            <i class="fas fa-database card-icon"></i>
+            <div>
+                <div class="card-title">Master Admin</div>
+                <div class="card-desc">Pusat kendali utama reservasi (Github)</div>
+            </div>
+            <i class="fas fa-arrow-right card-arrow"></i>
+        </a>
+
+        <a href="https://dewatalaptop.github.io/checkerds/" target="_blank" class="card">
+            <i class="fas fa-desktop card-icon"></i>
+            <div>
+                <div class="card-title">Viewer / Checker</div>
+                <div class="card-desc">Tampilan layar untuk dapur atau display</div>
+            </div>
+            <i class="fas fa-arrow-right card-arrow"></i>
+        </a>
+
+    </main>
+
+    <footer>
+        &copy; 2025 Dolan Sawah Management System. All Rights Reserved.
+    </footer>
+
+    <script>
+        // Fungsi Update Jam
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('clock').innerText = timeString + ' WIB';
+            
+            // Update Greeting Berdasarkan Jam
+            const hour = now.getHours();
+            let greeting = 'Selamat Malam';
+            if (hour >= 4 && hour < 11) greeting = 'Selamat Pagi';
+            else if (hour >= 11 && hour < 15) greeting = 'Selamat Siang';
+            else if (hour >= 15 && hour < 18) greeting = 'Selamat Sore';
+            
+            // Ganti teks "Halo, Owner" hanya saat load pertama kali atau biarkan dinamis
+            document.getElementById('greetingText').innerText = greeting + ", Dolan Sawah";
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime(); // Jalankan langsung
+    </script>
+</body>
+</html>
