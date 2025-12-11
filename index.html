@@ -541,10 +541,8 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     
-    db.enablePersistence().catch(err => {
-      console.warn("Firebase persistence error: ", err.code);
-      showToast("Mode offline tidak tersedia", "error");
-    });
+    // db.enablePersistence()... (dimatikan agar tidak crash saat buka banyak tab)
+
 
         // --- Global State Variables ---
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
