@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Dolan Sawah - Ops V3.0</title>
+  <title>Dolan Sawah - Ops V3.5</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,7 +13,7 @@
 
   <style>
     :root {
-      --bg-gradient: #f1f5f9; /* Warna solid lebih bersih untuk performa scroll */
+      --bg-gradient: #f8fafc;
       --primary: #2563eb;
       --primary-dark: #1e40af;
       --accent: #f59e0b;
@@ -35,41 +35,34 @@
       overflow-y: auto;
     }
 
-    /* --- STICKY HEADER WRAPPER --- */
+    /* --- STICKY WRAPPER --- */
     .sticky-wrapper {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background: var(--bg-gradient); /* Menutup konten saat scroll */
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      position: sticky; top: 0; z-index: 1000;
+      background: var(--bg-gradient);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
 
     /* HEADER */
     .top-bar {
-      background: #ffffff;
-      padding: 12px 20px;
+      background: #ffffff; padding: 12px 20px;
       display: flex; justify-content: space-between; align-items: center;
       border-bottom: 1px solid #e2e8f0;
     }
     .brand h1 { font-family: 'Oswald', sans-serif; font-size: 1.3rem; color: var(--primary); text-transform: uppercase; margin: 0; }
-    .brand p { font-size: 0.7rem; color: var(--text-gray); font-weight: 600; }
     
     /* DATE NAV */
     .date-nav-wrapper {
-      background: #ffffff;
-      padding: 8px 0;
-      border-bottom: 1px solid #e2e8f0;
+      background: #ffffff; padding: 8px 0; border-bottom: 1px solid #e2e8f0;
       display: flex; align-items: center;
     }
     .date-scroller {
       flex-grow: 1; display: flex; gap: 8px; overflow-x: auto; padding: 0 15px;
-      scrollbar-width: none; -ms-overflow-style: none; /* Hide scrollbar */
-      scroll-behavior: smooth;
+      scrollbar-width: none; scroll-behavior: smooth;
     }
     .date-scroller::-webkit-scrollbar { display: none; }
     
     .date-pill {
-      min-width: 55px; height: 55px; border-radius: 10px; background: #f8fafc;
+      min-width: 55px; height: 55px; border-radius: 10px; background: #f1f5f9;
       border: 1px solid #e2e8f0; display: flex; flex-direction: column; 
       justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0;
     }
@@ -77,15 +70,10 @@
     .date-pill .day { font-size: 0.65rem; text-transform: uppercase; font-weight: 700; }
     .date-pill .num { font-size: 1.1rem; font-weight: 800; line-height: 1; }
 
-    /* TAB & FILTERS (RESPONSIVE) */
+    /* TAB & FILTERS */
     .nav-tabs {
-      background: #ffffff;
-      padding: 10px 15px;
-      display: flex; 
-      gap: 10px;
-      overflow-x: auto; /* Scrollable horizontal */
-      white-space: nowrap; /* Mencegah wrap ke bawah */
-      -webkit-overflow-scrolling: touch; /* Smooth scroll di iOS */
+      background: #ffffff; padding: 10px 15px; display: flex; gap: 8px;
+      overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;
     }
     .nav-btn {
       padding: 8px 16px; border-radius: 20px; border: 1px solid #e2e8f0;
@@ -95,7 +83,7 @@
     .nav-btn.active { background: var(--dark); color: white; border-color: var(--dark); }
     .nav-btn.filter-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
 
-    /* --- CONTENT AREA --- */
+    /* --- CONTENT --- */
     .content-area { padding: 20px; display: none; animation: fadeIn 0.3s ease; }
     .content-area.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -108,56 +96,72 @@
 
     /* FLOOR CARDS */
     .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-    .res-card {
-      background: white; border-radius: 16px; padding: 15px; position: relative;
-      box-shadow: var(--shadow); border: 1px solid #f1f5f9;
-    }
+    .res-card { background: white; border-radius: 16px; padding: 15px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
     
     .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .res-time { font-family: 'Oswald', sans-serif; font-size: 1.5rem; color: var(--dark); }
     .res-badge { font-size: 0.7rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
     .badge-urgent { background: #fee2e2; color: var(--danger); }
-    .badge-soon { background: #fef3c7; color: var(--accent); }
     
-    .res-info { margin-bottom: 12px; }
     .res-name { font-size: 1.1rem; font-weight: 700; color: var(--dark); }
-    .res-meta { font-size: 0.85rem; color: var(--text-gray); display: flex; gap: 10px; font-weight: 500; }
-
-    /* MENU IN FLOOR CARD */
+    .res-meta { font-size: 0.85rem; color: var(--text-gray); display: flex; gap: 10px; font-weight: 500; margin-bottom: 12px;}
+    
     .menu-compact { background: #f8fafc; border-radius: 8px; padding: 10px; border-left: 3px solid var(--primary); }
     .menu-row { margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 6px; }
     .menu-row:last-child { border: none; margin: 0; padding: 0; }
-    .menu-main { font-weight: 600; font-size: 0.9rem; display: flex; justify-content: space-between; }
     .menu-qty { background: var(--dark); color: white; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px; }
-    
-    /* NEW: MENU COMPONENTS IN FLOOR */
-    .menu-comps-tiny { 
-        font-size: 0.75rem; color: #64748b; margin-top: 2px; padding-left: 28px; 
-        font-style: italic; line-height: 1.2;
-    }
+    .menu-comps-tiny { font-size: 0.75rem; color: #64748b; margin-top: 2px; padding-left: 28px; font-style: italic; }
 
-    /* KITCHEN VIEW (DUAL MODE) */
+    /* KITCHEN VIEW */
     .kitchen-section { margin-bottom: 25px; }
     .section-title { font-size: 1rem; font-weight: 800; color: var(--dark); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    .section-title i { color: var(--primary); }
     
     .prep-list { background: white; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
-    .prep-item { 
-        padding: 12px 15px; border-bottom: 1px solid #f1f5f9; 
-        display: flex; justify-content: space-between; align-items: center; 
-    }
+    .prep-item { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s; }
     .prep-item:last-child { border-bottom: none; }
-    .prep-name { font-weight: 600; font-size: 0.9rem; color: var(--dark); }
-    .prep-total { 
-        font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 700; 
-        color: var(--primary); background: #eff6ff; padding: 4px 10px; border-radius: 6px; 
-    }
+    .prep-item:hover { background: #f0f9ff; } /* Efek hover saat mau diklik */
+    
+    .prep-name { font-weight: 600; font-size: 0.9rem; color: var(--dark); display: flex; align-items: center; gap: 5px; }
+    .prep-name i { color: var(--primary); font-size: 0.8rem; opacity: 0.5; } /* Ikon kecil penanda bisa diklik */
+    
+    .prep-total { font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--primary); background: #eff6ff; padding: 4px 10px; border-radius: 6px; }
+    .comp-item .prep-total { color: var(--accent); background: #fffbeb; }
 
-    /* COMPONENTS AGGREGATION STYLE */
-    .comp-item .prep-total { color: var(--accent); background: #fffbeb; } /* Warna beda untuk komponen */
+    /* DETAIL MODAL (NEW) */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 2000; display: none;
+        justify-content: center; align-items: flex-end; /* Muncul dari bawah di HP */
+    }
+    .modal-overlay.active { display: flex; }
+    
+    .modal-content {
+        background: white; width: 100%; max-width: 500px;
+        border-radius: 20px 20px 0 0; padding: 25px;
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+        animation: slideUp 0.3s ease; max-height: 80vh; overflow-y: auto;
+    }
+    @media(min-width: 600px) {
+        .modal-overlay { align-items: center; }
+        .modal-content { border-radius: 15px; }
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--dark); }
+    .close-btn { background: #f1f5f9; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+    
+    .detail-list { list-style: none; }
+    .detail-item { 
+        display: flex; justify-content: space-between; align-items: center; 
+        padding: 10px 0; border-bottom: 1px dashed #eee; 
+    }
+    .d-name { font-weight: 600; font-size: 0.95rem; }
+    .d-time { font-size: 0.8rem; color: var(--text-gray); background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin-left: 8px;}
+    .d-qty { font-weight: 700; color: var(--primary); font-size: 1rem; }
 
     /* LOADER */
-    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:2000; display:flex; justify-content:center; align-items:center; flex-direction:column; }
+    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:3000; display:flex; justify-content:center; align-items:center; flex-direction:column; }
     .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 10px;}
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -170,19 +174,16 @@
       <header class="top-bar">
         <div class="brand">
           <h1>Dolan Sawah</h1>
-          <p>Operational Dashboard</p>
+          <p>Live Ops V3.5</p>
         </div>
-        <div style="text-align: right;">
-            <div id="clock" style="font-weight: 800; font-size: 1.2rem; color: var(--dark);">--:--</div>
-        </div>
+        <div id="clock" style="font-weight: 800; font-size: 1.2rem; color: var(--dark);">--:--</div>
       </header>
 
       <div class="date-nav-wrapper">
         <div style="padding: 0 10px;">
              <button onclick="goToToday()" style="background:var(--primary); border:none; color:white; border-radius:8px; padding:5px 10px; font-size:1.2rem;"><i class="fas fa-calendar-day"></i></button>
         </div>
-        <div class="date-scroller" id="dateScroller">
-          </div>
+        <div class="date-scroller" id="dateScroller"></div>
         <div style="position:relative; width:40px; margin-right:10px; text-align:center;">
              <i class="fas fa-calendar-alt" style="font-size:1.2rem; color:var(--primary);"></i>
              <input type="date" onchange="handleDateSelect(this.value)" style="position:absolute; left:0; top:0; width:100%; height:100%; opacity:0;">
@@ -195,47 +196,45 @@
         
         <div style="width:1px; background:#ddd; margin:0 5px;"></div>
         
-        <button class="nav-btn filter-btn" id="btnSiang" onclick="toggleFilter('siang')">🌞 Siang</button>
-        <button class="nav-btn filter-btn" id="btnMalam" onclick="toggleFilter('malam')">🌙 Malam</button>
+        <button class="nav-btn filter-btn active" id="btnAll" onclick="toggleFilter('all')">Semua</button>
+        <button class="nav-btn filter-btn" id="btnPagi" onclick="toggleFilter('pagi')">Shift Pagi</button>
+        <button class="nav-btn filter-btn" id="btnSiang" onclick="toggleFilter('siang')">Shift Siang</button>
       </nav>
   </div>
 
   <div id="view-floor" class="content-area active">
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-val" id="totalRes">0</div>
-        <div class="stat-label">Reservasi</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="totalPax">0</div>
-        <div class="stat-label">Total Pax</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="totalItems">0</div>
-        <div class="stat-label">Item Menu</div>
-      </div>
+      <div class="stat-card"><div class="stat-val" id="totalRes">0</div><div class="stat-label">Reservasi</div></div>
+      <div class="stat-card"><div class="stat-val" id="totalPax">0</div><div class="stat-label">Total Pax</div></div>
+      <div class="stat-card"><div class="stat-val" id="totalItems">0</div><div class="stat-label">Item Menu</div></div>
     </div>
-
-    <div class="grid-cards" id="floorContainer">
-       </div>
+    <div class="grid-cards" id="floorContainer"></div>
   </div>
 
   <div id="view-kitchen" class="content-area">
-    
     <div class="kitchen-section">
-        <div class="section-title"><i class="fas fa-concierge-bell"></i> Total Menu (Plating)</div>
+        <div class="section-title"><i class="fas fa-concierge-bell"></i> Menu Utama (Plating)</div>
         <div class="prep-list" id="kitchenMenuContainer"></div>
     </div>
-
     <div class="kitchen-section">
-        <div class="section-title"><i class="fas fa-carrot"></i> Total Komponen (Persiapan Bahan)</div>
+        <div class="section-title"><i class="fas fa-carrot"></i> Komponen (Klik untuk Detail)</div>
         <div class="prep-list" id="kitchenCompContainer"></div>
     </div>
+  </div>
 
+  <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+      <div class="modal-content">
+          <div class="modal-header">
+              <div class="modal-title" id="modalTitle">Detail Nasi</div>
+              <button class="close-btn" onclick="closeModalBtn()">✕</button>
+          </div>
+          <div style="margin-bottom:10px; font-size:0.9rem; color:#666;">Daftar pesanan untuk komponen ini:</div>
+          <ul class="detail-list" id="detailList">
+              </ul>
+      </div>
   </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyA_c1tU70FM84Qi_f_aSaQ-YVLo_18lCkI",
       authDomain: "reservasi-dolan-sawah.firebaseapp.com",
@@ -247,37 +246,28 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // --- STATE ---
     let allReservations = [];
-    let menuDetailsCache = {}; // Cache: { "Paket A": ["Nasi", "Ayam"] }
+    let menuDetailsCache = {};
     let selectedDate = new Date();
-    let currentFilter = 'all'; 
+    let currentFilter = 'all'; // Values: 'all', 'pagi', 'siang'
     let unsubscribe = null;
+    let globalCompDetails = {}; // Menyimpan data breakdown komponen
 
-    // --- INIT ---
     document.addEventListener('DOMContentLoaded', async () => {
-        startClock();
-        await loadMenuDetails(); // Load detail dulu agar siap dipakai
-        renderDateScroller();
-        loadData(selectedDate);
-    });
-
-    function startClock() {
         setInterval(() => {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
         }, 1000);
-    }
+        await loadMenuDetails();
+        renderDateScroller();
+        loadData(selectedDate);
+    });
 
-    // --- DATA LOADING ---
     async function loadMenuDetails() {
         try {
             const snap = await db.collection('menus').get();
-            snap.forEach(doc => { 
-                menuDetailsCache[doc.id] = doc.data().details || []; 
-            });
-            console.log("Menu details loaded:", Object.keys(menuDetailsCache).length);
-        } catch(e) { console.error("Err menu:", e); }
+            snap.forEach(doc => { menuDetailsCache[doc.id] = doc.data().details || []; });
+        } catch(e) {}
     }
 
     function loadData(dateObj) {
@@ -295,27 +285,20 @@
                 let temp = [];
                 snap.forEach(doc => temp.push({id: doc.id, ...doc.data()}));
                 allReservations = temp.sort((a,b) => a.jam.localeCompare(b.jam));
-                
                 renderUI();
-                document.getElementById('loader').style.display = 'none';
-            }, err => {
-                console.error(err);
                 document.getElementById('loader').style.display = 'none';
             });
     }
 
-    // --- RENDERING ---
     function renderUI() {
-        // 1. Filter Logic
+        // 1. Logic Shift Pagi (< 15:00) & Shift Siang (>= 15:00)
         let filtered = allReservations;
-        if (currentFilter === 'siang') filtered = allReservations.filter(r => parseInt(r.jam) < 16);
-        if (currentFilter === 'malam') filtered = allReservations.filter(r => parseInt(r.jam) >= 16);
+        if (currentFilter === 'pagi') filtered = allReservations.filter(r => parseInt(r.jam) < 15);
+        if (currentFilter === 'siang') filtered = allReservations.filter(r => parseInt(r.jam) >= 15);
 
-        // 2. Stats
         document.getElementById('totalRes').innerText = filtered.length;
         document.getElementById('totalPax').innerText = filtered.reduce((a,b) => a + parseInt(b.jumlah||0), 0);
         
-        // 3. Render Views
         renderFloor(filtered);
         renderKitchen(filtered);
     }
@@ -335,185 +318,196 @@
         const isToday = selectedDate.toDateString() === now.toDateString();
 
         data.forEach(r => {
-            // Urgency Badge
             let badgeHtml = '';
             if (isToday) {
                 const [h,m] = r.jam.split(':').map(Number);
                 const rTime = new Date(); rTime.setHours(h,m,0);
-                const diff = (rTime - now) / 60000; // menit
-                
-                if (diff < 0) badgeHtml = `<span class="res-badge badge-soon">Hadir</span>`;
-                else if (diff < 60) badgeHtml = `<span class="res-badge badge-urgent">${Math.floor(diff)} Min Lagi</span>`;
+                const diff = (rTime - now) / 60000; 
+                if (diff < 0) badgeHtml = `<span class="res-badge" style="background:#e0f2fe; color:#0284c7;">Hadir</span>`;
+                else if (diff < 60) badgeHtml = `<span class="res-badge badge-urgent">${Math.floor(diff)} Min</span>`;
             }
 
-            // Menu Rendering dengan Detail (Req 1)
             let menuHtml = '';
             if (r.menus && r.menus.length) {
                 menuHtml = r.menus.map(item => {
                     totalItems += parseInt(item.quantity);
-                    // Ambil detail komponen dari cache
                     const details = menuDetailsCache[item.name] || [];
                     const detailString = details.length > 0 ? `<div class="menu-comps-tiny">• ${details.join(', ')}</div>` : '';
-
                     return `<div class="menu-row">
-                        <div class="menu-main">
+                        <div style="display:flex; justify-content:space-between; font-weight:600; font-size:0.9rem;">
                             <span><span class="menu-qty">${item.quantity}</span> ${item.name}</span>
                         </div>
-                        ${detailString} </div>`;
+                        ${detailString}
+                    </div>`;
                 }).join('');
             } else if (r.menu) {
                 totalItems += 1;
                 const details = menuDetailsCache[r.menu] || [];
                 const detailString = details.length > 0 ? `<div class="menu-comps-tiny">• ${details.join(', ')}</div>` : '';
-                menuHtml = `<div class="menu-row"><div class="menu-main"><span><span class="menu-qty">1</span> ${r.menu}</span></div>${detailString}</div>`;
+                menuHtml = `<div class="menu-row"><div><span class="menu-qty">1</span> ${r.menu}</div>${detailString}</div>`;
             }
 
-            const card = document.createElement('div');
-            card.className = 'res-card';
-            card.innerHTML = `
-                <div class="card-header">
-                    <div class="res-time">${r.jam}</div>
-                    ${badgeHtml}
-                </div>
-                <div class="res-info">
-                    <div class="res-name">${r.nama}</div>
-                    <div class="res-meta">
-                        <span><i class="fas fa-users"></i> ${r.jumlah} Org</span>
-                        <span><i class="fas fa-map-marker-alt"></i> ${r.tempat || '?'}</span>
+            container.innerHTML += `
+                <div class="res-card">
+                    <div class="card-header">
+                        <div class="res-time">${r.jam}</div>
+                        ${badgeHtml}
                     </div>
-                </div>
-                <div class="menu-compact">${menuHtml || '<small>Belum ada menu</small>'}</div>
-                ${r.tambahan ? `<div style="margin-top:10px; font-size:0.8rem; background:#fff7ed; padding:8px; border-radius:6px; color:#c2410c;"><i class="fas fa-info-circle"></i> ${r.tambahan}</div>` : ''}
-            `;
-            container.appendChild(card);
+                    <div class="res-meta">
+                        <span class="res-name">${r.nama}</span>
+                        <span>|</span>
+                        <span>${r.jumlah} Pax</span>
+                        <span>•</span>
+                        <span>${r.tempat || '?'}</span>
+                    </div>
+                    <div class="menu-compact">${menuHtml || '<small>Belum ada menu</small>'}</div>
+                    ${r.tambahan ? `<div style="margin-top:8px;font-size:0.75rem;background:#fff7ed;padding:6px;border-radius:4px;color:#c2410c;">Note: ${r.tambahan}</div>` : ''}
+                </div>`;
         });
         document.getElementById('totalItems').innerText = totalItems;
     }
 
     function renderKitchen(data) {
-        // Aggregation Logic
-        const menuAgg = {};     // Hitung Paket (misal: Paket A: 10)
-        const compAgg = {};     // Hitung Komponen (misal: Nasi: 15)
+        const menuAgg = {}; 
+        // Reset Global Detail Data
+        globalCompDetails = {}; 
 
         data.forEach(r => {
-            if (r.menus && r.menus.length) {
-                r.menus.forEach(item => {
-                    const qty = parseInt(item.quantity);
-                    const name = item.name;
-
-                    // 1. Hitung Menu Utama
-                    menuAgg[name] = (menuAgg[name] || 0) + qty;
-
-                    // 2. Hitung Komponen (Req 2)
-                    const details = menuDetailsCache[name];
-                    if (details && details.length > 0) {
-                        details.forEach(comp => {
-                            // Trim spasi agar "Nasi " dan "Nasi" terhitung sama
-                            const cleanComp = comp.trim(); 
-                            compAgg[cleanComp] = (compAgg[cleanComp] || 0) + qty;
-                        });
-                    }
-                });
-            } else if (r.menu) { // Fallback data lama
-                const name = r.menu;
-                menuAgg[name] = (menuAgg[name] || 0) + 1;
+            const processItem = (name, qty) => {
+                // Menu Aggregation
+                menuAgg[name] = (menuAgg[name] || 0) + qty;
+                
+                // Component Aggregation & Breakdown
                 const details = menuDetailsCache[name];
-                if (details) details.forEach(c => {
-                    const clean = c.trim();
-                    compAgg[clean] = (compAgg[clean] || 0) + 1;
-                });
+                if (details && details.length > 0) {
+                    details.forEach(comp => {
+                        const clean = comp.trim();
+                        
+                        // Init object jika belum ada
+                        if (!globalCompDetails[clean]) {
+                            globalCompDetails[clean] = { total: 0, items: [] };
+                        }
+                        
+                        // Tambah Total
+                        globalCompDetails[clean].total += qty;
+                        
+                        // Tambah Detail Breakdown
+                        globalCompDetails[clean].items.push({
+                            nama: r.nama,
+                            jam: r.jam,
+                            qty: qty
+                        });
+                    });
+                }
+            };
+
+            if (r.menus && r.menus.length) {
+                r.menus.forEach(item => processItem(item.name, parseInt(item.quantity)));
+            } else if (r.menu) {
+                processItem(r.menu, 1);
             }
         });
 
-        // Render Menu List
-        const menuSorted = Object.entries(menuAgg).sort((a,b) => b[1] - a[1]);
+        // 1. Render Menu (Simple)
         const menuCont = document.getElementById('kitchenMenuContainer');
-        menuCont.innerHTML = menuSorted.length ? '' : '<div style="padding:15px;text-align:center;color:#999;">Kosong</div>';
-        menuSorted.forEach(([name, count]) => {
-            menuCont.innerHTML += `
-                <div class="prep-item">
-                    <span class="prep-name">${name}</span>
-                    <span class="prep-total">${count}</span>
-                </div>`;
+        menuCont.innerHTML = '';
+        Object.entries(menuAgg).sort((a,b)=>b[1]-a[1]).forEach(([name, count]) => {
+            menuCont.innerHTML += `<div class="prep-item"><span class="prep-name">${name}</span><span class="prep-total">${count}</span></div>`;
         });
+        if(!menuCont.innerHTML) menuCont.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">Kosong</div>';
 
-        // Render Component List (Detail Bahan)
-        const compSorted = Object.entries(compAgg).sort((a,b) => b[1] - a[1]);
+        // 2. Render Component (Interactive)
         const compCont = document.getElementById('kitchenCompContainer');
-        compCont.innerHTML = compSorted.length ? '' : '<div style="padding:15px;text-align:center;color:#999;">Tidak ada detail komponen yang terdata.</div>';
-        compSorted.forEach(([name, count]) => {
+        compCont.innerHTML = '';
+        
+        // Sort components by total qty desc
+        const sortedComps = Object.entries(globalCompDetails).sort((a,b) => b[1].total - a[1].total);
+        
+        sortedComps.forEach(([name, data]) => {
+            // Kita tambahkan onclick event
             compCont.innerHTML += `
-                <div class="prep-item comp-item">
-                    <span class="prep-name">${name}</span>
-                    <span class="prep-total">${count}</span>
+                <div class="prep-item comp-item" onclick="showComponentDetail('${name}')">
+                    <span class="prep-name"><i class="fas fa-search"></i> ${name}</span>
+                    <span class="prep-total">${data.total}</span>
                 </div>`;
         });
+        if(!compCont.innerHTML) compCont.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">Tidak ada data komponen.</div>';
     }
 
-    // --- NAVIGATION & UTILS ---
-    function renderDateScroller() {
-        const scroller = document.getElementById('dateScroller');
-        scroller.innerHTML = '';
-        const start = new Date(selectedDate);
-        start.setDate(selectedDate.getDate() - 3);
+    // --- MODAL LOGIC (NEW) ---
+    function showComponentDetail(compName) {
+        const data = globalCompDetails[compName];
+        if (!data) return;
 
-        for (let i = 0; i < 14; i++) {
-            const d = new Date(start);
-            d.setDate(start.getDate() + i);
-            const isSel = d.toDateString() === selectedDate.toDateString();
-            const isToday = d.toDateString() === new Date().toDateString();
+        document.getElementById('modalTitle').innerText = `Rincian: ${compName}`;
+        const listContainer = document.getElementById('detailList');
+        listContainer.innerHTML = '';
 
-            const pill = document.createElement('div');
-            pill.className = `date-pill ${isSel ? 'active' : ''}`;
-            pill.onclick = () => {
-                selectedDate = d;
-                renderDateScroller();
-                loadData(d);
-            };
-            pill.innerHTML = `<span class="day">${isToday ? 'HARI INI' : d.toLocaleDateString('id-ID',{weekday:'short'})}</span><span class="num">${d.getDate()}</span>`;
-            scroller.appendChild(pill);
+        // Sort per jam
+        const sortedItems = data.items.sort((a,b) => a.jam.localeCompare(b.jam));
+
+        sortedItems.forEach(item => {
+            listContainer.innerHTML += `
+                <li class="detail-item">
+                    <div>
+                        <span class="d-name">${item.nama}</span>
+                        <span class="d-time">${item.jam}</span>
+                    </div>
+                    <span class="d-qty">${item.qty}</span>
+                </li>`;
+        });
+
+        document.getElementById('detailModal').classList.add('active');
+    }
+
+    function closeModal(e) {
+        if (e.target.classList.contains('modal-overlay')) {
+            document.getElementById('detailModal').classList.remove('active');
         }
     }
-
-    function handleDateSelect(val) {
-        if (!val) return;
-        selectedDate = new Date(val);
-        renderDateScroller();
-        loadData(selectedDate);
+    function closeModalBtn() {
+        document.getElementById('detailModal').classList.remove('active');
     }
-    
-    function goToToday() {
-        selectedDate = new Date();
-        renderDateScroller();
-        loadData(selectedDate);
+
+    // --- UTILS ---
+    function toggleFilter(type) {
+        currentFilter = type;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        
+        if (type === 'all') document.getElementById('btnAll').classList.add('active');
+        if (type === 'pagi') document.getElementById('btnPagi').classList.add('active');
+        if (type === 'siang') document.getElementById('btnSiang').classList.add('active');
+        
+        renderUI();
     }
 
     function switchTab(tab) {
         document.querySelectorAll('.nav-tabs .nav-btn').forEach(b => {
-            if(!b.classList.contains('filter-btn')) b.classList.remove('active');
+             if(!b.classList.contains('filter-btn')) b.classList.remove('active');
         });
-        
-        // Manual set active class (simplified)
-        const btns = document.querySelectorAll('.nav-tabs .nav-btn');
-        if (tab === 'floor') btns[0].classList.add('active');
-        if (tab === 'kitchen') btns[1].classList.add('active');
-
+        if (tab === 'floor') document.querySelectorAll('.nav-tabs .nav-btn')[0].classList.add('active');
+        if (tab === 'kitchen') document.querySelectorAll('.nav-tabs .nav-btn')[1].classList.add('active');
         document.querySelectorAll('.content-area').forEach(c => c.classList.remove('active'));
         document.getElementById(`view-${tab}`).classList.add('active');
     }
 
-    function toggleFilter(type) {
-        if (currentFilter === type) currentFilter = 'all';
-        else currentFilter = type;
-
-        document.getElementById('btnSiang').classList.remove('active');
-        document.getElementById('btnMalam').classList.remove('active');
-        
-        if (currentFilter === 'siang') document.getElementById('btnSiang').classList.add('active');
-        if (currentFilter === 'malam') document.getElementById('btnMalam').classList.add('active');
-
-        renderUI();
+    function renderDateScroller() {
+        const scroller = document.getElementById('dateScroller');
+        scroller.innerHTML = '';
+        const start = new Date(selectedDate); start.setDate(selectedDate.getDate() - 3);
+        for (let i = 0; i < 14; i++) {
+            const d = new Date(start); d.setDate(start.getDate() + i);
+            const isSel = d.toDateString() === selectedDate.toDateString();
+            const pill = document.createElement('div');
+            pill.className = `date-pill ${isSel ? 'active' : ''}`;
+            pill.onclick = () => { selectedDate = d; renderDateScroller(); loadData(d); };
+            pill.innerHTML = `<span class="day">${d.toLocaleDateString('id-ID',{weekday:'short'})}</span><span class="num">${d.getDate()}</span>`;
+            scroller.appendChild(pill);
+        }
     }
+    
+    function goToToday() { selectedDate = new Date(); renderDateScroller(); loadData(selectedDate); }
+    function handleDateSelect(val) { if(val){ selectedDate = new Date(val); renderDateScroller(); loadData(selectedDate); } }
 </script>
 </body>
 </html>
