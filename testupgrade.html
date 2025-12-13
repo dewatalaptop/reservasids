@@ -2,409 +2,279 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Reservasi Dolan Sawah (Firebase) - V5.3 Full Detail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Dolan Sawah - Layar Mudah</title>
 
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <style>
     :root {
-      --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; 
-      --accent: #f4a261; --danger: #e76f51; --light: #f8f9fa; --dark: #343a40; 
-      --success: #28a745; --whatsapp: #25D366; --info: #0077b6;
+      /* Warna Tetap Sama (Tema Brand) tapi lebih kontras */
+      --primary: #2a9d8f;       
+      --primary-dark: #1d7c70;  
+      --secondary: #e9c46a;     
+      --danger: #d94524; /* Merah lebih gelap agar terbaca */       
+      --dark: #111827;   /* Hampir hitam */
+      --gray: #f3f4f6;
+      --border: #d1d5db;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
     body {
-      font-family: 'Poppins', sans-serif; margin: 0; background-color: #f5f5f5; color: var(--dark);
-      background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
-      background-size: cover; background-attachment: fixed; background-position: center; min-height: 100vh;
+      font-family: 'Inter', sans-serif; /* Font paling standar & jelas */
+      background-color: #f9fafb;
+      color: var(--dark);
+      padding-bottom: 100px;
+      font-size: 16px; /* Base font lebih besar */
     }
-    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.85); z-index: -1; }
 
-    /* --- HEADER BARU --- */
-    header {
-      background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; 
-      padding: 20px 20px 30px 20px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
-      position: relative; overflow: visible;
+    /* HEADER BESAR & JELAS */
+    .header-bar {
+      background: var(--primary-dark);
+      color: white;
+      padding: 15px 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      position: sticky; top: 0; z-index: 1000;
     }
-    header::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 5px; background: linear-gradient(90deg, var(--secondary), var(--accent)); }
-    header h2 { font-size: 2rem; margin-bottom: 5px; font-weight: 600; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); }
-    header small { display: block; font-size: 0.8rem; margin-top: 5px; color: rgba(255, 255, 255, 0.8); font-weight: 300; }
+    .header-bar h1 { font-size: 1.2rem; font-weight: 700; margin: 0; }
+    #clock { font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 8px;}
 
-    /* TOMBOL TAB PERMINTAAN (HEADER) */
-    .header-tabs-container { display: flex; justify-content: center; margin-top: 20px; }
-    .header-tab-btn {
-        background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
-        color: white; padding: 10px 25px; border-radius: 50px;
-        cursor: pointer; font-size: 0.95rem; font-weight: 500;
-        transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;
-        backdrop-filter: blur(5px); text-decoration: none;
+    /* KONTROL TANGGAL (TOMBOL FISIK BESAR) */
+    .date-controls {
+      background: white; padding: 15px; 
+      border-bottom: 2px solid #e5e7eb;
+      display: flex; gap: 10px; align-items: center;
     }
-    .header-tab-btn:hover { background: white; color: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-    .req-badge { background: #ff6b6b; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: none; }
-
-    /* --- LAYOUT UTAMA --- */
-    .container { max-width: 1200px; margin: 30px auto; padding: 20px; background-color: rgba(255, 255, 255, 0.9); border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); display: none; }
-    #login-container { max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid var(--primary); }
-    #login-error { color: var(--danger); margin-top: 15px; font-weight: 500; display: none; }
-    #logout-button { position: fixed; top: 20px; right: 20px; z-index: 1001; background-color: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: none; }
-
-    /* --- INTEGRASI ADMIN MANDIRI (DESAIN PREMIUM) --- */
-    #integrated-mandiri-view { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #f4f6f9; z-index: 3000; overflow: hidden; font-family: 'Inter', sans-serif; }
-    #integrated-mandiri-view .sidebar { width: 270px; background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%); border-right: none; color: white; display: flex; flex-direction: column; height: 100%; position: absolute; left: 0; top: 0; box-shadow: 5px 0 25px rgba(0,0,0,0.05); }
-    #integrated-mandiri-view .brand-area { padding: 30px; font-size: 1.2rem; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
-    #integrated-mandiri-view .main-content { margin-left: 270px; padding: 40px; overflow-y: auto; height: 100%; }
     
-    #integrated-mandiri-view .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: #94a3b8; cursor: pointer; font-weight: 500; margin: 5px 15px; border-radius: 12px; transition: all 0.2s; }
-    #integrated-mandiri-view .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-    #integrated-mandiri-view .nav-item.active { background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 4px 15px rgba(42, 157, 143, 0.4); }
-
-    /* Stats & Request Cards (Mandiri) */
-    #integrated-mandiri-view .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 35px; }
-    #integrated-mandiri-view .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; display: flex; align-items: center; gap: 20px; transition: transform 0.2s; }
-    #integrated-mandiri-view .stat-card:hover { transform: translateY(-5px); }
-    #integrated-mandiri-view .stat-icon { width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
-    #integrated-mandiri-view .stat-info h4 { margin: 0; font-size: 0.9rem; color: #64748b; font-weight: 500; }
-    #integrated-mandiri-view .stat-info .value { font-size: 1.8rem; font-weight: 700; color: #1e293b; display: block; margin-top: 5px; }
-
-    #integrated-mandiri-view .request-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
-    #integrated-mandiri-view .request-card { background: white; border-radius: 16px; padding: 25px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); position: relative; overflow: hidden; }
-    #integrated-mandiri-view .request-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #f59e0b; }
-    #integrated-mandiri-view .req-name { font-weight: 700; font-size: 1.15rem; color: #1e293b; }
-    #integrated-mandiri-view .req-details { margin: 15px 0; font-size: 0.9rem; color: #475569; display: grid; gap: 8px; }
-    #integrated-mandiri-view .req-actions button { flex: 1; padding: 10px; border-radius: 8px; font-size: 0.9rem; margin-top: 15px; border:none; cursor: pointer; color:white; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; }
-
-    /* --- KALENDER & UI UMUM --- */
-    .calendar-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
-    .month-year { font-size: 1.5rem; font-weight: 600; color: var(--primary-dark); text-align: center; margin-bottom: 10px; }
-    .calendar-nav { display: flex; gap: 10px; }
-    .calendar-nav button { background-color: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 5px; }
-    .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 10px; color: var(--primary-dark); }
-    .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-    .calendar-day { min-height: 90px; padding: 5px; background-color: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); position: relative; border: 2px solid transparent; transition: all 0.2s ease-in-out; cursor: pointer; }
-    .calendar-day:not(.selected):hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .day-number { font-weight: 600; font-size: 0.9rem; color: var(--dark); position: absolute; top: 6px; right: 8px; transition: all 0.3s ease; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
-    .reservation-count { position: absolute; bottom: 8px; left: 8px; background-color: rgba(42, 157, 143, 0.15); color: var(--primary-dark); width: auto; min-width: 22px; height: 22px; padding: 0 8px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; }
-    .calendar-day.today { border-color: var(--accent); background-color: #fffaf0; }
-    .today .day-number { background-color: var(--accent); color: white; border-radius: 50%; }
-    .selected { background-color: var(--primary) !important; border-color: var(--primary-dark) !important; color: white; }
-    .selected .day-number { color: white; background-color: transparent; }
-    .selected .reservation-count { background-color: white; color: var(--primary); }
-
-    /* Popups & Buttons */
-    .popup-form { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); border-top: 4px solid var(--primary); }
-    button { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
-    button:hover { background-color: var(--primary-dark); }
-    button.secondary { background-color: #6c757d; color: white; }
-    button.secondary:hover { background-color: #5a6268; }
-    button.danger { background-color: var(--danger); }
-    button.whatsapp { background-color: var(--whatsapp); }
-    button.accent { background-color: var(--accent); color: white; }
-    button.info { background-color: var(--info); }
-    button.info:hover { background-color: #005f8d; }
-    footer { text-align: center; font-size: 0.8rem; color: white; background-color: var(--primary-dark); padding: 15px; margin-top: 40px; }
-    
-    /* Forms & Inputs */
-    label { display: block; margin-bottom: 10px; font-weight: 500; color: var(--primary-dark); }
-    input, select, textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; margin-top: 5px; font-family: 'Poppins', sans-serif; }
-    textarea { min-height: 80px; }
-    .reservation-item { padding: 15px; margin-bottom: 15px; background-color: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); border-left: 4px solid var(--primary); }
-    .reservation-details { flex-grow: 1; width: 100%; }
-    .action-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
-    .action-buttons button { flex: 1 1 auto; min-width: 0; }
-    .data-actions { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; width: 100%; }
-    .data-actions button { flex-grow: 1; padding: 8px 10px; font-size: 0.85rem; margin-top: 0; }
-    .header-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-    .header-actions button { margin-top: 0; }
-    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 999; display: none; }
-    .search-container { position: relative; margin: 0 auto 20px; max-width: 600px; width: 100%; }
-    .search-container input { padding-left: 35px; border-radius: 30px; border: 2px solid var(--primary); }
-    .search-container i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary); }
-    
-    /* Lists & Items */
-    #menu-list-container, #location-list-container, #customer-list { max-height: 300px; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; }
-    .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-    .menu-item-actions button { padding: 5px 10px; font-size: 0.8rem; margin-top: 0; margin-left: 5px; }
-    .menu-detail { margin-top: 8px; font-size: 0.85rem; color: #555; background-color: rgba(233, 196, 106, 0.1); padding: 8px; border-radius: 5px; border-left: 3px solid var(--secondary); }
-    
-    /* Loader & Toast */
-    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 2000; display: flex; justify-content: center; align-items: center; display: none; }
-    .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--dark); color: white; padding: 12px 24px; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1001; display: none; }
-    .toast.error { background-color: var(--danger); }
-    .toast.success { background-color: var(--success); }
-    .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; display: block; min-height: 1.2em; }
-    
-    /* Analysis & Others */
-    .print-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-    .print-options-grid label { display: flex; align-items: center; gap: 8px; background-color: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #eee; }
-    .analysis-controls { display: flex; gap: 10px; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
-    .chart-container { background: white; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; height: 300px; position: relative; }
-    .insight-box { background-color: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; }
-    .mini-stat { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 3px solid var(--primary); }
-    .mini-stat .val { font-size: 1.4rem; font-weight: 700; color: var(--dark); }
-    .mini-stat .lbl { font-size: 0.8rem; color: #666; }
-    
-    /* Broadcast */
-    .broadcast-customer-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid #f0f0f0; }
-    .broadcast-customer-item .customer-info small { display: block; color: #6c757d; font-size: 0.8rem; }
-    .broadcast-customer-item .broadcast-btn { background-color: var(--accent); color: white; padding: 8px 15px; font-size: 0.85rem; margin-top: 0; min-width: 120px; }
-    .broadcast-customer-item .broadcast-btn.sent { background-color: var(--success); cursor: default; }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-        .header-tab-btn span:first-child { display: none; } /* Hanya icon di HP */
-        .header-tab-btn i { font-size: 1.2rem; }
-        #integrated-mandiri-view .sidebar { transform: translateX(-100%); z-index: 3005; width: 260px; transition: 0.3s; }
-        #integrated-mandiri-view .sidebar.open { transform: translateX(0); }
-        #integrated-mandiri-view .main-content { margin-left: 0; padding: 80px 20px 20px 20px; }
-        #integrated-mandiri-view .mobile-toggle { display: block; position: fixed; top: 15px; left: 15px; z-index: 3010; background: #2a9d8f; color: white; border:none; padding:10px; border-radius:5px;}
-        .action-buttons, .data-actions { flex-direction: column; } .action-buttons button, .data-actions button { width: 100%; }
+    .btn-date {
+      flex: 1; /* Memenuhi layar */
+      position: relative;
+      background: white;
+      border: 2px solid var(--primary);
+      color: var(--primary-dark);
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 1rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.05); /* Efek tombol timbul */
     }
+    .btn-date input {
+      position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+    }
+
+    .btn-today {
+      background: var(--secondary); border: 2px solid #d4a017;
+      color: #5c4103; font-weight: 800;
+      padding: 12px 20px; border-radius: 12px;
+      cursor: pointer;
+    }
+
+    /* NAVIGASI TOMBOL KOTAK (GRID) - BUKAN SCROLL */
+    .nav-grid {
+      display: grid; 
+      grid-template-columns: 1fr 1fr; /* 2 Kolom */
+      gap: 10px;
+      padding: 15px;
+      background: white;
+      border-bottom: 1px solid #eee;
+    }
+
+    .btn-big-nav {
+      padding: 15px;
+      border: 2px solid #e5e7eb;
+      background: #f9fafb;
+      border-radius: 12px;
+      font-size: 1rem; font-weight: 700; color: #6b7280;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .btn-big-nav.active {
+      background: var(--primary);
+      border-color: var(--primary-dark);
+      color: white;
+      box-shadow: 0 4px 6px rgba(42, 157, 143, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    /* FILTER SHIFT (BARIS BAWAH) */
+    .filter-bar {
+      padding: 0 15px 15px 15px; background: white;
+      display: flex; gap: 10px;
+    }
+    .btn-shift {
+      flex: 1; padding: 10px;
+      background: #fff; border: 2px solid #ddd; border-radius: 8px;
+      font-weight: 600; color: #555; cursor: pointer;
+    }
+    .btn-shift.active {
+      background: var(--dark); color: white; border-color: var(--dark);
+    }
+
+    /* CARD DESIGN YANG TEGAS */
+    .content-area { padding: 15px; display: none; }
+    .content-area.active { display: block; }
+
+    /* Info Status Besar */
+    .status-summary {
+        background: #e0f2fe; border: 2px solid #bae6fd;
+        padding: 15px; border-radius: 12px; margin-bottom: 20px;
+        text-align: center; font-size: 1.1rem; color: #0369a1; font-weight: 700;
+    }
+
+    .card-list { display: grid; gap: 15px; }
+    
+    .big-card {
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.05); /* Shadow kasar agar terlihat 'pop' */
+    }
+
+    /* Header Kartu: Jam Besar */
+    .bc-header {
+      padding: 15px;
+      background: #f3f4f6;
+      border-bottom: 2px solid #e5e7eb;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .bc-time { font-size: 1.8rem; font-weight: 800; color: var(--dark); }
+    .bc-pax { font-size: 1.2rem; font-weight: 700; background: white; padding: 5px 12px; border-radius: 8px; border: 1px solid #ccc; }
+
+    /* Timer Bar */
+    .timer-bar {
+      padding: 8px; text-align: center; font-weight: 700; font-size: 0.9rem; color: white;
+    }
+    .bg-green { background: #10b981; }
+    .bg-yellow { background: #f59e0b; color: black; }
+    .bg-red { background: #ef4444; }
+
+    /* Isi Kartu */
+    .bc-body { padding: 15px; }
+    .bc-name { font-size: 1.4rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 5px; }
+    .bc-loc { font-size: 1.1rem; color: #555; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 15px;}
+    
+    .bc-menu-box {
+        background: #fffbeb; border: 2px solid #fde68a;
+        padding: 12px; border-radius: 10px;
+    }
+    .bc-menu-item {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        margin-bottom: 8px; border-bottom: 1px dashed #d1d5db; padding-bottom: 8px;
+    }
+    .bc-qty {
+        background: black; color: white; font-size: 1rem; font-weight: 700;
+        width: 30px; height: 30px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; margin-right: 10px;
+    }
+    .bc-menu-name { font-size: 1.1rem; font-weight: 600; flex: 1; }
+    .bc-menu-detail { display: block; font-size: 0.9rem; color: #666; margin-top: 4px; font-weight: 400; font-style: italic;}
+
+    /* DAPUR - LIST BESAR */
+    .kitchen-item {
+        background: white; border: 2px solid #e5e7eb;
+        padding: 15px; margin-bottom: 10px; border-radius: 12px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .k-name { font-size: 1.1rem; font-weight: 700; }
+    .k-count { 
+        font-size: 1.5rem; font-weight: 800; color: var(--primary);
+        background: #e0f2fe; padding: 5px 15px; border-radius: 8px;
+    }
+
+    /* MODAL POPUP */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); z-index: 2000; display: none;
+        justify-content: center; align-items: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+        background: white; width: 90%; max-width: 500px;
+        padding: 25px; border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .btn-close {
+        width: 100%; padding: 15px; background: var(--danger); color: white;
+        border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 700; margin-top: 20px;
+    }
+
+    /* Loader */
+    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:3000; display:flex; justify-content:center; align-items:center; flex-direction:column; }
+    .spinner { width: 50px; height: 50px; border: 6px solid #f3f3f3; border-top: 6px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;}
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-    <header>
-    <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Versi 5.3 Integrated</small>
+
+  <div id="loader"><div class="spinner"></div><h3 style="color:#555;">Memuat Data...</h3></div>
+
+  <header class="header-bar">
+    <h1><i class="fas fa-leaf"></i> Dolan Sawah</h1>
+    <div id="clock">12:00</div>
+  </header>
+
+  <div class="date-controls">
+    <button class="btn-date">
+      <i class="fas fa-calendar-alt fa-lg"></i> 
+      <span id="dateDisplay">Pilih Tanggal</span>
+      <input type="date" id="dateInput" onchange="handleDateSelect(this.value)">
+    </button>
+    <button class="btn-today" onclick="goToToday()">HARI INI</button>
+  </div>
+
+  <div class="nav-grid">
+    <button class="btn-big-nav active" onclick="switchTab('floor')">
+        <i class="fas fa-users fa-lg" style="display:block; margin-bottom:5px;"></i>
+        LAYAR TAMU
+    </button>
+    <button class="btn-big-nav" onclick="switchTab('kitchen')">
+        <i class="fas fa-utensils fa-lg" style="display:block; margin-bottom:5px;"></i>
+        LAYAR DAPUR
+    </button>
+  </div>
+  
+  <div class="filter-bar">
+    <button class="btn-shift active" id="btnAll" onclick="toggleFilter('all')">Semua Jam</button>
+    <button class="btn-shift" id="btnPagi" onclick="toggleFilter('pagi')">Pagi</button>
+    <button class="btn-shift" id="btnSiang" onclick="toggleFilter('siang')">Siang/Sore</button>
+  </div>
+
+  <div id="view-floor" class="content-area active">
+    <div class="status-summary">
+        Total: <span id="totalRes">0</span> Reservasi (<span id="totalPax">0</span> Orang)
+    </div>
+    <div class="card-list" id="floorContainer"></div>
+  </div>
+
+  <div id="view-kitchen" class="content-area">
+    <h3 style="margin-bottom:15px; border-bottom:2px solid #ddd; padding-bottom:10px;">Menu Utama (Plating)</h3>
+    <div id="kitchenMenuContainer"></div>
     
-    <div class="header-tabs-container">
-        <div class="header-tab-btn" onclick="openMandiriView()">
-            <span><i class="fas fa-inbox"></i> Permintaan Reservasi</span>
-            <span id="header-req-badge" class="req-badge">0</span>
-        </div>
-    </div>
-</header>
-  
-  <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
-  <div class="toast" id="toast"></div>
-  
-  <div id="login-container">
-    <h3><i class="fas fa-lock"></i> Login Admin</h3>
-    <label>Email: <input type="email" id="loginEmail" placeholder="Masukkan email admin"/></label>
-    <label>Password: <input type="password" id="loginPassword" placeholder="Masukkan password"/></label>
-    <button onclick="handleLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
-    <p id="login-error">Email atau password salah.</p>
+    <h3 style="margin-top:30px; margin-bottom:15px; border-bottom:2px solid #ddd; padding-bottom:10px;">
+        Komponen Bahan <br><small style="font-weight:400; font-size:0.9rem; color:#666;">(Klik untuk lihat detail)</small>
+    </h3>
+    <div id="kitchenCompContainer"></div>
   </div>
-  
-  <button id="logout-button" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
-  
-  <div class="container" id="main-container">
-    <div class="calendar-header">
-      <div class="month-year" id="monthYear"></div>
-      <div class="calendar-nav">
-        <button onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
-        <button class="secondary" onclick="goToToday()"><i class="fas fa-calendar-day"></i> Hari Ini</button>
-        <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
+
+  <div class="modal-overlay" id="detailModal">
+      <div class="modal-box">
+          <h2 id="modalTitle" style="margin-bottom:15px; color:var(--primary);">Detail</h2>
+          <ul id="detailList" style="list-style:none; max-height:300px; overflow-y:auto;"></ul>
+          <button class="btn-close" onclick="closeModal()">TUTUP</button>
       </div>
-    </div>
-    <div class="calendar-weekdays"><div>Min</div> <div>Sen</div> <div>Sel</div> <div>Rab</div> <div>Kam</div> <div>Jum</div> <div>Sab</div></div>
-    <div class="calendar-days" id="calendar"></div>
-        
-    <div class="action-buttons">
-      <button onclick="showCustomerMenu()"><i class="fas fa-address-book"></i> Customer</button>
-      <button onclick="showMenuManagement()"><i class="fas fa-book-open"></i> Kelola Menu</button>
-      <button onclick="showLocationManagement()"><i class="fas fa-map-marker-alt"></i> Kelola Tempat</button>
-      <button class="info" onclick="showAnalysis()"><i class="fas fa-chart-pie"></i> Analisis Data</button>
-      <div class="whatsapp-options-container">
-        <button class="whatsapp" onclick="toggleWhatsAppOptions(event)"><i class="fab fa-whatsapp"></i> Bagikan WhatsApp</button>
-        <div class="whatsapp-options" id="whatsappOptions">
-          <p>Pilih Opsi Laporan Bulanan:</p>
-          <button class="whatsapp" onclick="shareViaWhatsApp('month')">Kirim Rekap 1 Bulan</button>
-        </div>
-      </div>
-      <button class="info" onclick="showExportDataPopup()"><i class="fas fa-file-export"></i> Export Data ASCII</button>
-      <button class="secondary" onclick="showBroadcastMain()"><i class="fas fa-bullhorn"></i> Broadcast Promo</button>
-      <button class="accent" onclick="forceSync()"><i class="fas fa-sync-alt"></i> Sinkronisasi</button>
-    </div>
   </div>
-
-  <div id="integrated-mandiri-view">
-    <button class="mobile-toggle" onclick="toggleMandiriSidebar()"><i class="fas fa-bars"></i></button>
-
-    <div class="sidebar" id="mandiri-sidebar">
-        <div class="brand-area">
-            <i class="fas fa-seedling" style="color:#2dd4bf;"></i> Reservasi Mandiri
-        </div>
-        
-        <div style="flex: 1; padding: 15px 0;">
-            <div class="nav-item active" onclick="switchMandiriTab('dashboard')">
-                <i class="fas fa-chart-pie" style="width:25px;"></i> Dashboard
-            </div>
-            <div class="nav-item" onclick="switchMandiriTab('inbox')">
-                <i class="fas fa-inbox" style="width:25px;"></i> Inbox Request
-                <span class="badge" id="sidebar-req-badge" style="background:#ef4444; color:white; padding:2px 8px; border-radius:10px; font-size:0.75rem; margin-left:auto;">0</span>
-            </div>
-        </div>
-
-        <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <button onclick="closeMandiriView()" style="width: 100%; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; font-weight: 500; cursor: pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:0.2s;">
-                <i class="fas fa-arrow-left"></i> Kembali ke Menu Utama
-            </button>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <div id="mandiri-tab-dashboard" style="display:block;">
-            <h2 style="color:#1e293b; margin-top:0; font-size:1.8rem; margin-bottom:25px;">Overview Permintaan</h2>
-            <div class="stats-grid">
-                <div class="stat-card" onclick="switchMandiriTab('inbox')" style="cursor:pointer; border-bottom: 4px solid #f59e0b;">
-                    <div class="stat-icon" style="background:#fff7ed; color:#ea580c;"><i class="fas fa-inbox"></i></div>
-                    <div class="stat-info"><h4>Menunggu Persetujuan</h4><span class="value" id="mandiri-stat-pending">0</span></div>
-                </div>
-            </div>
-            
-            <div style="background:#fff; padding:30px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.03); border:1px solid #e2e8f0;">
-                <h3 style="margin-top:0; color:#334155;"><i class="fas fa-info-circle" style="color:#3b82f6;"></i> Pusat Kontrol Reservasi Online</h3>
-                <p style="color:#64748b; line-height:1.6;">Selamat datang di modul Reservasi Mandiri. Semua data yang masuk dari formulir website pelanggan akan muncul di sini.</p>
-                <div style="display:flex; gap:15px; flex-wrap:wrap; margin-top:20px;">
-                    <button onclick="switchMandiriTab('inbox')" style="background:#0f172a; color:white; padding:12px 25px; border-radius:10px; border:none; cursor:pointer;">Buka Inbox</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="mandiri-tab-inbox" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-                <div>
-                    <h2 style="color:#1e293b; margin:0; font-size:1.8rem;">Inbox Permintaan</h2>
-                    <p style="color:#64748b; margin:5px 0 0 0;">Daftar reservasi yang menunggu konfirmasi Anda.</p>
-                </div>
-                <button onclick="loadMandiriRequests()" style="background:#fff; border:1px solid #cbd5e1; color:#475569; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:600;"><i class="fas fa-sync"></i> Refresh</button>
-            </div>
-            <div id="mandiri-inbox-container" class="request-grid"></div>
-        </div>
-    </div>
-  </div>
-
-  <div id="addFormPopup" class="popup-form">
-    <h3><i class="fas fa-calendar-plus"></i> Input Reservasi</h3>
-    <form id="reservation-form">
-      <label>Nama: <input type="text" id="nama" required /><span class="error-message" id="nama-error"></span></label>
-      <label>Nomor HP: <input type="tel" id="nomorHp" placeholder="Cth: 081234567890" /><span class="error-message" id="nomorHp-error"></span></label>
-      <label>Jam Reservasi: <input type="time" id="jam" required /><span class="error-message" id="jam-error"></span></label>
-      <label>Jumlah Peserta: <input type="number" id="jumlah" min="1" required /><span class="error-message" id="jumlah-error"></span></label>
-      <label>DP (Rupiah): <input type="number" id="dp" value="0" min="0" /></label>
-      <label>Tipe Pembayaran DP: 
-        <select id="tipeDp"><option value="">- Tanpa DP -</option><option>Cash</option><option>QRIS</option><option>Transfer BCA</option><option>Transfer Mandiri</option><option>Transfer BRI</option></select>
-      </label>
-      <label>Tempat: <select id="tempat" required onchange="updateCapacityInfo('reservation-form')"></select>
-        <span id="capacity-info"></span><span class="error-message" id="tempat-error"></span>
-      </label>
-      <label>Paket Menu Dipesan: <span class="error-message" id="menus-error"></span></label>
-      <div id="selected-menus-container"></div>
-      <button type="button" class="secondary" id="add-menu-btn" onclick="addMenuSelectionRow('reservation-form')"><i class="fas fa-plus"></i> Tambah Paket</button>
-      <label>Request Tambahan: <textarea id="tambahan"></textarea></label>
-      <div class="data-actions">
-        <button type="button" onclick="simpanReservasi()"><i class="fas fa-save"></i> Simpan Reservasi</button>
-        <button type="button" class="danger" onclick="closePopup('addFormPopup')"><i class="fas fa-times"></i> Batal</button>
-      </div>
-    </form>
-  </div>
-  <div id="editFormPopup" class="popup-form"></div>
-  <div id="menuManagementPopup" class="popup-form"></div>
-  <div id="locationManagementPopup" class="popup-form"></div>
-  <div id="customerListPopup" class="popup-form"></div>
-  <div id="analysisPopup" class="popup-form"></div>
-  <div id="exportDataPopup" class="popup-form">
-    <h3><i class="fas fa-file-export"></i> Export Data ASCII untuk Viewer</h3>
-    <textarea id="export-data-output" readonly style="height: 150px; font-family: monospace; font-size: 0.8rem; background-color: #f0f0f0; resize: vertical;"></textarea>
-    <div class="data-actions">
-        <button type="button" onclick="copyExportCode()"><i class="fas fa-copy"></i> Salin Kode</button>
-        <button type="button" class="danger" onclick="closePopup('exportDataPopup')"><i class="fas fa-times"></i> Tutup</button>
-    </div>
-  </div>
-  <div id="printOptionsPopup" class="popup-form">
-    <h3><i class="fas fa-print"></i> Opsi Cetak</h3>
-    <div id="print-options-form">
-        <div class="print-options-grid">
-            <label><input type="checkbox" id="print-detail-menu" checked> Detail Menu</label>
-            <label><input type="checkbox" id="print-kontak" checked> Kontak (No. HP)</label>
-            <label><input type="checkbox" id="print-dp" checked> Info DP</label>
-            <label><input type="checkbox" id="print-tambahan" checked> Request Tambahan</label>
-        </div>
-        <div class="data-actions">
-            <button type="button" onclick="executePrint()"><i class="fas fa-check"></i> Lanjutkan Cetak</button>
-            <button type="button" class="danger" onclick="closePopup('printOptionsPopup')"><i class="fas fa-times"></i> Batal</button>
-        </div>
-    </div>
-  </div>
-  <div id="broadcastMainPopup" class="popup-form">
-    <h3><i class="fas fa-bullhorn"></i> Menu Broadcast Promo</h3>
-    <div class="data-actions" style="margin-top: 20px;">
-        <button type="button" class="info" onclick="showBroadcastSettings()"><i class="fas fa-cog"></i> Atur Pesan Broadcast</button>
-        <button type="button" class="whatsapp" onclick="showBroadcastList()"><i class="fas fa-paper-plane"></i> Mulai Broadcast</button>
-    </div>
-    <div class="data-actions" style="margin-top: 10px;">
-        <button type="button" class="danger" onclick="closePopup('broadcastMainPopup')"><i class="fas fa-times"></i> Tutup</button>
-    </div>
-  </div>
-  <div id="broadcastSettingsPopup" class="popup-form">
-    <h3><i class="fas fa-cog"></i> Atur Pesan Broadcast</h3>
-    <form id="broadcast-settings-form">
-        <label for="broadcastMessage">Pesan Promo:</label>
-        <textarea id="broadcastMessage" placeholder="Contoh: Halo Kak! Ada promo spesial..." style="height: 150px;"></textarea>
-        <div class="data-actions" style="margin-top: 20px;">
-            <button type="button" onclick="saveBroadcastMessage()"><i class="fas fa-save"></i> Simpan Pesan</button>
-            <button type="button" class="secondary" onclick="closePopup('broadcastSettingsPopup'); showBroadcastMain();"><i class="fas fa-arrow-left"></i> Kembali</button>
-        </div>
-    </form>
-  </div>
-  <div id="broadcastListPopup" class="popup-form" style="max-width: 700px;">
-    <h3><i class="fas fa-users"></i> Daftar Penerima Broadcast</h3>
-    <div class="search-container" style="margin-top: 15px;">
-        <i class="fas fa-search"></i>
-        <input type="text" id="broadcastCustomerSearch" oninput="filterBroadcastCustomers(this.value)" placeholder="Cari nama atau nomor HP...">
-    </div>
-    <div id="broadcast-customer-list" style="max-height: 40vh; overflow-y: auto; margin-top: 15px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 10px 0;">
-        <p style="text-align: center; color: #888;">Memuat daftar customer...</p>
-    </div>
-    <div class="data-actions" style="margin-top: 20px;">
-        <button type="button" class="danger" onclick="closePopup('broadcastListPopup')"><i class="fas fa-times"></i> Tutup</button>
-    </div>
-  </div>
-
-  <div id="reservation-view-container" style="display: none; background-color: #f5f5f5; padding: 20px;">
-    <div class="reservation-view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--primary);">
-        <h2 id="reservation-view-title" style="color: var(--primary-dark); font-size: 1.8rem;"></h2>
-        <div class="header-actions">
-            <button onclick="showAddForm()"><i class="fas fa-plus"></i> Tambah Reservasi</button>
-            <button class="whatsapp" onclick="shareViaWhatsApp('day')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
-            <button class="secondary" onclick="shareViaEmail()"><i class="fas fa-envelope"></i> Email</button>
-            <div class="sort-options-container" style="width: auto; position: relative;">
-                <button class="secondary" onclick="toggleDetailSort(event)"><i class="fas fa-sort"></i> Urutkan</button>
-                <div class="sort-options" id="sortOptionsDetail" style="bottom: auto; top: 100%; margin-top: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <p>Urutkan berdasarkan:</p>
-                    <button onclick="sortReservations('jam')">Jam</button>
-                    <button onclick="sortReservations('tempat')">Tempat</button>
-                </div>
-            </div>
-            <button onclick="printData()"><i class="fas fa-print"></i> Print</button>
-            <button class="danger" onclick="kembaliKeKalender()"><i class="fas fa-arrow-left"></i> Kembali</button>
-        </div>
-    </div>
-    <div class="search-container">
-        <i class="fas fa-search"></i>
-        <input type="text" id="detailSearchInput" oninput="filterReservations(this.value)" placeholder="Cari nama, tempat, atau menu...">
-    </div>
-    <div id="reservation-detail-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;"></div>
-  </div>
-  
-  <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan </p></footer>
 
 <script>
-    // --- 1. KONFIGURASI FIREBASE ---
+    // --- FIREBASE SETUP ---
     const firebaseConfig = {
       apiKey: "AIzaSyA_c1tU70FM84Qi_f_aSaQ-YVLo_18lCkI",
       authDomain: "reservasi-dolan-sawah.firebaseapp.com",
@@ -413,700 +283,218 @@
       messagingSenderId: "213151400721",
       appId: "1:213151400721:web:e51b0d8cdd24206cf682b0"
     };
-    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const auth = firebase.auth();
 
-    // --- 2. VARIABEL GLOBAL ---
-    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    let dataReservasi = {};
-    let detailMenu = {};
-    let locationsData = {};
-    let tanggalDipilih = '';
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
-    let unsubscribeReservations = null;
-    let allReservationsCache = null;
-    let hasAutoOpened = false; 
-    let analysisChartInstance = null;
-    let requestsCache = []; 
-    const BROADCAST_MESSAGE_KEY = 'dolanSawahBroadcastMessage';
-    let promoMessageCache = null;
-    let allCustomersCache = [];
+    // --- VARIABLES ---
+    let allReservations = [];
+    let menuDetailsCache = {};
+    let selectedDate = new Date();
+    let currentFilter = 'all'; 
+    let unsubscribe = null;
+    let globalCompDetails = {};
 
-    // --- 3. STARTUP & AUTH ---
-    const mainContainer = document.getElementById('main-container');
-    const loginContainer = document.getElementById('login-container');
-    const logoutButton = document.getElementById('logout-button');
-    const overlay = document.getElementById('overlay');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const toast = document.getElementById('toast');
-    const calendarEl = document.getElementById('calendar');
-    const monthYearEl = document.getElementById('monthYear');
+    // --- INIT ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+        }, 1000);
+        // Timer Loop
+        setInterval(updateUI, 60000); 
 
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            loginContainer.style.display = 'none'; 
-            mainContainer.style.display = 'block';
-            logoutButton.style.display = 'inline-flex'; 
-            initializeApp(); 
-        } else {
-            loginContainer.style.display = 'block'; 
-            mainContainer.style.display = 'none';
-            logoutButton.style.display = 'none';
-        }
+        await loadMenuDetails();
+        updateDateDisplay();
+        loadData(selectedDate);
     });
 
-    async function handleLogin() {
-      const email = document.getElementById('loginEmail').value;
-      const p = document.getElementById('loginPassword').value;
-      if (!email || !p) return showToast('Email & Password wajib diisi', 'error');
-      showLoader();
-      try { await auth.signInWithEmailAndPassword(email, p); } 
-      catch (err) { showToast('Login Gagal: ' + err.message, 'error'); } 
-      finally { hideLoader(); }
-    }
-    
-    function handleLogout() { if (confirm("Yakin ingin logout?")) auth.signOut(); }
-
-    async function initializeApp() { 
-      showLoader();
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const paramDate = urlParams.get('date');
-        if (paramDate) {
-            const d = new Date(paramDate);
-            if (!isNaN(d.getTime())) { currentMonth = d.getMonth(); currentYear = d.getFullYear(); }
-        }
-        await loadMenus();
-        await loadLocations();
-        loadReservationsForCurrentMonth(); 
-        listenMandiriRequests(); // Listener Integrasi
-      } catch (e) {
-        console.error("Init Error:", e);
-        showToast("Gagal memuat data awal", "error");
-      } finally {
-          hideLoader();
-      }
-    }
-
-    // --- 4. LOGIKA INTEGRASI ADMIN MANDIRI ---
-    function listenMandiriRequests() {
-        db.collection('reservation_requests').orderBy('createdAt', 'desc')
-          .onSnapshot(snapshot => {
-             requestsCache = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-             updateMandiriBadges(); 
-             const mandiriView = document.getElementById('integrated-mandiri-view');
-             if(mandiriView && mandiriView.style.display === 'block') {
-                 renderMandiriInbox();
-             }
-          });
-    }
-
-    function updateMandiriBadges() {
-        const count = requestsCache.length;
-        const headerBadge = document.getElementById('header-req-badge');
-        if(headerBadge) { headerBadge.textContent = count; headerBadge.style.display = count > 0 ? 'inline-block' : 'none'; }
-        const sidebarBadge = document.getElementById('sidebar-req-badge');
-        if(sidebarBadge) { sidebarBadge.textContent = count; sidebarBadge.style.display = count > 0 ? 'inline-block' : 'none'; }
-        const statPending = document.getElementById('mandiri-stat-pending');
-        if(statPending) statPending.textContent = count;
-    }
-
-    window.openMandiriView = function() {
-        document.getElementById('integrated-mandiri-view').style.display = 'block';
-        document.body.style.overflow = 'hidden'; 
-        switchMandiriTab('dashboard');
-    }
-
-    window.closeMandiriView = function() {
-        document.getElementById('integrated-mandiri-view').style.display = 'none';
-        document.body.style.overflow = 'auto'; 
-    }
-
-    window.toggleMandiriSidebar = function() {
-        document.getElementById('mandiri-sidebar').classList.toggle('open');
-    }
-
-    window.switchMandiriTab = function(tabName) {
-        document.getElementById('mandiri-tab-dashboard').style.display = 'none';
-        document.getElementById('mandiri-tab-inbox').style.display = 'none';
-        document.getElementById('mandiri-tab-' + tabName).style.display = 'block';
-        
-        // Update Nav Active State
-        const navs = document.querySelectorAll('#integrated-mandiri-view .nav-item');
-        navs.forEach(n => n.classList.remove('active'));
-        if(tabName === 'dashboard') navs[0].classList.add('active');
-        if(tabName === 'inbox') navs[1].classList.add('active');
-
-        if(tabName === 'inbox') renderMandiriInbox();
-        if(window.innerWidth < 768) {
-            document.getElementById('mandiri-sidebar').classList.remove('open');
-        }
-    }
-
-    window.loadMandiriRequests = function() {
-        renderMandiriInbox();
-        showToast("Inbox diperbarui");
-    }
-
-    function renderMandiriInbox() {
-        const container = document.getElementById('mandiri-inbox-container');
-        if (!requestsCache || requestsCache.length === 0) {
-            container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:#94a3b8; background:white; border-radius:16px; border:1px dashed #cbd5e1;"><i class="fas fa-inbox fa-4x" style="opacity:0.2; margin-bottom:20px;"></i><p>Belum ada permintaan reservasi baru.</p></div>`;
-            return;
-        }
-
-        container.innerHTML = requestsCache.map(r => {
-            let menuHtml = '<span style="color:#94a3b8; font-style:italic;">Tidak ada menu</span>';
-            if(r.menus && r.menus.length > 0) {
-                menuHtml = r.menus.map(m => `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding:4px 0;"><span>${m.name}</span> <b>x${m.quantity}</b></div>`).join('');
-            }
-            const note = r.tambahan ? `<div style="font-size:0.85rem; color:#b45309; background:#fffbeb; padding:10px; border-radius:8px; margin-top:10px; border:1px solid #fcd34d;"><i class="fas fa-sticky-note"></i> <b>Note:</b> ${r.tambahan}</div>` : '';
-
-            return `
-            <div class="request-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
-                    <span class="req-name">${r.nama || 'Tanpa Nama'}</span>
-                    <span style="font-size:0.75rem; background:#f1f5f9; padding:4px 10px; border-radius:20px; color:#64748b; font-weight:600;">${r.via || 'Web'}</span>
-                </div>
-                <div class="req-details">
-                    <div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-calendar" style="color:#2a9d8f; width:20px;"></i> <b>${r.date}</b></div>
-                    <div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-clock" style="color:#2a9d8f; width:20px;"></i> ${r.jam} WIB</div>
-                    <div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-users" style="color:#2a9d8f; width:20px;"></i> ${r.jumlah} Orang</div>
-                    <div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-map-marker-alt" style="color:#2a9d8f; width:20px;"></i> ${r.tempat}</div>
-                </div>
-                <div class="req-menu-box" style="background:#f8fafc; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #e2e8f0; font-size:0.85rem;">
-                    <strong style="display:block; margin-bottom:5px; color:#475569;">Pesanan Menu:</strong>${menuHtml}
-                </div>
-                ${note}
-                <div class="req-actions" style="margin-top:20px; display:flex; gap:10px;">
-                    <button style="background:#25D366; color:white; border:none;" onclick="window.open('https://wa.me/${r.nomorHp ? r.nomorHp.replace(/[^0-9]/g,'').replace(/^0/,'62') : ''}','_blank')"><i class="fab fa-whatsapp"></i> Chat</button>
-                    <button style="background:#fee2e2; color:#ef4444; border:none;" onclick="rejectRequest('${r.id}')"><i class="fas fa-times"></i> Tolak</button>
-                    <button style="background:#10b981; color:white; border:none;" onclick="approveRequest('${r.id}')"><i class="fas fa-check"></i> Terima</button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    window.approveRequest = async function(id) {
-        const req = requestsCache.find(r => r.id === id);
-        if(!req) return;
-        const { value: formValues } = await Swal.fire({
-            title: `Approve: ${req.nama}`,
-            html: `
-                <p style="font-size:0.9rem; color:#666;">Data akan masuk ke Kalender Utama.</p>
-                <div style="text-align:left; font-weight:600; font-size:0.9rem;">Nominal DP (Rp)</div>
-                <input id="swal-dp" type="number" class="swal2-input" placeholder="0" value="0">
-                <div style="text-align:left; font-weight:600; font-size:0.9rem;">Tipe Pembayaran</div>
-                <select id="swal-type" class="swal2-select" style="width:100%; display:block;">
-                    <option value="">- Pilih -</option>
-                    <option value="Transfer BCA">Transfer BCA</option>
-                    <option value="Transfer Mandiri">Transfer Mandiri</option>
-                    <option value="QRIS">QRIS</option>
-                    <option value="Cash">Cash</option>
-                </select>
-            `,
-            showCancelButton: true, confirmButtonText: 'Approve & Simpan', confirmButtonColor: '#10b981',
-            preConfirm: () => { return { dp: document.getElementById('swal-dp').value, tipeDp: document.getElementById('swal-type').value } }
-        });
-
-        if (formValues) {
-            showLoader();
-            try {
-                const newData = { ...req, status: 'approved', approvedAt: firebase.firestore.FieldValue.serverTimestamp(), dp: parseInt(formValues.dp) || 0, tipeDp: formValues.tipeDp };
-                delete newData.id; 
-                await db.collection('reservations').add(newData);
-                await db.collection('reservation_requests').doc(id).delete();
-                showToast("Sukses! Reservasi disetujui.", "success");
-            } catch (e) { showToast("Gagal approve: " + e.message, "error"); } finally { hideLoader(); }
-        }
-    }
-
-    window.rejectRequest = async function(id) {
-        const result = await Swal.fire({ title: 'Tolak Permintaan?', text: "Data akan dihapus permanen.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Tolak' });
-        if(result.isConfirmed) {
-            showLoader();
-            try { await db.collection('reservation_requests').doc(id).delete(); showToast("Permintaan ditolak.", "success"); } 
-            catch(e) { showToast("Gagal: " + e.message, "error"); } finally { hideLoader(); }
-        }
-    }
-
-    // --- 5. LOGIKA ADMIN UTAMA (CRUD) ---
-    async function loadMenus() {
-      try {
-        const snapshot = await db.collection('menus').get();
-        detailMenu = {};
-        snapshot.forEach(doc => { const data = doc.data(); detailMenu[doc.id] = data.details || []; });
-      } catch (e) { console.error(e); }
-    }
-
-    async function loadLocations() {
+    async function loadMenuDetails() {
         try {
-            const snapshot = await db.collection('locations').get();
-            locationsData = {};
-            snapshot.forEach(doc => { locationsData[doc.id] = doc.data(); });
-        } catch (e) { console.error(e); }
+            const snap = await db.collection('menus').get();
+            snap.forEach(doc => { menuDetailsCache[doc.id] = doc.data().details || []; });
+        } catch(e) {}
     }
 
-    function loadReservationsForCurrentMonth() {
-      if (unsubscribeReservations) unsubscribeReservations();
-      const monthStr = String(currentMonth + 1).padStart(2, '0');
-      const startDate = `${currentYear}-${monthStr}-01`;
-      const endDate = `${currentYear}-${monthStr}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`;
-      
-      unsubscribeReservations = db.collection('reservations').where('date', '>=', startDate).where('date', '<=', endDate)
-        .onSnapshot( snapshot => {
-            dataReservasi = {};
-            snapshot.forEach(doc => {
-              const r = { id: doc.id, ...doc.data() };
-              const dateKey = r.date.substring(5);
-              if (!dataReservasi[dateKey]) dataReservasi[dateKey] = [];
-              dataReservasi[dateKey].push(r);
+    function updateDateDisplay() {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('dateDisplay').innerText = selectedDate.toLocaleDateString('id-ID', options);
+        // Update input value agar sync
+        const y = selectedDate.getFullYear();
+        const m = String(selectedDate.getMonth()+1).padStart(2,'0');
+        const d = String(selectedDate.getDate()).padStart(2,'0');
+        document.getElementById('dateInput').value = `${y}-${m}-${d}`;
+    }
+
+    function loadData(dateObj) {
+        document.getElementById('loader').style.display = 'flex';
+        if (unsubscribe) unsubscribe();
+
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth()+1).padStart(2,'0');
+        const d = String(dateObj.getDate()).padStart(2,'0');
+        const dateStr = `${y}-${m}-${d}`;
+
+        unsubscribe = db.collection('reservations')
+            .where('date', '==', dateStr)
+            .onSnapshot(snap => {
+                let temp = [];
+                snap.forEach(doc => temp.push({id: doc.id, ...doc.data()}));
+                allReservations = temp.sort((a,b) => a.jam.localeCompare(b.jam));
+                renderUI();
+                document.getElementById('loader').style.display = 'none';
             });
-            buatKalender();
-            if (!hasAutoOpened) {
-                const urlParams = new URLSearchParams(window.location.search);
-                if(urlParams.get('autoOpen') && tanggalDipilih) {
-                    updateReservationList(dataReservasi[tanggalDipilih] || []);
-                    hasAutoOpened = true;
-                }
-            }
-            if (tanggalDipilih) updateReservationList(dataReservasi[tanggalDipilih] || []);
-          }, err => { console.error(err); }
-        );
-    }
-    
-    // UI Utilities
-    function showLoader() { if(loadingOverlay) loadingOverlay.style.display = 'flex'; }
-    function hideLoader() { if(loadingOverlay) loadingOverlay.style.display = 'none'; }
-    function showToast(msg, type='success') { toast.textContent = msg; toast.className = `toast ${type}`; toast.style.display = 'block'; setTimeout(() => toast.style.display = 'none', 3000); }
-    function formatRupiah(amount) { return (amount || 0).toLocaleString('id-ID'); }
-    function cleanPhoneNumber(phone) { return phone.replace(/[^0-9]/g, ''); }
-    function isValidPhone(phone) { return /^[0-9]{10,13}$/.test(cleanPhoneNumber(phone)); }
-    function closePopup(id) { document.getElementById(id).style.display = 'none'; if(overlay) overlay.style.display = 'none'; }
-    function formatK(num) { if(num >= 1000000) return (num/1000000).toFixed(1) + 'jt'; if(num >= 1000) return (num/1000).toFixed(0) + 'rb'; return num; }
-
-    // Calendar
-    function buatKalender() {
-      if(!calendarEl) return;
-      calendarEl.innerHTML = ''; 
-      monthYearEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      for (let i = 0; i < firstDay; i++) { calendarEl.insertAdjacentHTML('beforeend', `<div></div>`); }
-      for (let i = 1; i <= daysInMonth; i++) {
-        const dateKey = `${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        const isToday = new Date().toDateString() === new Date(currentYear, currentMonth, i).toDateString() ? 'today' : '';
-        const isSelected = dateKey === tanggalDipilih ? 'selected' : '';
-        const hasRes = dataReservasi[dateKey] && dataReservasi[dateKey].length > 0;
-        const countHTML = hasRes ? `<div class="reservation-count">${dataReservasi[dateKey].length}</div>` : '';
-        calendarEl.insertAdjacentHTML('beforeend', `<div class="calendar-day ${isToday} ${isSelected}" onclick="pilihTanggal(${i})"><div class="day-number">${i}</div>${countHTML}</div>`);
-      }
-    }
-    
-    function pilihTanggal(day) {
-      tanggalDipilih = `${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      buatKalender(); 
-      const reservations = dataReservasi[tanggalDipilih] || [];
-      document.getElementById('reservation-view-title').innerHTML = `<i class="far fa-calendar-check"></i> ${day} ${monthNames[currentMonth]} ${currentYear}`;
-      updateReservationList(reservations); 
-      mainContainer.style.display = 'none';
-      document.getElementById('reservation-view-container').style.display = 'block';
-      window.scrollTo(0, 0);
     }
 
-    function kembaliKeKalender() {
-      document.getElementById('reservation-view-container').style.display = 'none';
-      mainContainer.style.display = 'block';
-      tanggalDipilih = '';
-      buatKalender();
-    }
-    
-    const previousMonth = () => { currentMonth--; if(currentMonth<0){currentMonth=11;currentYear--;} loadReservationsForCurrentMonth(); };
-    const nextMonth = () => { currentMonth++; if(currentMonth>11){currentMonth=0;currentYear++;} loadReservationsForCurrentMonth(); };
-    const goToToday = () => { currentMonth=new Date().getMonth(); currentYear=new Date().getFullYear(); loadReservationsForCurrentMonth(); };
-    function toggleDetailSort(event) { event.stopPropagation(); const sortOptions = document.getElementById('sortOptionsDetail'); sortOptions.style.display = sortOptions.style.display === 'block' ? 'none' : 'block'; }
-    window.addEventListener('click', function(e) { document.querySelectorAll('.sort-options-container').forEach(container => { if (!container.contains(e.target)) container.querySelector('.sort-options').style.display = 'none'; }); });
+    function renderUI() {
+        // Filter Shift
+        let filtered = allReservations;
+        if (currentFilter === 'pagi') filtered = allReservations.filter(r => parseInt(r.jam) < 15);
+        if (currentFilter === 'siang') filtered = allReservations.filter(r => parseInt(r.jam) >= 15);
 
-    function updateReservationList(reservations) {
-        const container = document.getElementById('reservation-detail-list');
-        if (!reservations || reservations.length === 0) {
-            container.innerHTML = `<p style="text-align:center; padding:20px 0; grid-column: 1 / -1;">Tidak ada reservasi.</p>`; 
+        document.getElementById('totalRes').innerText = filtered.length;
+        document.getElementById('totalPax').innerText = filtered.reduce((a,b) => a + parseInt(b.jumlah||0), 0);
+        
+        renderFloor(filtered);
+        renderKitchen(filtered);
+    }
+
+    // --- TIMER LOGIC (SIMPLE & CLEAR) ---
+    function getTimerInfo(jamReservasi) {
+        const now = new Date();
+        const isToday = selectedDate.toDateString() === now.toDateString();
+        
+        if (!isToday) return { text: "Bukan Hari Ini", colorClass: "bg-green" };
+
+        const [h, m] = jamReservasi.split(':').map(Number);
+        const resTime = new Date(); resTime.setHours(h, m, 0);
+        const diffMins = Math.floor((resTime - now) / 60000);
+
+        if (diffMins < 0) return { text: "TAMU SUDAH HADIR / TERLAMBAT", colorClass: "bg-red" };
+        if (diffMins <= 30) return { text: `SEGERA! ${diffMins} MENIT LAGI`, colorClass: "bg-red" };
+        if (diffMins <= 60) return { text: `PERSIAPAN (${diffMins} Menit)`, colorClass: "bg-yellow" };
+        
+        const jam = Math.floor(diffMins/60);
+        const sisaMenit = diffMins%60;
+        return { text: `Masih Lama (${jam} jam ${sisaMenit} mnt)`, colorClass: "bg-green" };
+    }
+
+    function renderFloor(data) {
+        const container = document.getElementById('floorContainer');
+        container.innerHTML = '';
+
+        if (data.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding:50px; color:#888;"><h3>Tidak ada data</h3></div>`;
             return;
         }
-        container.innerHTML = reservations.map(r => {
-            let menuItemsHtml = "-";
-            if (Array.isArray(r.menus) && r.menus.length > 0) {
-                menuItemsHtml = r.menus.map(item => {
-                    const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
-                    const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br/>');
-                    return `<strong>${item.quantity}x ${item.name}</strong><br/>${detailString}`;
-                }).join('<br/><br/>');
-            } else if (r.menu) { menuItemsHtml = (detailMenu[r.menu] || []).map(item => `&bull; ${item}`).join('<br/>') || "-"; }
 
-            let thankYouBtn = '';
-            if(r.nomorHp) {
-                thankYouBtn = r.thankYouSent ? `<button style="background:var(--success);" disabled><i class="fas fa-check"></i> Terkirim</button>` : `<button class="accent" id="thank-you-btn-${r.id}" onclick="sendThankYouMessage('${r.id}', '${r.nama}', '${r.nomorHp}')"><i class="fas fa-gift"></i> Thanks</button>`;
+        data.forEach(r => {
+            const timer = getTimerInfo(r.jam);
+
+            let menuHtml = '';
+            if (r.menus && r.menus.length) {
+                menuHtml = r.menus.map(item => {
+                    const details = menuDetailsCache[item.name] || [];
+                    const detailString = details.length > 0 ? `<span class="bc-menu-detail">• ${details.join(', ')}</span>` : '';
+                    return `<div class="bc-menu-item">
+                        <div style="display:flex; align-items:flex-start; flex:1;">
+                            <span class="bc-qty">${item.quantity}</span>
+                            <div>
+                                <span class="bc-menu-name">${item.name}</span>
+                                ${detailString}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } else if (r.menu) {
+                const details = menuDetailsCache[r.menu] || [];
+                const detailString = details.length > 0 ? `<span class="bc-menu-detail">• ${details.join(', ')}</span>` : '';
+                menuHtml = `<div class="bc-menu-item"><div style="display:flex; flex:1;"><span class="bc-qty">1</span><div><span class="bc-menu-name">${r.menu}</span>${detailString}</div></div></div>`;
             }
 
-            return `
-            <div class="reservation-item" style="display: flex; flex-direction: column; justify-content: space-between;">
-                <div class="reservation-details">
-                <b><i class="fas fa-user"></i> ${r.nama || 'Tanpa Nama'}</b><br/>
-                <span><i class="fas fa-map-marker-alt"></i> ${r.tempat || '?'} • <i class="far fa-clock"></i> ${r.jam || '?'} • <i class="fas fa-users"></i> ${r.jumlah || '?'} org</span>
-                ${r.dp > 0 ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)} ${r.tipeDp?`(${r.tipeDp})`:''}</div>` : ''}
-                <div class="menu-detail"><b><i class="fas fa-utensils"></i> Menu:</b><br/>${menuItemsHtml}</div>
-                <div><i class="fas fa-comment"></i> ${r.tambahan || '-'}</div>
-                </div>
-                <div class="data-actions">
-                ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.id}')"><i class="fab fa-whatsapp"></i></button>` : ''}
-                ${thankYouBtn}
-                <button onclick="editReservasi('${r.id}')"><i class="fas fa-edit"></i></button>
-                <button class="danger" onclick="hapusReservasi('${r.id}')"><i class="fas fa-trash-alt"></i></button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    function filterReservations(query) {
-      if (!tanggalDipilih) return;
-      const q = query.toLowerCase();
-      const filtered = (dataReservasi[tanggalDipilih] || []).filter(r => (r.nama && r.nama.toLowerCase().includes(q)) || (r.tempat && r.tempat.toLowerCase().includes(q)));
-      updateReservationList(filtered);
-    }
-    
-    function sortReservations(sortBy) {
-        if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
-        const reservationsToSort = [...dataReservasi[tanggalDipilih]]; 
-        const sorted = reservationsToSort.sort((a, b) => {
-            const valA = a[sortBy] || ''; const valB = b[sortBy] || '';
-            return valA.localeCompare(valB);
+            container.innerHTML += `
+                <div class="big-card">
+                    <div class="timer-bar ${timer.colorClass}">${timer.text}</div>
+                    <div class="bc-header">
+                        <span class="bc-time">${r.jam}</span>
+                        <span class="bc-pax">${r.jumlah} Orang</span>
+                    </div>
+                    <div class="bc-body">
+                        <div class="bc-name">${r.nama}</div>
+                        <div class="bc-loc"><i class="fas fa-map-marker-alt"></i> ${r.tempat || '?'}</div>
+                        <div class="bc-menu-box">${menuHtml || 'Belum ada menu'}</div>
+                        ${r.tambahan ? `<div style="margin-top:15px; background:#ffe4e6; color:#9f1239; padding:10px; border-radius:8px; font-weight:bold;">⚠️ NOTE: ${r.tambahan}</div>` : ''}
+                    </div>
+                </div>`;
         });
-        updateReservationList(sorted);
-        document.querySelectorAll('.sort-options').forEach(el => el.style.display = 'none');
     }
 
-    function showAddForm() {
-        document.getElementById('reservation-form').reset();
-        populateLocationDropdown(document.querySelector('#reservation-form #tempat'));
-        document.getElementById('selected-menus-container').innerHTML = '';
-        addMenuSelectionRow('reservation-form');
-        document.getElementById('addFormPopup').style.display = 'block';
-        if(overlay) overlay.style.display = 'block';
-    }
-
-    function editReservasi(id) {
-        const res = (dataReservasi[tanggalDipilih] || []).find(r => r.id === id);
-        if(!res) return;
-        const formDiv = document.getElementById('editFormPopup');
-        formDiv.innerHTML = `
-            <form id="edit-reservation-form">
-            <h3><i class="fas fa-edit"></i> Edit Reservasi</h3>
-            <input type="hidden" id="editReservationId" value="${id}">
-            <label>Nama: <input type="text" id="edit_nama" value="${res.nama}"></label>
-            <label>HP: <input type="text" id="edit_hp" value="${res.nomorHp}"></label>
-            <label>Jam: <input type="time" id="edit_jam" value="${res.jam}"></label>
-            <label>Jumlah: <input type="number" id="edit_jumlah" value="${res.jumlah}"></label>
-            <label>DP: <input type="number" id="edit_dp" value="${res.dp}"></label>
-            <label>Tipe DP: <select id="edit_tipeDp"><option>Cash</option><option>QRIS</option><option>Transfer BCA</option><option>Transfer Mandiri</option><option>Transfer BRI</option></select></label>
-            <label>Tempat: <select id="edit_tempat"></select></label>
-            <label>Menu:</label><div id="edit-menus-container"></div>
-            <button type="button" class="secondary" onclick="addMenuSelectionRow('edit-reservation-form')">+ Menu</button>
-            <label>Note: <textarea id="edit_note">${res.tambahan}</textarea></label>
-            <div class="data-actions">
-                <button type="button" onclick="simpanPerubahanReservasi()"><i class="fas fa-save"></i> Simpan</button>
-                <button type="button" class="danger" onclick="closePopup('editFormPopup')">Batal</button>
-            </div>
-            </form>
-        `;
-        const tipeDpSel = document.getElementById('edit_tipeDp'); if(res.tipeDp) tipeDpSel.value = res.tipeDp;
-        populateLocationDropdown(document.getElementById('edit_tempat'), res.tempat);
-        const menuCont = document.getElementById('edit-menus-container'); menuCont.innerHTML = '';
-        if(Array.isArray(res.menus) && res.menus.length > 0) res.menus.forEach(m => addMenuSelectionRow('edit-reservation-form', m.name, m.quantity));
-        else addMenuSelectionRow('edit-reservation-form');
-        formDiv.style.display = 'block'; overlay.style.display = 'block';
-    }
-
-    async function simpanReservasi() {
-        const data = await getFormData('reservation-form');
-        if(!data) return;
-        data.date = `${currentYear}-${tanggalDipilih}`;
-        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        showLoader();
-        try { await db.collection('reservations').add(data); showToast("Tersimpan"); closePopup('addFormPopup'); } catch(e) { showToast("Gagal simpan", "error"); } finally { hideLoader(); }
-    }
-
-    async function simpanPerubahanReservasi() {
-        const id = document.getElementById('editReservationId').value;
-        const nama = document.getElementById('edit_nama').value;
-        const hp = document.getElementById('edit_hp').value;
-        const jam = document.getElementById('edit_jam').value;
-        const jumlah = document.getElementById('edit_jumlah').value;
-        const dp = document.getElementById('edit_dp').value;
-        const tipeDp = document.getElementById('edit_tipeDp').value;
-        const tempat = document.getElementById('edit_tempat').value;
-        const note = document.getElementById('edit_note').value;
-        const menus = [];
-        document.querySelectorAll('#edit-reservation-form .menu-selection-row').forEach(row => {
-            const mName = row.querySelector('select').value;
-            const mQty = row.querySelector('input').value;
-            if(mName) menus.push({name: mName, quantity: parseInt(mQty)});
-        });
-        const updateData = { nama, nomorHp: cleanPhoneNumber(hp), jam, jumlah: parseInt(jumlah), dp: parseInt(dp), tipeDp, tempat, tambahan: note, menus };
-        showLoader();
-        try { await db.collection('reservations').doc(id).update(updateData); showToast("Terupdate"); closePopup('editFormPopup'); } catch(e) { showToast("Gagal update", "error"); } finally { hideLoader(); }
-    }
-
-    async function hapusReservasi(id) {
-        if(!confirm("Hapus?")) return;
-        try { await db.collection('reservations').doc(id).delete(); showToast("Terhapus"); } catch(e){}
-    }
-
-    async function getFormData(formId) {
-        const form = document.getElementById(formId);
-        const nama = form.querySelector('#nama').value;
-        const hp = form.querySelector('#nomorHp').value;
-        const jam = form.querySelector('#jam').value;
-        const jumlah = form.querySelector('#jumlah').value;
-        const dp = form.querySelector('#dp').value;
-        const tipeDp = form.querySelector('#tipeDp').value;
-        const tempat = form.querySelector('#tempat').value;
-        const note = form.querySelector('#tambahan').value;
-        if(!nama || !jam || !tempat) { showToast("Lengkapi data wajib", "error"); return null; }
-        const menus = [];
-        form.querySelectorAll('.menu-selection-row').forEach(row => {
-            const mName = row.querySelector('select').value;
-            const mQty = row.querySelector('input').value;
-            if(mName) menus.push({name: mName, quantity: parseInt(mQty)});
-        });
-        return { nama, nomorHp: cleanPhoneNumber(hp), jam, jumlah: parseInt(jumlah), dp: parseInt(dp), tipeDp, tempat, tambahan: note, menus };
-    }
-
-    function addMenuSelectionRow(formId, defName='', defQty=1) {
-        const container = document.querySelector(`#${formId} div[id$='menus-container']`);
-        const div = document.createElement('div');
-        div.className = 'menu-selection-row';
-        const opts = Object.keys(detailMenu).sort().map(n => `<option value="${n}" ${n===defName?'selected':''}>${n}</option>`).join('');
-        div.innerHTML = `<select class="menu-select"><option value="">Pilih Menu</option>${opts}</select><input type="number" class="quantity-input" value="${defQty}" min="1"><button type="button" class="remove-btn" onclick="this.parentElement.remove()">X</button>`;
-        container.appendChild(div);
-    }
-
-    function populateLocationDropdown(sel, def='') {
-        sel.innerHTML = '<option value="">Pilih Tempat</option>';
-        Object.values(locationsData).sort((a,b)=>a.name.localeCompare(b.name)).forEach(l => { sel.innerHTML += `<option value="${l.name}" ${l.name===def?'selected':''}>${l.name} (Kap: ${l.capacity})</option>`; });
-    }
-    function updateCapacityInfo(formId) {
-        const form = document.getElementById(formId);
-        const sel = form.querySelector('#tempat');
-        const info = form.querySelector('#capacity-info');
-        const loc = Object.values(locationsData).find(l => l.name === sel.value);
-        if(loc) info.textContent = `Kapasitas: ${loc.capacity} org.`; else info.textContent='';
-    }
-
-    function contactViaWhatsApp(id) {
-        const r = (dataReservasi[tanggalDipilih] || []).find(x => x.id === id);
-        if (!r) return;
-        
-        // --- RESTORED: Full Detailed Menu Logic from V5.2 ---
-        let menuList = '  - _(Tidak ada detail menu)_';
-        if (Array.isArray(r.menus) && r.menus.length > 0) {
-            menuList = r.menus.map(item => {
-                const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
-                const detailString = details.map(d => `    • ${d}`).join('\n');
-                return `  - *${item.quantity}x ${item.name}*\n${detailString}`;
-            }).join('\n');
-        } else if (r.menu) { // Fallback data lama
-            const details = detailMenu[r.menu] || [];
-            const detailString = details.map(d => `    • ${d}`).join('\n');
-            menuList = `  - *${r.menu}*\n${detailString}`;
-        }
-
-        const tambahanInfo = r.tambahan ? `📝 *Request Tambahan:*\n${r.tambahan}\n\n` : '';
-        const dpInfo = r.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(r.dp)} ${r.tipeDp ? `(via ${r.tipeDp})` : ''} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
-        
-        const message = `Halo Kak *${r.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${r.date}\n⏰ *Jam:* ${r.jam}\n📍 *Tempat:* ${r.tempat}\n👥 *Jumlah:* ${r.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
-        
-        openWhatsApp(r.nomorHp, r.nama, message);
-    }
-
-    function sendThankYouMessage(id, name, phone) {
-        openWhatsApp(phone, name, `Halo Kak *${name}*, Terima kasih sudah berkunjung ke Dolan Sawah! 🙏\nKami harap Kakak menikmati hidangan kami. Ditunggu kedatangannya kembali! 😊`);
-        db.collection('reservations').doc(id).update({ thankYouSent: true });
-        const btn = document.getElementById(`thank-you-btn-${id}`);
-        if(btn) { btn.innerHTML=`<i class="fas fa-check"></i> Terkirim`; btn.disabled=true; btn.style.background='var(--success)';}
-    }
-    function openWhatsApp(phone, name, msg) {
-        if(!phone) return;
-        let p = phone.replace(/[^0-9]/g,''); if(p.startsWith('0')) p = '62'+p.slice(1);
-        window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-    
-    function toggleNotificationDropdown(e) { e.stopPropagation(); } 
-
-    // MANAJEMEN MENU & LOKASI
-    function showMenuManagement() { 
-        const p = document.getElementById('menuManagementPopup');
-        p.innerHTML = `<h3>Kelola Menu</h3><div id="menu-list-container"></div><div id="add-menu-form"><h4>Tambah Menu</h4><label>Nama: <input type="text" id="newMenuName"></label><label>Detail: <textarea id="newMenuDetails"></textarea></label><button onclick="addNewMenu()">Simpan</button></div><div class="data-actions"><button class="danger" onclick="closePopup('menuManagementPopup')">Tutup</button></div>`;
-        renderMenuList(); p.style.display='block'; overlay.style.display='block';
-    }
-    function renderMenuList() {
-        const c = document.getElementById('menu-list-container');
-        c.innerHTML = Object.keys(detailMenu).sort().map(n => `<div class="menu-item"><span>${n}</span><div><button onclick="editMenuPopup('${n}')"><i class="fas fa-edit"></i></button><button class="danger" onclick="deleteMenu('${n}')"><i class="fas fa-trash"></i></button></div></div>`).join('');
-    }
-    async function addNewMenu() {
-        const n = document.getElementById('newMenuName').value.trim();
-        const d = document.getElementById('newMenuDetails').value.split(',').map(s=>s.trim()).filter(Boolean);
-        if(!n) return;
-        showLoader(); await db.collection('menus').doc(n).set({details:d}); await loadMenus(); renderMenuList(); hideLoader();
-    }
-    async function deleteMenu(n) { if(confirm('Hapus?')) { showLoader(); await db.collection('menus').doc(n).delete(); await loadMenus(); renderMenuList(); hideLoader(); }}
-    function editMenuPopup(n) {
-        const d = detailMenu[n].join(', ');
-        document.getElementById('menuManagementPopup').innerHTML=`<h3>Edit Menu</h3><label>Nama: <input id="edtMN" value="${n}"></label><label>Detail: <textarea id="edtMD">${d}</textarea></label><button onclick="saveEditMenu('${n}')">Update</button><button class="danger" onclick="showMenuManagement()">Batal</button>`;
-    }
-    async function saveEditMenu(oldN) {
-        const newN = document.getElementById('edtMN').value.trim();
-        const d = document.getElementById('edtMD').value.split(',').map(s=>s.trim()).filter(Boolean);
-        showLoader();
-        if(newN !== oldN) await db.collection('menus').doc(oldN).delete();
-        await db.collection('menus').doc(newN).set({details:d});
-        await loadMenus(); showMenuManagement(); hideLoader();
-    }
-
-    function showLocationManagement() {
-        const p = document.getElementById('locationManagementPopup');
-        p.innerHTML = `<h3>Kelola Tempat</h3><div id="location-list-container"></div><div id="add-loc-form"><h4>Tambah Tempat</h4><label>Nama: <input type="text" id="newLocName"></label><label>Kapasitas: <input type="number" id="newLocCap"></label><button onclick="addNewLoc()">Simpan</button></div><div class="data-actions"><button class="danger" onclick="closePopup('locationManagementPopup')">Tutup</button></div>`;
-        renderLocList(); p.style.display='block'; overlay.style.display='block';
-    }
-    function renderLocList() {
-        const c = document.getElementById('location-list-container');
-        c.innerHTML = Object.values(locationsData).sort((a,b)=>a.name.localeCompare(b.name)).map(l => {
-            const k = Object.keys(locationsData).find(key => locationsData[key]===l);
-            return `<div class="menu-item"><span>${l.name} (${l.capacity})</span><div><button class="danger" onclick="deleteLoc('${k}')"><i class="fas fa-trash"></i></button></div></div>`;
-        }).join('');
-    }
-    async function addNewLoc() {
-        const n = document.getElementById('newLocName').value.trim();
-        const c = parseInt(document.getElementById('newLocCap').value);
-        if(!n || !c) return;
-        const id = n.toLowerCase().replace(/\s+/g,'-');
-        showLoader(); await db.collection('locations').doc(id).set({name:n, capacity:c}); await loadLocations(); renderLocList(); hideLoader();
-    }
-    async function deleteLoc(id) { if(confirm('Hapus?')) { showLoader(); await db.collection('locations').doc(id).delete(); await loadLocations(); renderLocList(); hideLoader(); }}
-
-    async function showCustomerMenu() {
-        showLoader();
-        try {
-            const snap = await db.collection('reservations').orderBy('createdAt','desc').limit(300).get();
-            const custs = new Map();
-            snap.forEach(d => { const v=d.data(); if(v.nomorHp) custs.set(cleanPhoneNumber(v.nomorHp), v.nama); });
-            
-            // Fix: Render list with try-catch logic protection from previous request
-            const sortedCusts = [...custs.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-            let list = '';
-            if(sortedCusts.length === 0) list = '<div style="text-align:center;">Kosong</div>';
-            else {
-                list = sortedCusts.map(([hp,nm]) => `<div class="menu-item"><span>${nm}<br><small>${hp}</small></span><button class="whatsapp" onclick="openWhatsApp('${hp}','${nm.replace(/'/g, "\\'") }','')">WA</button></div>`).join('');
-            }
-            document.getElementById('customerListPopup').innerHTML = `<h3>Customer (${custs.size})</h3><div style="max-height:400px;overflow:auto;">${list}</div><button class="danger" onclick="closePopup('customerListPopup')">Tutup</button>`;
-            document.getElementById('customerListPopup').style.display='block'; overlay.style.display='block';
-        } catch(e) { console.error(e); } finally { hideLoader(); }
-    }
-
-    async function showAnalysis() {
-        const p = document.getElementById('analysisPopup');
-        p.innerHTML = `<h3>Analisis</h3><div class="chart-container"><canvas id="anChart"></canvas></div><div id="anStats">Loading...</div><button class="danger" onclick="closePopup('analysisPopup')">Tutup</button>`;
-        p.style.display='block'; overlay.style.display='block';
-        if(!allReservationsCache) { const s = await db.collection('reservations').get(); allReservationsCache = s.docs.map(d=>d.data()); }
-        const data = allReservationsCache;
-        const total = data.length;
-        const pax = data.reduce((a,b)=>a+(parseInt(b.jumlah)||0),0);
-        document.getElementById('anStats').innerHTML = `<p>Total Reservasi: <b>${total}</b></p><p>Total Tamu: <b>${pax}</b></p>`;
-        const counts = Array(12).fill(0);
-        data.forEach(r => { if(r.date){ const m = new Date(r.date).getMonth(); counts[m]++; }});
-        const ctx = document.getElementById('anChart').getContext('2d');
-        if(analysisChartInstance) analysisChartInstance.destroy();
-        analysisChartInstance = new Chart(ctx, { type: 'bar', data: { labels:monthNames.map(m=>m.substr(0,3)), datasets:[{label:'Reservasi', data:counts, backgroundColor:'#2a9d8f'}] } });
-    }
-
-    function showExportDataPopup() {
-        const data = {};
-        for(let k in dataReservasi) { data[k] = dataReservasi[k].map(r => ({ nama:r.nama, jumlah:r.jumlah, jam:r.jam, tempat:r.tempat, menus:r.menus||[] })); }
-        const str = btoa(unescape(encodeURIComponent(JSON.stringify({version:'5.4', data, locations:locationsData}))));
-        document.getElementById('export-data-output').value = str;
-        document.getElementById('exportDataPopup').style.display='block'; overlay.style.display='block';
-    }
-    function copyExportCode() { const t = document.getElementById('export-data-output'); t.select(); navigator.clipboard.writeText(t.value); showToast("Disalin"); }
-    function printData() { document.getElementById('printOptionsPopup').style.display='block'; overlay.style.display='block'; }
-    function executePrint() {
-        const res = (dataReservasi[tanggalDipilih]||[]).sort((a,b)=>a.jam.localeCompare(b.jam));
-        const html = res.map((r,i) => `<div style="border-bottom:1px solid #ccc; padding:10px; break-inside:avoid;"><h3>${i+1}. ${r.nama}</h3><p>Jam: ${r.jam} | ${r.tempat} | ${r.jumlah} Org</p><p>Menu: ${(r.menus||[]).map(m=>m.quantity+'x '+m.name).join(', ')}</p><p>Note: ${r.tambahan||'-'} | DP: ${r.dp}</p></div>`).join('');
-        const win = window.open('','_blank'); win.document.write(`<html><head><title>Print</title></head><body style="font-family:sans-serif;"><h2>Reservasi ${tanggalDipilih}</h2>${html}</body></html>`); win.document.close();
-    }
-
-    function showBroadcastMain() { document.getElementById('broadcastMainPopup').style.display='block'; overlay.style.display='block'; }
-    function showBroadcastSettings() { closePopup('broadcastMainPopup'); const msg = localStorage.getItem(BROADCAST_MESSAGE_KEY)||''; document.getElementById('broadcastMessage').value = msg; document.getElementById('broadcastSettingsPopup').style.display='block'; overlay.style.display='block'; }
-    function saveBroadcastMessage() { const msg = document.getElementById('broadcastMessage').value; localStorage.setItem(BROADCAST_MESSAGE_KEY, msg); promoMessageCache = msg; showToast("Tersimpan"); closePopup('broadcastSettingsPopup'); showBroadcastMain(); }
-    async function showBroadcastList() {
-        closePopup('broadcastMainPopup'); showLoader();
-        const msg = localStorage.getItem(BROADCAST_MESSAGE_KEY);
-        if(!msg) { showToast("Atur pesan dulu"); hideLoader(); return showBroadcastSettings(); }
-        promoMessageCache = msg;
-        const snap = await db.collection('reservations').orderBy('createdAt','desc').get();
-        const map = new Map();
-        snap.forEach(d => { const v=d.data(); if(v.nomorHp) map.set(cleanPhoneNumber(v.nomorHp), {name:v.nama, hp:cleanPhoneNumber(v.nomorHp)}); });
-        allCustomersCache = [...map.values()];
-        renderBroadcastList(allCustomersCache);
-        document.getElementById('broadcastListPopup').style.display='block'; overlay.style.display='block'; hideLoader();
-    }
-    function renderBroadcastList(arr) { document.getElementById('broadcast-customer-list').innerHTML = arr.map(c => `<div class="broadcast-customer-item"><div class="customer-info"><strong>${c.name}</strong><br><small>${c.hp}</small></div><button class="broadcast-btn" onclick="doBroadcast('${c.hp}','${c.name}',this)">Kirim</button></div>`).join(''); }
-    function filterBroadcastCustomers(q) { const f = allCustomersCache.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || c.hp.includes(q)); renderBroadcastList(f); }
-    function doBroadcast(hp, name, btn) { const msg = promoMessageCache.replace(/kak/gi, `Kak *${name}*`); openWhatsApp(hp, name, msg); btn.classList.add('sent'); btn.textContent = 'Terkirim'; }
-
-    function forceSync() { window.location.reload(); }
-    
-    function shareViaWhatsApp(type) {
-        if(type==='day') {
-            // --- RESTORED: Full Detailed Day Report Logic from V5.2 ---
-            const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
-            let message = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n=========================\n\n`;
-            
-            if (reservations.length === 0) {
-                message += `_Tidak ada reservasi untuk tanggal ini._`;
-            } else {
-                reservations.forEach((r, i) => {
-                    let menuList = '  - _(Tidak ada detail menu)_';
-                    if (Array.isArray(r.menus) && r.menus.length > 0) {
-                        menuList = r.menus.map(item => {
-                            const details = detailMenu[item.name] || ['(Detail tidak ditemukan)'];
-                            const detailString = details.map(d => `      • ${d}`).join('\n');
-                            return `  - *${item.quantity}x ${item.name}*\n${detailString}`;
-                        }).join('\n');
-                    } else if (r.menu) {
-                        const details = detailMenu[r.menu] || [];
-                        const detailString = details.map(d => `      • ${d}`).join('\n');
-                        menuList = `  - *${r.menu}*\n${detailString}`;
-                    }
-
-                    message += `*${i + 1}. ${r.nama || 'Nama tidak ada'}*\n`;
-                    message += `⏰ Jam: *${r.jam || '?'}* | 📍 Tempat: *${r.tempat || '?'}* | 👥 Jumlah: *${r.jumlah || '?'} org*\n`;
-                    message += `🍽️ *Pesanan Menu:*\n${menuList}\n`;
-                    if (r.dp > 0) message += `💰 DP: *Rp ${formatRupiah(r.dp)}* ${r.tipeDp ? `(${r.tipeDp})` : ''}\n`;
-                    if (r.tambahan) message += `📝 Tambahan: *${r.tambahan}*\n`;
-                    message += `-------------------------\n\n`;
+    function renderKitchen(data) {
+        const menuAgg = {}; globalCompDetails = {}; 
+        data.forEach(r => {
+            const process = (name, qty) => {
+                menuAgg[name] = (menuAgg[name] || 0) + qty;
+                const details = menuDetailsCache[name];
+                if (details) details.forEach(c => {
+                    const clean = c.trim();
+                    if(!globalCompDetails[clean]) globalCompDetails[clean] = {total:0, items:[]};
+                    globalCompDetails[clean].total += qty;
+                    globalCompDetails[clean].items.push({nama:r.nama, jam:r.jam, qty:qty});
                 });
-            }
-            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-        } else { 
-            // Month report simplified logic remains
-            let total=0; for(let k in dataReservasi) total+=dataReservasi[k].length; 
-            window.open(`https://wa.me/?text=${encodeURIComponent('Total Reservasi Bulan Ini: '+total)}`); 
-        }
+            };
+            if(r.menus) r.menus.forEach(i => process(i.name, parseInt(i.quantity)));
+            else if(r.menu) process(r.menu, 1);
+        });
+
+        // Render Menu
+        const mCont = document.getElementById('kitchenMenuContainer'); mCont.innerHTML = '';
+        Object.entries(menuAgg).sort((a,b)=>b[1]-a[1]).forEach(([n,c]) => {
+            mCont.innerHTML += `<div class="kitchen-item"><span class="k-name">${n}</span><span class="k-count">${c}</span></div>`;
+        });
+
+        // Render Comp
+        const cCont = document.getElementById('kitchenCompContainer'); cCont.innerHTML = '';
+        Object.entries(globalCompDetails).sort((a,b)=>b[1].total-a[1].total).forEach(([n,d]) => {
+            cCont.innerHTML += `
+                <div class="kitchen-item" onclick="openDetail('${n}')" style="cursor:pointer; border-left:5px solid var(--secondary);">
+                    <span class="k-name"><i class="fas fa-search-plus" style="color:var(--primary); margin-right:5px;"></i> ${n}</span>
+                    <span class="k-count" style="background:var(--accent); color:white;">${d.total}</span>
+                </div>`;
+        });
     }
-    
-    function shareViaEmail() { window.location.href=`mailto:?subject=Laporan&body=Cek lampiran`; }
+
+    function openDetail(name) {
+        const data = globalCompDetails[name];
+        document.getElementById('modalTitle').innerText = name;
+        const list = document.getElementById('detailList'); list.innerHTML = '';
+        data.items.sort((a,b)=>a.jam.localeCompare(b.jam)).forEach(i => {
+            list.innerHTML += `<li style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <div><strong style="font-size:1.1rem;">${i.nama}</strong><br><span style="color:#666;">Jam: ${i.jam}</span></div>
+                <div style="font-size:1.2rem; font-weight:800; color:var(--primary);">${i.qty}</div>
+            </li>`;
+        });
+        document.getElementById('detailModal').classList.add('active');
+    }
+    function closeModal() { document.getElementById('detailModal').classList.remove('active'); }
+
+    // Helpers
+    function goToToday() { handleDateSelect(new Date().toISOString().split('T')[0]); }
+    function handleDateSelect(val) { selectedDate = new Date(val); updateDateDisplay(); loadData(selectedDate); }
+    function switchTab(tab) {
+        document.querySelectorAll('.btn-big-nav').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.content-area').forEach(c => c.classList.remove('active'));
+        if(tab==='floor') document.querySelectorAll('.btn-big-nav')[0].classList.add('active');
+        if(tab==='kitchen') document.querySelectorAll('.btn-big-nav')[1].classList.add('active');
+        document.getElementById('view-'+tab).classList.add('active');
+    }
+    function toggleFilter(type) {
+        currentFilter = type;
+        document.querySelectorAll('.btn-shift').forEach(b => b.classList.remove('active'));
+        if(type==='all') document.getElementById('btnAll').classList.add('active');
+        if(type==='pagi') document.getElementById('btnPagi').classList.add('active');
+        if(type==='siang') document.getElementById('btnSiang').classList.add('active');
+        renderUI();
+    }
 </script>
 </body>
 </html>
