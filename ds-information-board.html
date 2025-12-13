@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Team Viewer - Dolan Sawah</title>
+  
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <style>
+    :root {
+      --primary: #2a9d8f; 
+      --primary-dark: #264653; 
+      --secondary: #e9c46a; 
+      --accent: #f4a261; 
+      --danger: #e76f51; 
+      --light: #f1faee; 
+      --dark: #1d3557;
+      --card-bg: #ffffff;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      font-family: 'Poppins', sans-serif; 
+      background-color: #eef1f5; 
+      color: var(--dark);
+      padding-bottom: 40px;
+    }
+
+    /* HEADER KHUSUS VIEWER - Lebih Simpel */
+    header {
+      background: var(--primary-dark);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand h2 { font-size: 1.4rem; font-weight: 700; color: var(--secondary); margin: 0; }
+    .brand small { font-size: 0.75rem; opacity: 0.8; letter-spacing: 1px; color: white;}
+    
+    #live-clock {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 1.1rem;
+      background: rgba(0,0,0,0.3);
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+
+    /* CONTAINER UTAMA */
+    .container { max-width: 1200px; margin: 0 auto; padding: 15px; }
+
+    /* KALENDER NAVIGASI (Horizontal Scroll) */
+    .date-scroller {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      padding: 10px 5px;
+      margin-bottom: 20px;
+      scrollbar-width: none; /* Firefox */
+    }
+    .date-scroller::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+    .date-card {
+      min-width: 70px;
+      height: 80px;
+      background: white;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      border: 2px solid transparent;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+      position: relative;
+    }
+    
+    .date-card.active {
+      background: var(--primary);
+      color: white;
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(42, 157, 143, 0.4);
+    }
+    
+    .date-card .day-name { font-size: 0.8rem; font-weight: 400; text-transform: uppercase; }
+    .date-card .day-num { font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
+    .date-card .res-dot {
+      position: absolute; bottom: 5px; width: 6px; height: 6px;
+      background-color: var(--danger); border-radius: 50%; display: none;
+    }
+    .date-card.has-data .res-dot { display: block; }
+    .date-card.active .res-dot { background-color: var(--secondary); }
+
+    /* INFO BAR */
+    .info-bar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 5px solid var(--secondary);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+    .info-item { flex: 1; min-width: 120px; }
+    .info-item h4 { font-size: 0.8rem; color: #888; margin-bottom: 2px; }
+    .info-item strong { font-size: 1.3rem; color: var(--primary-dark); }
+
+    /* FILTER BUTTONS */
+    .filter-group { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+    .filter-btn {
+      padding: 8px 16px; border: none; background: #ddd; border-radius: 20px;
+      font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.3s; color: #555;
+    }
+    .filter-btn.active { background: var(--primary-dark); color: white; }
+
+    /* CARD GRID - Tampilan Utama */
+    .reservation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .res-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      border-top: 5px solid var(--primary); /* Default color */
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Warna border atas berdasarkan waktu */
+    .res-card.siang { border-top-color: var(--secondary); } /* Kuning Siang */
+    .res-card.sore { border-top-color: var(--accent); } /* Sore Orange */
+    .res-card.malam { border-top-color: var(--primary-dark); } /* Malam Gelap */
+
+    .card-header {
+      padding: 15px 15px 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .time-badge {
+      background: var(--primary-dark); color: white; padding: 5px 10px;
+      border-radius: 6px; font-weight: 700; font-size: 1.1rem;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    
+    .table-badge {
+      background: #eef1f5; color: var(--dark); padding: 5px 10px;
+      border-radius: 6px; font-weight: 600; font-size: 0.95rem; border: 1px solid #ccc;
+    }
+
+    .card-body { padding: 10px 15px; flex-grow: 1; }
+    .guest-name { font-size: 1.3rem; font-weight: 800; color: var(--dark); margin-bottom: 5px; line-height: 1.2; }
+    .pax-badge { 
+      display: inline-block; background: rgba(42, 157, 143, 0.15); color: var(--primary-dark); 
+      padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.9rem; margin-bottom: 15px;
+    }
+
+    .menu-section { background: #fafafa; padding: 12px; border-radius: 8px; border-left: 3px solid #ddd; }
+    .menu-title { font-size: 0.8rem; text-transform: uppercase; color: #888; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px; }
+    .menu-list { list-style: none; font-size: 0.95rem; }
+    .menu-list li { margin-bottom: 6px; display: flex; align-items: flex-start; }
+    .menu-qty { 
+      background: var(--dark); color: white; width: 24px; height: 24px; 
+      display: flex; align-items: center; justify-content: center; 
+      border-radius: 50%; font-size: 0.8rem; font-weight: 700; margin-right: 8px; flex-shrink: 0;
+    }
+    .menu-details { font-size: 0.8rem; color: #666; margin-left: 32px; display: block; margin-top: -2px; font-style: italic;}
+
+    .card-note {
+      margin-top: 10px; padding: 10px; background: #fff3cd; color: #856404; 
+      border-radius: 6px; font-size: 0.9rem; border: 1px dashed #ffeeba;
+    }
+
+    .card-footer {
+      padding: 12px 15px; background: #f8f9fa; border-top: 1px solid #eee;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* Checkbox Custom */
+    .prep-check { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #555; cursor: pointer; }
+    .prep-check input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;}
+    
+    .status-tag { font-size: 0.75rem; font-weight: 600; color: #aaa; text-transform: uppercase; }
+
+    /* Loading */
+    .loader {
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%;
+      width: 50px; height: 50px; animation: spin 1s linear infinite; z-index: 1000;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .reservation-grid { grid-template-columns: 1fr; }
+      header h2 { font-size: 1.1rem; }
+      .brand small { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <i class="fas fa-utensils fa-lg" style="color:white;"></i>
+      <div>
+        <h2>TEAM VIEWER</h2>
+        <small>Sistem Operasional Dolan Sawah</small>
+      </div>
+    </div>
+    <div id="live-clock">--:--</div>
+  </header>
+
+  <div class="loader" id="loader"></div>
+
+  <div class="container">
+    <div class="date-scroller" id="dateScroller">
+      </div>
+
+    <div class="info-bar">
+      <div class="info-item">
+        <h4>Tanggal Terpilih</h4>
+        <strong id="displayDate">-</strong>
+      </div>
+      <div class="info-item">
+        <h4>Total Reservasi</h4>
+        <strong id="totalRes">0</strong>
+      </div>
+      <div class="info-item">
+        <h4>Total Pax (Tamu)</h4>
+        <strong id="totalPax">0</strong>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <button class="filter-btn active" onclick="filterData('all', this)">Semua</button>
+      <button class="filter-btn" onclick="filterData('siang', this)">Siang (10-14)</button>
+      <button class="filter-btn" onclick="filterData('sore', this)">Sore (15-17)</button>
+      <button class="filter-btn" onclick="filterData('malam', this)">Malam (18+)</button>
+    </div>
+
+    <div class="reservation-grid" id="reservationGrid">
+      <p style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">
+        <i class="fas fa-spinner fa-spin"></i> Menghubungkan ke database...
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. KONFIGURASI FIREBASE (SAMA PERSIS DENGAN ADMIN) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_c1tU70FM84Qi_f_aSaQ-YVLo_18lCkI",
+      authDomain: "reservasi-dolan-sawah.firebaseapp.com",
+      projectId: "reservasi-dolan-sawah",
+      storageBucket: "reservasi-dolan-sawah.appspot.com",
+      messagingSenderId: "213151400721",
+      appId: "1:213151400721:web:e51b0d8cdd24206cf682b0"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // --- 2. GLOBAL VARIABLES ---
+    let allReservations = []; // Cache semua data bulan ini
+    let detailMenus = {};     // Cache detail menu
+    let selectedDateStr = ""; // Format YYYY-MM-DD
+    let currentDate = new Date();
+
+    // --- 3. INIT & CLOCK ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        updateClock();
+        setInterval(updateClock, 1000);
+        
+        await loadMenuDetails(); // Load detail menu dulu
+        generateDateScroller();  // Buat navigasi tanggal
+        selectDate(new Date());  // Pilih hari ini otomatis
+    });
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('live-clock').innerText = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+    }
+
+    // --- 4. LOAD DATA (HANYA BACA) ---
+    async function loadMenuDetails() {
+        try {
+            const snapshot = await db.collection('menus').get();
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                detailMenus[doc.id] = data.details || [];
+            });
+        } catch (e) { console.error("Gagal load menu", e); }
+    }
+
+    // Fungsi Utama: Mengambil data real-time
+    function loadReservationsByDate(dateObj) {
+        document.getElementById('loader').style.display = 'block';
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        
+        // Format tanggal database YYYY-MM-DD
+        const dateKey = `${year}-${month}-${day}`; 
+        selectedDateStr = dateKey;
+
+        // Tampilkan tanggal di UI
+        const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+        document.getElementById('displayDate').innerText = dateObj.toLocaleDateString('id-ID', options);
+
+        // Listener Real-time
+        db.collection('reservations')
+            .where('date', '==', dateKey)
+            .onSnapshot((snapshot) => {
+                let tempRes = [];
+                snapshot.forEach(doc => {
+                    tempRes.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Urutkan berdasarkan Jam
+                allReservations = tempRes.sort((a, b) => a.jam.localeCompare(b.jam));
+                
+                updateStats();
+                renderCards('all'); // Render semua data
+                document.getElementById('loader').style.display = 'none';
+            }, (error) => {
+                console.error("Error getting documents: ", error);
+                document.getElementById('reservationGrid').innerHTML = `<p style="text-align:center; padding:20px; color:red;">Gagal memuat data. Periksa koneksi internet.</p>`;
+                document.getElementById('loader').style.display = 'none';
+            });
+    }
+
+    // --- 5. RENDER UI ---
+    
+    // Generate Scroller 14 hari (7 hari lalu - 7 hari depan)
+    function generateDateScroller() {
+        const scroller = document.getElementById('dateScroller');
+        scroller.innerHTML = '';
+        
+        const today = new Date();
+        // Mulai dari 2 hari yang lalu
+        const startDay = new Date(today);
+        startDay.setDate(today.getDate() - 2);
+
+        for (let i = 0; i < 14; i++) {
+            const d = new Date(startDay);
+            d.setDate(startDay.getDate() + i);
+            
+            const isToday = d.toDateString() === today.toDateString();
+            const dayName = d.toLocaleDateString('id-ID', { weekday: 'short' });
+            const dateNum = d.getDate();
+            const dateStr = d.toISOString().split('T')[0];
+
+            const el = document.createElement('div');
+            el.className = `date-card ${isToday ? 'active' : ''}`;
+            el.dataset.date = dateStr;
+            el.onclick = () => selectDate(d);
+            el.innerHTML = `
+                <span class="day-name">${dayName}</span>
+                <span class="day-num">${dateNum}</span>
+                <span class="res-dot"></span>
+            `;
+            scroller.appendChild(el);
+        }
+    }
+
+    function selectDate(dateObj) {
+        // Update UI Active State
+        document.querySelectorAll('.date-card').forEach(el => el.classList.remove('active'));
+        const dateStr = dateObj.toISOString().split('T')[0];
+        const activeCard = document.querySelector(`.date-card[data-date="${dateStr}"]`);
+        if(activeCard) activeCard.classList.add('active');
+
+        loadReservationsByDate(dateObj);
+    }
+
+    function updateStats() {
+        document.getElementById('totalRes').innerText = allReservations.length;
+        const totalPax = allReservations.reduce((sum, r) => sum + parseInt(r.jumlah || 0), 0);
+        document.getElementById('totalPax').innerText = totalPax;
+    }
+
+    function filterData(filterType, btnEl) {
+        if(btnEl) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btnEl.classList.add('active');
+        }
+        renderCards(filterType);
+    }
+
+    function renderCards(filterType) {
+        const grid = document.getElementById('reservationGrid');
+        grid.innerHTML = '';
+
+        if (allReservations.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; opacity:0.6;">
+                <i class="fas fa-calendar-times fa-3x" style="color:var(--secondary)"></i>
+                <h3 style="margin-top:15px;">Tidak ada reservasi</h3>
+                <p>Belum ada data masuk untuk tanggal ini.</p>
+            </div>`;
+            return;
+        }
+
+        let filtered = allReservations;
+        if (filterType !== 'all') {
+            filtered = allReservations.filter(r => {
+                const hour = parseInt(r.jam.split(':')[0]);
+                if (filterType === 'siang') return hour < 15;
+                if (filterType === 'sore') return hour >= 15 && hour < 18;
+                if (filterType === 'malam') return hour >= 18;
+            });
+        }
+
+        filtered.forEach(r => {
+            // Tentukan kategori waktu untuk warna border
+            const hour = parseInt(r.jam.split(':')[0]);
+            let timeClass = 'malam';
+            if (hour < 15) timeClass = 'siang';
+            else if (hour < 18) timeClass = 'sore';
+
+            // Proses Menu
+            let menuHtml = '';
+            if (Array.isArray(r.menus) && r.menus.length > 0) {
+                menuHtml = r.menus.map(m => {
+                    const details = detailMenus[m.name] || [];
+                    const detailStr = details.length > 0 ? `<span class="menu-details">(${details.join(', ')})</span>` : '';
+                    return `<li><span class="menu-qty">${m.quantity}</span> <div><strong>${m.name}</strong>${detailStr}</div></li>`;
+                }).join('');
+            } else if (r.menu) {
+                // Fallback data lama
+                const details = detailMenus[r.menu] || [];
+                const detailStr = details.length > 0 ? `<span class="menu-details">(${details.join(', ')})</span>` : '';
+                menuHtml = `<li><span class="menu-qty">1</span> <div><strong>${r.menu}</strong>${detailStr}</div></li>`;
+            } else {
+                menuHtml = `<li style="color:#999; font-style:italic;">Belum pilih menu</li>`;
+            }
+
+            // Status Checked (Local Storage)
+            const storageKey = `done-${r.id}`;
+            const isChecked = localStorage.getItem(storageKey) === 'true';
+
+            // HTML Card
+            const card = document.createElement('div');
+            card.className = `res-card ${timeClass}`;
+            card.style.opacity = isChecked ? '0.6' : '1'; // Visual cue jika sudah done
+            
+            // LOGIKA PRIVASI: Tidak menampilkan r.dp atau r.nomorHp sama sekali
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="time-badge"><i class="far fa-clock"></i> ${r.jam}</span>
+                    <span class="table-badge"><i class="fas fa-map-marker-alt"></i> ${r.tempat || '?'}</span>
+                </div>
+                <div class="card-body">
+                    <div class="guest-name">${r.nama}</div>
+                    <span class="pax-badge"><i class="fas fa-users"></i> ${r.jumlah} Orang</span>
+                    
+                    <div class="menu-section">
+                        <div class="menu-title">Pesanan</div>
+                        <ul class="menu-list">${menuHtml}</ul>
+                    </div>
+                    
+                    ${r.tambahan ? `<div class="card-note"><i class="fas fa-sticky-note"></i> <strong>Note:</strong> ${r.tambahan}</div>` : ''}
+                </div>
+                <div class="card-footer">
+                    <label class="prep-check">
+                        <input type="checkbox" onchange="toggleDone('${r.id}', this)" ${isChecked ? 'checked' : ''}>
+                        Sudah Disiapkan
+                    </label>
+                    <span class="status-tag">#${r.id.substring(0,4)}</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // Fitur Simpan Status "Selesai" di Local Browser
+    window.toggleDone = function(id, checkbox) {
+        const storageKey = `done-${id}`;
+        if (checkbox.checked) {
+            localStorage.setItem(storageKey, 'true');
+            checkbox.closest('.res-card').style.opacity = '0.6';
+        } else {
+            localStorage.removeItem(storageKey);
+            checkbox.closest('.res-card').style.opacity = '1';
+        }
+    }
+
+  </script>
+</body>
+</html>
