@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Dolan Sawah - Ops V3.5</title>
+  <title>Dolan Sawah - Mobile Ops V4</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -13,179 +13,236 @@
 
   <style>
     :root {
-      --bg-gradient: #f8fafc;
-      --primary: #2563eb;
-      --primary-dark: #1e40af;
-      --accent: #f59e0b;
-      --danger: #ef4444;
-      --success: #10b981;
-      --dark: #0f172a;
-      --text-gray: #64748b;
-      --glass-bg: #ffffff;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      /* TEMA ADMIN DOLAN SAWAH */
+      --primary: #2a9d8f;       /* Teal Utama */
+      --primary-dark: #264653;  /* Dark Header */
+      --secondary: #e9c46a;     /* Kuning/Gold */
+      --accent: #f4a261;        /* Orange */
+      --danger: #e76f51;        /* Merah Bata */
+      --light: #f8f9fa;
+      --dark: #343a40;
+      
+      /* UTILITIES */
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --radius: 12px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     
     body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-gradient);
+      font-family: 'Poppins', sans-serif;
+      background-color: #f0f2f5;
       color: var(--dark);
-      padding-bottom: 80px;
+      padding-bottom: 80px; /* Space untuk scroll bawah */
       overflow-y: auto;
     }
 
-    /* --- STICKY WRAPPER --- */
+    /* --- STICKY HEADER WRAPPER --- */
+    /* Ini yang membuat menu menempel di atas */
     .sticky-wrapper {
-      position: sticky; top: 0; z-index: 1000;
-      background: var(--bg-gradient);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: white;
       box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
 
-    /* HEADER */
+    /* 1. BRAND HEADER */
     .top-bar {
-      background: #ffffff; padding: 12px 20px;
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      padding: 10px 15px;
+      color: white;
       display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid #e2e8f0;
     }
-    .brand h1 { font-family: 'Oswald', sans-serif; font-size: 1.3rem; color: var(--primary); text-transform: uppercase; margin: 0; }
-    
-    /* DATE NAV */
+    .brand h1 { font-family: 'Poppins', sans-serif; font-size: 1.1rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px; }
+    .brand small { font-size: 0.7rem; opacity: 0.8; font-weight: 400; display: block; }
+    #clock { font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 500; letter-spacing: 1px;}
+
+    /* 2. DATE NAV (SCROLLABLE) */
     .date-nav-wrapper {
-      background: #ffffff; padding: 8px 0; border-bottom: 1px solid #e2e8f0;
+      background: white;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
       display: flex; align-items: center;
     }
     .date-scroller {
-      flex-grow: 1; display: flex; gap: 8px; overflow-x: auto; padding: 0 15px;
-      scrollbar-width: none; scroll-behavior: smooth;
+      flex-grow: 1; display: flex; gap: 8px; 
+      overflow-x: auto; /* Scroll Horizontal */
+      padding: 0 15px;
+      scrollbar-width: none; /* Firefox hide scroll */
+      -ms-overflow-style: none;
     }
-    .date-scroller::-webkit-scrollbar { display: none; }
+    .date-scroller::-webkit-scrollbar { display: none; } /* Chrome hide scroll */
     
     .date-pill {
-      min-width: 55px; height: 55px; border-radius: 10px; background: #f1f5f9;
-      border: 1px solid #e2e8f0; display: flex; flex-direction: column; 
-      justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0;
+      min-width: 50px; height: 50px; 
+      border-radius: var(--radius); 
+      background: #f8f9fa; border: 1px solid #eee; 
+      display: flex; flex-direction: column; 
+      justify-content: center; align-items: center; 
+      cursor: pointer; flex-shrink: 0; transition: all 0.2s;
     }
-    .date-pill.active { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.05); }
-    .date-pill .day { font-size: 0.65rem; text-transform: uppercase; font-weight: 700; }
-    .date-pill .num { font-size: 1.1rem; font-weight: 800; line-height: 1; }
+    .date-pill.active {
+      background: var(--primary); color: white; border-color: var(--primary-dark);
+      transform: scale(1.05); box-shadow: 0 2px 8px rgba(42, 157, 143, 0.4);
+    }
+    .date-pill .day { font-size: 0.6rem; text-transform: uppercase; font-weight: 600; }
+    .date-pill .num { font-size: 1.1rem; font-weight: 700; line-height: 1; }
 
-    /* TAB & FILTERS */
+    /* 3. TABS & FILTER (MOBILE FIX) */
     .nav-tabs {
-      background: #ffffff; padding: 10px 15px; display: flex; gap: 8px;
-      overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;
+      background: white;
+      padding: 8px 15px;
+      display: flex; 
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto; /* KUNCI RESPONSIF: Scroll Samping */
+      white-space: nowrap; /* Mencegah turun ke baris baru */
+      border-bottom: 1px solid #eee;
     }
-    .nav-btn {
-      padding: 8px 16px; border-radius: 20px; border: 1px solid #e2e8f0;
-      background: #f8fafc; color: var(--text-gray); font-weight: 600; font-size: 0.8rem;
-      cursor: pointer; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
-    }
-    .nav-btn.active { background: var(--dark); color: white; border-color: var(--dark); }
-    .nav-btn.filter-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+    .nav-tabs::-webkit-scrollbar { display: none; }
 
-    /* --- CONTENT --- */
-    .content-area { padding: 20px; display: none; animation: fadeIn 0.3s ease; }
+    /* Gaya Tombol Navigasi */
+    .nav-btn {
+      padding: 6px 14px; 
+      border-radius: 20px; 
+      border: 1px solid #eee;
+      background: white; 
+      color: #666; 
+      font-weight: 500; font-size: 0.8rem; font-family: 'Poppins', sans-serif;
+      cursor: pointer; 
+      display: inline-flex; align-items: center; gap: 5px; 
+      flex-shrink: 0; /* Agar tidak gepeng */
+      transition: all 0.2s;
+    }
+    
+    /* Active States */
+    .nav-btn.active { background: var(--primary-dark); color: white; border-color: var(--primary-dark); }
+    
+    /* Filter Buttons (Shift) - Beda Gaya Sedikit */
+    .filter-btn { background: #f1f5f9; border: none; }
+    .filter-btn.active { background: var(--secondary); color: var(--primary-dark); font-weight: 700; }
+
+    /* Separator Vertical */
+    .nav-sep { width: 1px; height: 20px; background: #ddd; margin: 0 5px; flex-shrink: 0; }
+
+    /* --- CONTENT AREA --- */
+    .content-area { padding: 15px; display: none; animation: fadeIn 0.3s ease; }
     .content-area.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* STATS */
+    /* STATS SUMMARY */
     .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-    .stat-card { background: white; padding: 10px; border-radius: 12px; text-align: center; box-shadow: var(--shadow); }
-    .stat-val { font-size: 1.4rem; font-weight: 800; color: var(--dark); }
-    .stat-label { font-size: 0.65rem; color: var(--text-gray); font-weight: 700; text-transform: uppercase; }
+    .stat-card { 
+      background: white; padding: 10px 5px; border-radius: var(--radius); 
+      text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+      border-top: 3px solid var(--primary);
+    }
+    .stat-val { font-size: 1.3rem; font-weight: 700; color: var(--primary-dark); }
+    .stat-label { font-size: 0.6rem; color: #777; font-weight: 600; text-transform: uppercase; }
 
-    /* FLOOR CARDS */
-    .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-    .res-card { background: white; border-radius: 16px; padding: 15px; box-shadow: var(--shadow); border: 1px solid #f1f5f9; }
+    /* CARDS (FLOOR) */
+    .grid-cards { display: grid; grid-template-columns: 1fr; gap: 15px; } /* Mobile 1 kolom */
+    @media (min-width: 600px) { .grid-cards { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
     
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .res-time { font-family: 'Oswald', sans-serif; font-size: 1.5rem; color: var(--dark); }
+    .res-card {
+      background: white; border-radius: var(--radius); padding: 15px; 
+      box-shadow: var(--shadow); position: relative;
+      border-left: 5px solid var(--secondary); /* Default siang */
+    }
+    
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .res-time { font-family: 'Oswald', sans-serif; font-size: 1.6rem; color: var(--primary-dark); font-weight: 600; }
+    
     .res-badge { font-size: 0.7rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
-    .badge-urgent { background: #fee2e2; color: var(--danger); }
+    .badge-urgent { background: var(--danger); color: white; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     
-    .res-name { font-size: 1.1rem; font-weight: 700; color: var(--dark); }
-    .res-meta { font-size: 0.85rem; color: var(--text-gray); display: flex; gap: 10px; font-weight: 500; margin-bottom: 12px;}
-    
-    .menu-compact { background: #f8fafc; border-radius: 8px; padding: 10px; border-left: 3px solid var(--primary); }
-    .menu-row { margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 6px; }
-    .menu-row:last-child { border: none; margin: 0; padding: 0; }
-    .menu-qty { background: var(--dark); color: white; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px; }
-    .menu-comps-tiny { font-size: 0.75rem; color: #64748b; margin-top: 2px; padding-left: 28px; font-style: italic; }
+    .res-details { margin-bottom: 12px; }
+    .res-name { font-size: 1.1rem; font-weight: 700; color: var(--dark); display: block;}
+    .res-meta { font-size: 0.85rem; color: #666; margin-top: 2px; display: flex; gap: 10px; align-items: center;}
+    .res-meta i { color: var(--primary); }
 
-    /* KITCHEN VIEW */
+    .menu-box { background: #f8f9fa; border-radius: 8px; padding: 10px; border: 1px solid #eee; }
+    .menu-row { display: flex; justify-content: space-between; margin-bottom: 6px; align-items: flex-start; }
+    .menu-qty { 
+        background: var(--primary-dark); color: white; font-size: 0.75rem; 
+        padding: 2px 6px; border-radius: 4px; margin-right: 6px; font-weight: 600;
+    }
+    .menu-name { font-size: 0.9rem; font-weight: 500; color: #333; flex: 1; }
+    .menu-detail-text { display: block; font-size: 0.75rem; color: #777; font-style: italic; margin-left: 28px; margin-top: -2px; line-height: 1.2;}
+
+    /* KITCHEN LIST */
     .kitchen-section { margin-bottom: 25px; }
-    .section-title { font-size: 1rem; font-weight: 800; color: var(--dark); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    
-    .prep-list { background: white; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
-    .prep-item { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s; }
+    .section-header { 
+        background: linear-gradient(to right, #f1f5f9, white); padding: 8px 0; 
+        margin-bottom: 10px; border-radius: 4px; font-weight: 700; color: var(--primary-dark);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .prep-list { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    .prep-item { 
+        padding: 12px 15px; border-bottom: 1px solid #f0f0f0; 
+        display: flex; justify-content: space-between; align-items: center; 
+    }
     .prep-item:last-child { border-bottom: none; }
-    .prep-item:hover { background: #f0f9ff; } /* Efek hover saat mau diklik */
+    .prep-item.clickable:active { background: #e9ecef; }
     
-    .prep-name { font-weight: 600; font-size: 0.9rem; color: var(--dark); display: flex; align-items: center; gap: 5px; }
-    .prep-name i { color: var(--primary); font-size: 0.8rem; opacity: 0.5; } /* Ikon kecil penanda bisa diklik */
-    
-    .prep-total { font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--primary); background: #eff6ff; padding: 4px 10px; border-radius: 6px; }
-    .comp-item .prep-total { color: var(--accent); background: #fffbeb; }
+    .prep-count { 
+        background: var(--secondary); color: var(--primary-dark); 
+        font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 700; 
+        padding: 2px 10px; border-radius: 6px; min-width: 40px; text-align: center;
+    }
+    .comp-count { background: var(--accent); color: white; }
 
-    /* DETAIL MODAL (NEW) */
+    /* MODAL POPUP (BOTTOM SHEET STYLE) */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5); z-index: 2000; display: none;
-        justify-content: center; align-items: flex-end; /* Muncul dari bawah di HP */
+        background: rgba(0,0,0,0.6); z-index: 2000; display: none;
+        justify-content: center; align-items: flex-end; /* Muncul dari bawah */
     }
     .modal-overlay.active { display: flex; }
-    
     .modal-content {
-        background: white; width: 100%; max-width: 500px;
-        border-radius: 20px 20px 0 0; padding: 25px;
-        box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
-        animation: slideUp 0.3s ease; max-height: 80vh; overflow-y: auto;
-    }
-    @media(min-width: 600px) {
-        .modal-overlay { align-items: center; }
-        .modal-content { border-radius: 15px; }
+        background: white; width: 100%; max-width: 600px;
+        border-radius: 20px 20px 0 0; padding: 20px;
+        max-height: 80vh; overflow-y: auto;
+        animation: slideUp 0.3s ease-out;
     }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .modal-title { font-size: 1.2rem; font-weight: 800; color: var(--dark); }
-    .close-btn { background: #f1f5f9; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; }
     
-    .detail-list { list-style: none; }
-    .detail-item { 
-        display: flex; justify-content: space-between; align-items: center; 
-        padding: 10px 0; border-bottom: 1px dashed #eee; 
-    }
-    .d-name { font-weight: 600; font-size: 0.95rem; }
-    .d-time { font-size: 0.8rem; color: var(--text-gray); background: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin-left: 8px;}
-    .d-qty { font-weight: 700; color: var(--primary); font-size: 1rem; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .modal-title { font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); }
+    .close-btn { background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; }
+    
+    .detail-list { list-style: none; padding: 0; }
+    .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #eee; align-items: center; }
+    .d-badge { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; color: #555; margin-left: 5px; }
 
     /* LOADER */
-    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:3000; display:flex; justify-content:center; align-items:center; flex-direction:column; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 10px;}
+    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:3000; display:flex; justify-content:center; align-items:center; flex-direction:column; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 10px;}
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
-  <div id="loader"><div class="spinner"></div><small>Menyiapkan Data...</small></div>
+  <div id="loader"><div class="spinner"></div><small style="color:#888;">Memuat Dolan Sawah...</small></div>
 
   <div class="sticky-wrapper">
       <header class="top-bar">
         <div class="brand">
-          <h1>Dolan Sawah</h1>
-          <p>Live Ops V3.5</p>
+          <h1><i class="fas fa-leaf"></i> Dolan Sawah</h1>
+          <small>Team Viewer</small>
         </div>
-        <div id="clock" style="font-weight: 800; font-size: 1.2rem; color: var(--dark);">--:--</div>
+        <div id="clock">--:--</div>
       </header>
 
       <div class="date-nav-wrapper">
         <div style="padding: 0 10px;">
-             <button onclick="goToToday()" style="background:var(--primary); border:none; color:white; border-radius:8px; padding:5px 10px; font-size:1.2rem;"><i class="fas fa-calendar-day"></i></button>
+             <button onclick="goToToday()" style="background:var(--primary-dark); border:none; color:white; border-radius:10px; width:45px; height:45px; font-size:1.1rem;"><i class="fas fa-calendar-day"></i></button>
         </div>
         <div class="date-scroller" id="dateScroller"></div>
         <div style="position:relative; width:40px; margin-right:10px; text-align:center;">
-             <i class="fas fa-calendar-alt" style="font-size:1.2rem; color:var(--primary);"></i>
+             <i class="fas fa-calendar-alt" style="font-size:1.4rem; color:var(--primary);"></i>
              <input type="date" onchange="handleDateSelect(this.value)" style="position:absolute; left:0; top:0; width:100%; height:100%; opacity:0;">
         </div>
       </div>
@@ -194,7 +251,7 @@
         <button class="nav-btn active" onclick="switchTab('floor')"><i class="fas fa-layer-group"></i> Floor</button>
         <button class="nav-btn" onclick="switchTab('kitchen')"><i class="fas fa-utensils"></i> Dapur</button>
         
-        <div style="width:1px; background:#ddd; margin:0 5px;"></div>
+        <div class="nav-sep"></div>
         
         <button class="nav-btn filter-btn active" id="btnAll" onclick="toggleFilter('all')">Semua</button>
         <button class="nav-btn filter-btn" id="btnPagi" onclick="toggleFilter('pagi')">Shift Pagi</button>
@@ -205,7 +262,7 @@
   <div id="view-floor" class="content-area active">
     <div class="stats-row">
       <div class="stat-card"><div class="stat-val" id="totalRes">0</div><div class="stat-label">Reservasi</div></div>
-      <div class="stat-card"><div class="stat-val" id="totalPax">0</div><div class="stat-label">Total Pax</div></div>
+      <div class="stat-card"><div class="stat-val" id="totalPax">0</div><div class="stat-label">Tamu (Pax)</div></div>
       <div class="stat-card"><div class="stat-val" id="totalItems">0</div><div class="stat-label">Item Menu</div></div>
     </div>
     <div class="grid-cards" id="floorContainer"></div>
@@ -213,11 +270,12 @@
 
   <div id="view-kitchen" class="content-area">
     <div class="kitchen-section">
-        <div class="section-title"><i class="fas fa-concierge-bell"></i> Menu Utama (Plating)</div>
+        <div class="section-header"><i class="fas fa-concierge-bell"></i> Total Menu (Plating)</div>
         <div class="prep-list" id="kitchenMenuContainer"></div>
     </div>
     <div class="kitchen-section">
-        <div class="section-title"><i class="fas fa-carrot"></i> Komponen (Klik untuk Detail)</div>
+        <div class="section-header"><i class="fas fa-carrot"></i> Total Komponen (Prep)</div>
+        <small style="display:block; margin-bottom:8px; color:#666; font-size:0.8rem;">*Klik nama komponen untuk lihat detail</small>
         <div class="prep-list" id="kitchenCompContainer"></div>
     </div>
   </div>
@@ -225,12 +283,11 @@
   <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
       <div class="modal-content">
           <div class="modal-header">
-              <div class="modal-title" id="modalTitle">Detail Nasi</div>
+              <div class="modal-title" id="modalTitle">Detail</div>
               <button class="close-btn" onclick="closeModalBtn()">✕</button>
           </div>
-          <div style="margin-bottom:10px; font-size:0.9rem; color:#666;">Daftar pesanan untuk komponen ini:</div>
-          <ul class="detail-list" id="detailList">
-              </ul>
+          <div style="margin-bottom:10px; font-size:0.85rem; color:#666;">Distribusi pesanan untuk shift ini:</div>
+          <ul class="detail-list" id="detailList"></ul>
       </div>
   </div>
 
@@ -249,9 +306,9 @@
     let allReservations = [];
     let menuDetailsCache = {};
     let selectedDate = new Date();
-    let currentFilter = 'all'; // Values: 'all', 'pagi', 'siang'
+    let currentFilter = 'all'; 
     let unsubscribe = null;
-    let globalCompDetails = {}; // Menyimpan data breakdown komponen
+    let globalCompDetails = {};
 
     document.addEventListener('DOMContentLoaded', async () => {
         setInterval(() => {
@@ -291,11 +348,12 @@
     }
 
     function renderUI() {
-        // 1. Logic Shift Pagi (< 15:00) & Shift Siang (>= 15:00)
+        // Filter Shift
         let filtered = allReservations;
         if (currentFilter === 'pagi') filtered = allReservations.filter(r => parseInt(r.jam) < 15);
         if (currentFilter === 'siang') filtered = allReservations.filter(r => parseInt(r.jam) >= 15);
 
+        // Stats Logic
         document.getElementById('totalRes').innerText = filtered.length;
         document.getElementById('totalPax').innerText = filtered.reduce((a,b) => a + parseInt(b.jumlah||0), 0);
         
@@ -309,7 +367,7 @@
         let totalItems = 0;
 
         if (data.length === 0) {
-            container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#999;">Tidak ada reservasi.</div>`;
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#999; font-size:0.9rem;">Tidak ada reservasi.</div>`;
             document.getElementById('totalItems').innerText = 0;
             return;
         }
@@ -318,50 +376,54 @@
         const isToday = selectedDate.toDateString() === now.toDateString();
 
         data.forEach(r => {
+            // Tentukan warna border berdasarkan shift
+            const hour = parseInt(r.jam);
+            const borderColor = hour >= 15 ? 'var(--accent)' : 'var(--secondary)'; // Orange untuk sore, Kuning untuk siang
+
+            // Badge Urgent
             let badgeHtml = '';
             if (isToday) {
                 const [h,m] = r.jam.split(':').map(Number);
                 const rTime = new Date(); rTime.setHours(h,m,0);
                 const diff = (rTime - now) / 60000; 
-                if (diff < 0) badgeHtml = `<span class="res-badge" style="background:#e0f2fe; color:#0284c7;">Hadir</span>`;
-                else if (diff < 60) badgeHtml = `<span class="res-badge badge-urgent">${Math.floor(diff)} Min</span>`;
+                if (diff < 0) badgeHtml = `<span class="res-badge" style="background:var(--success); color:white;">Hadir</span>`;
+                else if (diff < 45) badgeHtml = `<span class="res-badge badge-urgent">${Math.floor(diff)} Min</span>`;
             }
 
+            // Render Menu
             let menuHtml = '';
             if (r.menus && r.menus.length) {
                 menuHtml = r.menus.map(item => {
                     totalItems += parseInt(item.quantity);
                     const details = menuDetailsCache[item.name] || [];
-                    const detailString = details.length > 0 ? `<div class="menu-comps-tiny">• ${details.join(', ')}</div>` : '';
+                    const detailString = details.length > 0 ? `<span class="menu-detail-text">• ${details.join(', ')}</span>` : '';
                     return `<div class="menu-row">
-                        <div style="display:flex; justify-content:space-between; font-weight:600; font-size:0.9rem;">
-                            <span><span class="menu-qty">${item.quantity}</span> ${item.name}</span>
-                        </div>
-                        ${detailString}
+                        <span class="menu-qty">${item.quantity}</span>
+                        <div class="menu-name">${item.name} ${detailString}</div>
                     </div>`;
                 }).join('');
             } else if (r.menu) {
                 totalItems += 1;
                 const details = menuDetailsCache[r.menu] || [];
-                const detailString = details.length > 0 ? `<div class="menu-comps-tiny">• ${details.join(', ')}</div>` : '';
-                menuHtml = `<div class="menu-row"><div><span class="menu-qty">1</span> ${r.menu}</div>${detailString}</div>`;
+                const detailString = details.length > 0 ? `<span class="menu-detail-text">• ${details.join(', ')}</span>` : '';
+                menuHtml = `<div class="menu-row"><span class="menu-qty">1</span><div class="menu-name">${r.menu} ${detailString}</div></div>`;
             }
 
             container.innerHTML += `
-                <div class="res-card">
+                <div class="res-card" style="border-left-color: ${borderColor}">
                     <div class="card-header">
                         <div class="res-time">${r.jam}</div>
                         ${badgeHtml}
                     </div>
-                    <div class="res-meta">
+                    <div class="res-details">
                         <span class="res-name">${r.nama}</span>
-                        <span>|</span>
-                        <span>${r.jumlah} Pax</span>
-                        <span>•</span>
-                        <span>${r.tempat || '?'}</span>
+                        <div class="res-meta">
+                            <span><i class="fas fa-users"></i> ${r.jumlah} Org</span>
+                            <span><i class="fas fa-map-marker-alt"></i> ${r.tempat || '?'}</span>
+                        </div>
                     </div>
-                    <div class="menu-compact">${menuHtml || '<small>Belum ada menu</small>'}</div>
-                    ${r.tambahan ? `<div style="margin-top:8px;font-size:0.75rem;background:#fff7ed;padding:6px;border-radius:4px;color:#c2410c;">Note: ${r.tambahan}</div>` : ''}
+                    <div class="menu-box">${menuHtml || '<small>Belum ada menu</small>'}</div>
+                    ${r.tambahan ? `<div style="margin-top:8px;font-size:0.75rem;background:#fff5f5;padding:8px;border-radius:4px;color:var(--danger); border:1px dashed var(--danger);"><i class="fas fa-exclamation-circle"></i> ${r.tambahan}</div>` : ''}
                 </div>`;
         });
         document.getElementById('totalItems').innerText = totalItems;
@@ -369,115 +431,88 @@
 
     function renderKitchen(data) {
         const menuAgg = {}; 
-        // Reset Global Detail Data
         globalCompDetails = {}; 
 
         data.forEach(r => {
             const processItem = (name, qty) => {
-                // Menu Aggregation
+                // Menu Agg
                 menuAgg[name] = (menuAgg[name] || 0) + qty;
-                
-                // Component Aggregation & Breakdown
+                // Comp Agg
                 const details = menuDetailsCache[name];
                 if (details && details.length > 0) {
                     details.forEach(comp => {
                         const clean = comp.trim();
-                        
-                        // Init object jika belum ada
-                        if (!globalCompDetails[clean]) {
-                            globalCompDetails[clean] = { total: 0, items: [] };
-                        }
-                        
-                        // Tambah Total
+                        if (!globalCompDetails[clean]) globalCompDetails[clean] = { total: 0, items: [] };
                         globalCompDetails[clean].total += qty;
-                        
-                        // Tambah Detail Breakdown
-                        globalCompDetails[clean].items.push({
-                            nama: r.nama,
-                            jam: r.jam,
-                            qty: qty
-                        });
+                        globalCompDetails[clean].items.push({ nama: r.nama, jam: r.jam, qty: qty });
                     });
                 }
             };
-
-            if (r.menus && r.menus.length) {
-                r.menus.forEach(item => processItem(item.name, parseInt(item.quantity)));
-            } else if (r.menu) {
-                processItem(r.menu, 1);
-            }
+            if (r.menus && r.menus.length) r.menus.forEach(item => processItem(item.name, parseInt(item.quantity)));
+            else if (r.menu) processItem(r.menu, 1);
         });
 
-        // 1. Render Menu (Simple)
+        // Render Menu
         const menuCont = document.getElementById('kitchenMenuContainer');
         menuCont.innerHTML = '';
-        Object.entries(menuAgg).sort((a,b)=>b[1]-a[1]).forEach(([name, count]) => {
-            menuCont.innerHTML += `<div class="prep-item"><span class="prep-name">${name}</span><span class="prep-total">${count}</span></div>`;
-        });
-        if(!menuCont.innerHTML) menuCont.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">Kosong</div>';
-
-        // 2. Render Component (Interactive)
-        const compCont = document.getElementById('kitchenCompContainer');
-        compCont.innerHTML = '';
+        const sortedMenu = Object.entries(menuAgg).sort((a,b)=>b[1]-a[1]);
+        if(sortedMenu.length===0) menuCont.innerHTML='<div style="padding:15px; text-align:center; color:#888;">Kosong</div>';
         
-        // Sort components by total qty desc
-        const sortedComps = Object.entries(globalCompDetails).sort((a,b) => b[1].total - a[1].total);
-        
-        sortedComps.forEach(([name, data]) => {
-            // Kita tambahkan onclick event
-            compCont.innerHTML += `
-                <div class="prep-item comp-item" onclick="showComponentDetail('${name}')">
-                    <span class="prep-name"><i class="fas fa-search"></i> ${name}</span>
-                    <span class="prep-total">${data.total}</span>
+        sortedMenu.forEach(([name, count]) => {
+            menuCont.innerHTML += `
+                <div class="prep-item">
+                    <span style="font-weight:500;">${name}</span>
+                    <span class="prep-count">${count}</span>
                 </div>`;
         });
-        if(!compCont.innerHTML) compCont.innerHTML = '<div style="padding:15px;text-align:center;color:#999;">Tidak ada data komponen.</div>';
+
+        // Render Comp
+        const compCont = document.getElementById('kitchenCompContainer');
+        compCont.innerHTML = '';
+        const sortedComps = Object.entries(globalCompDetails).sort((a,b) => b[1].total - a[1].total);
+        if(sortedComps.length===0) compCont.innerHTML='<div style="padding:15px; text-align:center; color:#888;">Tidak ada data komponen.</div>';
+        
+        sortedComps.forEach(([name, data]) => {
+            compCont.innerHTML += `
+                <div class="prep-item clickable" onclick="showComponentDetail('${name}')">
+                    <span style="font-weight:500; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-search-plus" style="color:var(--primary); font-size:0.8rem;"></i> ${name}
+                    </span>
+                    <span class="prep-count comp-count">${data.total}</span>
+                </div>`;
+        });
     }
 
-    // --- MODAL LOGIC (NEW) ---
+    // --- MODAL ---
     function showComponentDetail(compName) {
         const data = globalCompDetails[compName];
         if (!data) return;
-
-        document.getElementById('modalTitle').innerText = `Rincian: ${compName}`;
-        const listContainer = document.getElementById('detailList');
-        listContainer.innerHTML = '';
-
-        // Sort per jam
-        const sortedItems = data.items.sort((a,b) => a.jam.localeCompare(b.jam));
-
-        sortedItems.forEach(item => {
-            listContainer.innerHTML += `
-                <li class="detail-item">
+        document.getElementById('modalTitle').innerText = compName;
+        const list = document.getElementById('detailList');
+        list.innerHTML = '';
+        
+        data.items.sort((a,b) => a.jam.localeCompare(b.jam)).forEach(item => {
+            list.innerHTML += `
+                <li class="detail-row">
                     <div>
-                        <span class="d-name">${item.nama}</span>
-                        <span class="d-time">${item.jam}</span>
+                        <span style="font-weight:600; display:block; font-size:0.9rem;">${item.nama}</span>
+                        <span style="font-size:0.75rem; color:#888;">Jam: ${item.jam}</span>
                     </div>
-                    <span class="d-qty">${item.qty}</span>
+                    <span style="font-weight:700; color:var(--primary-dark); font-size:1rem;">${item.qty} <span style="font-size:0.7rem; font-weight:400;">porsi</span></span>
                 </li>`;
         });
-
         document.getElementById('detailModal').classList.add('active');
     }
-
-    function closeModal(e) {
-        if (e.target.classList.contains('modal-overlay')) {
-            document.getElementById('detailModal').classList.remove('active');
-        }
-    }
-    function closeModalBtn() {
-        document.getElementById('detailModal').classList.remove('active');
-    }
+    function closeModal(e) { if(e.target.classList.contains('modal-overlay')) document.getElementById('detailModal').classList.remove('active'); }
+    function closeModalBtn() { document.getElementById('detailModal').classList.remove('active'); }
 
     // --- UTILS ---
     function toggleFilter(type) {
         currentFilter = type;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        
         if (type === 'all') document.getElementById('btnAll').classList.add('active');
         if (type === 'pagi') document.getElementById('btnPagi').classList.add('active');
         if (type === 'siang') document.getElementById('btnSiang').classList.add('active');
-        
         renderUI();
     }
 
@@ -505,7 +540,6 @@
             scroller.appendChild(pill);
         }
     }
-    
     function goToToday() { selectedDate = new Date(); renderDateScroller(); loadData(selectedDate); }
     function handleDateSelect(val) { if(val){ selectedDate = new Date(val); renderDateScroller(); loadData(selectedDate); } }
 </script>
