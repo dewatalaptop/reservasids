@@ -2,280 +2,226 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Team Viewer - Dolan Sawah</title>
-  
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Dolan Sawah - Live Ops V2</title>
 
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
     :root {
-      --primary: #2a9d8f; 
-      --primary-dark: #264653; 
-      --secondary: #e9c46a; 
-      --accent: #f4a261; 
-      --danger: #e76f51; 
-      --light: #f1faee; 
-      --dark: #1d3557;
-      --card-bg: #ffffff;
+      --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      --glass-bg: rgba(255, 255, 255, 0.85);
+      --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+      --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+      
+      --primary: #2563eb; /* Biru Modern */
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --dark: #1e293b;
+      --text-gray: #64748b;
     }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
     
     body {
-      font-family: 'Poppins', sans-serif; 
-      background-color: #eef1f5; 
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-gradient);
       color: var(--dark);
-      padding-bottom: 40px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-bottom: 80px; /* Space for mobile nav if needed */
     }
 
-    /* HEADER KHUSUS VIEWER - Lebih Simpel */
-    header {
-      background: var(--primary-dark);
-      color: white;
+    /* --- HEADER --- */
+    .top-bar {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      position: sticky; top: 0; z-index: 100;
       padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
     }
+    .brand h1 { font-family: 'Oswald', sans-serif; font-size: 1.5rem; letter-spacing: 1px; color: var(--primary); text-transform: uppercase; margin: 0; }
+    .brand p { font-size: 0.75rem; color: var(--text-gray); margin: 0; font-weight: 500; }
     
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand h2 { font-size: 1.4rem; font-weight: 700; color: var(--secondary); margin: 0; }
-    .brand small { font-size: 0.75rem; opacity: 0.8; letter-spacing: 1px; color: white;}
-    
-    #live-clock {
-      font-family: 'Courier New', monospace;
-      font-weight: 700;
-      font-size: 1.1rem;
-      background: rgba(0,0,0,0.3);
-      padding: 5px 10px;
-      border-radius: 5px;
+    .clock-widget {
+      text-align: right;
     }
+    .clock-time { font-size: 1.2rem; font-weight: 700; color: var(--dark); line-height: 1; }
+    .clock-date { font-size: 0.7rem; color: var(--text-gray); text-transform: uppercase; font-weight: 600; }
 
-    /* CONTAINER UTAMA */
-    .container { max-width: 1200px; margin: 0 auto; padding: 15px; }
-
-    /* KALENDER NAVIGASI (Horizontal Scroll) */
-    .date-scroller {
-      display: flex;
+    /* --- TAB NAVIGATION --- */
+    .nav-tabs {
+      display: flex; gap: 10px; padding: 15px 20px;
       overflow-x: auto;
-      gap: 10px;
-      padding: 10px 5px;
-      margin-bottom: 20px;
-      scrollbar-width: none; /* Firefox */
     }
-    .date-scroller::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+    .nav-btn {
+      padding: 10px 20px; border-radius: 30px; border: none;
+      background: white; color: var(--text-gray); font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05); white-space: nowrap;
+    }
+    .nav-btn.active {
+      background: var(--primary); color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .nav-btn i { margin-right: 5px; }
 
-    .date-card {
-      min-width: 70px;
-      height: 80px;
-      background: white;
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      border: 2px solid transparent;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.05);
-      transition: all 0.2s;
-      position: relative;
-    }
-    
-    .date-card.active {
-      background: var(--primary);
-      color: white;
-      transform: scale(1.05);
-      box-shadow: 0 5px 15px rgba(42, 157, 143, 0.4);
-    }
-    
-    .date-card .day-name { font-size: 0.8rem; font-weight: 400; text-transform: uppercase; }
-    .date-card .day-num { font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
-    .date-card .res-dot {
-      position: absolute; bottom: 5px; width: 6px; height: 6px;
-      background-color: var(--danger); border-radius: 50%; display: none;
-    }
-    .date-card.has-data .res-dot { display: block; }
-    .date-card.active .res-dot { background-color: var(--secondary); }
+    /* --- MAIN CONTENT AREA --- */
+    .content-area { padding: 0 20px 20px; display: none; animation: fadeIn 0.4s ease; }
+    .content-area.active { display: block; }
 
-    /* INFO BAR */
-    .info-bar {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      border-left: 5px solid var(--secondary);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-    }
-    .info-item { flex: 1; min-width: 120px; }
-    .info-item h4 { font-size: 0.8rem; color: #888; margin-bottom: 2px; }
-    .info-item strong { font-size: 1.3rem; color: var(--primary-dark); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* FILTER BUTTONS */
-    .filter-group { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-    .filter-btn {
-      padding: 8px 16px; border: none; background: #ddd; border-radius: 20px;
-      font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.3s; color: #555;
+    /* --- VIEW 1: RESERVATION CARDS --- */
+    .stats-row {
+      display: flex; gap: 15px; margin-bottom: 20px;
+      overflow-x: auto; padding-bottom: 5px;
     }
-    .filter-btn.active { background: var(--primary-dark); color: white; }
+    .stat-card {
+      background: white; min-width: 140px; padding: 15px; border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); flex: 1;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .stat-val { font-size: 1.8rem; font-weight: 800; color: var(--dark); line-height: 1.1; }
+    .stat-label { font-size: 0.75rem; color: var(--text-gray); font-weight: 600; text-transform: uppercase; }
 
-    /* CARD GRID - Tampilan Utama */
-    .reservation-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
+    .grid-cards {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;
     }
 
     .res-card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 0;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      border-top: 5px solid var(--primary); /* Default color */
-      display: flex;
-      flex-direction: column;
+      background: var(--glass-bg);
+      border-radius: 20px;
+      padding: 20px;
       position: relative;
-      overflow: hidden;
-      animation: fadeIn 0.3s ease-in;
+      border: var(--glass-border);
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* Warna border atas berdasarkan waktu */
-    .res-card.siang { border-top-color: var(--secondary); } /* Kuning Siang */
-    .res-card.sore { border-top-color: var(--accent); } /* Sore Orange */
-    .res-card.malam { border-top-color: var(--primary-dark); } /* Malam Gelap */
-
-    .card-header {
-      padding: 15px 15px 5px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
+    .res-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
     
-    .time-badge {
-      background: var(--primary-dark); color: white; padding: 5px 10px;
-      border-radius: 6px; font-weight: 700; font-size: 1.1rem;
-      display: inline-flex; align-items: center; gap: 5px;
+    /* Indikator Waktu (Border kiri) */
+    .res-card::before {
+      content: ''; position: absolute; left: 0; top: 20px; bottom: 20px; width: 4px;
+      border-radius: 0 4px 4px 0; background: #ddd;
     }
+    .res-card.urgent::before { background: var(--danger); box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+    .res-card.soon::before { background: var(--warning); }
+    .res-card.safe::before { background: var(--success); }
+
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .res-time { font-family: 'Oswald', sans-serif; font-size: 1.6rem; color: var(--dark); line-height: 1; }
+    .res-countdown { font-size: 0.75rem; font-weight: 600; padding: 4px 8px; border-radius: 6px; background: #eee; color: #555; }
+    .urgent .res-countdown { background: #fee2e2; color: var(--danger); }
     
-    .table-badge {
-      background: #eef1f5; color: var(--dark); padding: 5px 10px;
-      border-radius: 6px; font-weight: 600; font-size: 0.95rem; border: 1px solid #ccc;
-    }
+    .res-name { font-size: 1.25rem; font-weight: 700; color: var(--dark); margin-bottom: 5px; }
+    .res-meta { display: flex; gap: 15px; font-size: 0.85rem; color: var(--text-gray); font-weight: 500; margin-bottom: 15px; }
+    .res-meta span i { color: var(--primary); margin-right: 4px; }
 
-    .card-body { padding: 10px 15px; flex-grow: 1; }
-    .guest-name { font-size: 1.3rem; font-weight: 800; color: var(--dark); margin-bottom: 5px; line-height: 1.2; }
-    .pax-badge { 
-      display: inline-block; background: rgba(42, 157, 143, 0.15); color: var(--primary-dark); 
-      padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.9rem; margin-bottom: 15px;
-    }
-
-    .menu-section { background: #fafafa; padding: 12px; border-radius: 8px; border-left: 3px solid #ddd; }
-    .menu-title { font-size: 0.8rem; text-transform: uppercase; color: #888; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px; }
-    .menu-list { list-style: none; font-size: 0.95rem; }
-    .menu-list li { margin-bottom: 6px; display: flex; align-items: flex-start; }
-    .menu-qty { 
-      background: var(--dark); color: white; width: 24px; height: 24px; 
-      display: flex; align-items: center; justify-content: center; 
-      border-radius: 50%; font-size: 0.8rem; font-weight: 700; margin-right: 8px; flex-shrink: 0;
-    }
-    .menu-details { font-size: 0.8rem; color: #666; margin-left: 32px; display: block; margin-top: -2px; font-style: italic;}
-
-    .card-note {
-      margin-top: 10px; padding: 10px; background: #fff3cd; color: #856404; 
-      border-radius: 6px; font-size: 0.9rem; border: 1px dashed #ffeeba;
-    }
-
-    .card-footer {
-      padding: 12px 15px; background: #f8f9fa; border-top: 1px solid #eee;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-
-    /* Checkbox Custom */
-    .prep-check { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #555; cursor: pointer; }
-    .prep-check input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;}
+    .menu-compact { background: rgba(241, 245, 249, 0.8); padding: 12px; border-radius: 12px; }
+    .menu-item { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px; }
+    .menu-item:last-child { border: none; margin: 0; padding: 0; }
+    .qty-badge { background: var(--dark); color: white; padding: 0 6px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; margin-right: 8px; }
     
-    .status-tag { font-size: 0.75rem; font-weight: 600; color: #aaa; text-transform: uppercase; }
+    .note-box { margin-top: 10px; font-size: 0.8rem; background: #fffbeb; color: #b45309; padding: 8px; border-radius: 8px; display: flex; gap: 6px; align-items: start; }
+
+    /* --- VIEW 2: KITCHEN PREP (Aggregated) --- */
+    .prep-list { background: white; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+    .prep-header { background: var(--primary); color: white; padding: 15px 20px; font-weight: 700; display: flex; justify-content: space-between; }
+    .prep-item { 
+      padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; 
+      transition: background 0.2s;
+    }
+    .prep-item:hover { background: #f8fafc; }
+    .prep-name { font-weight: 600; color: var(--dark); font-size: 1rem; }
+    .prep-total { 
+      font-family: 'Oswald', sans-serif; font-size: 1.4rem; color: var(--primary); 
+      background: rgba(37, 99, 235, 0.1); padding: 5px 12px; border-radius: 8px;
+    }
+    .prep-details { font-size: 0.8rem; color: #888; display: block; margin-top: 2px;}
+
+    /* Utility */
+    .badge-new { 
+        position: absolute; top: -8px; right: -8px; background: var(--danger); 
+        color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 20px; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2); animation: pulse 1s infinite;
+        display: none;
+    }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
     /* Loading */
-    .loader {
-      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%;
-      width: 50px; height: 50px; animation: spin 1s linear infinite; z-index: 1000;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; display:flex; justify-content:center; align-items:center; flex-direction: column; gap: 15px;}
+    .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    @media (max-width: 600px) {
-      .reservation-grid { grid-template-columns: 1fr; }
-      header h2 { font-size: 1.1rem; }
-      .brand small { display: none; }
-    }
   </style>
 </head>
 <body>
 
-  <header>
+  <div id="loader">
+    <div class="spinner"></div>
+    <div style="font-weight:600; color:var(--text-gray)">Memuat Data Resto...</div>
+  </div>
+
+  <header class="top-bar">
     <div class="brand">
-      <i class="fas fa-utensils fa-lg" style="color:white;"></i>
-      <div>
-        <h2>TEAM VIEWER</h2>
-        <small>Sistem Operasional Dolan Sawah</small>
-      </div>
+      <h1>Dolan Sawah</h1>
+      <p>Live Operation Viewer</p>
     </div>
-    <div id="live-clock">--:--</div>
+    <div class="clock-widget">
+      <div class="clock-time" id="clockTime">--:--</div>
+      <div class="clock-date" id="clockDate">...</div>
+    </div>
   </header>
 
-  <div class="loader" id="loader"></div>
+  <nav class="nav-tabs">
+    <button class="nav-btn active" onclick="switchTab('floor')"><i class="fas fa-th-large"></i> Kartu Reservasi</button>
+    <button class="nav-btn" onclick="switchTab('kitchen')"><i class="fas fa-fire"></i> Rekap Dapur (Total)</button>
+    <div style="border-left: 2px solid #ddd; height: 30px; margin: 0 5px;"></div> 
+    <button class="nav-btn" onclick="filterTime('siang')" id="btnSiang">🌞 Siang</button>
+    <button class="nav-btn" onclick="filterTime('malam')" id="btnMalam">🌙 Malam</button>
+  </nav>
 
-  <div class="container">
-    <div class="date-scroller" id="dateScroller">
+  <div id="view-floor" class="content-area active">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val" id="totalRes">0</div>
+        <div class="stat-label">Reservasi Hari Ini</div>
       </div>
-
-    <div class="info-bar">
-      <div class="info-item">
-        <h4>Tanggal Terpilih</h4>
-        <strong id="displayDate">-</strong>
+      <div class="stat-card">
+        <div class="stat-val" id="totalPax">0</div>
+        <div class="stat-label">Total Tamu (Pax)</div>
       </div>
-      <div class="info-item">
-        <h4>Total Reservasi</h4>
-        <strong id="totalRes">0</strong>
-      </div>
-      <div class="info-item">
-        <h4>Total Pax (Tamu)</h4>
-        <strong id="totalPax">0</strong>
+      <div class="stat-card" style="background: #e0f2fe;">
+        <div class="stat-val" style="color:var(--primary);" id="nextResTime">--:--</div>
+        <div class="stat-label">Reservasi Berikutnya</div>
       </div>
     </div>
 
-    <div class="filter-group">
-      <button class="filter-btn active" onclick="filterData('all', this)">Semua</button>
-      <button class="filter-btn" onclick="filterData('siang', this)">Siang (10-14)</button>
-      <button class="filter-btn" onclick="filterData('sore', this)">Sore (15-17)</button>
-      <button class="filter-btn" onclick="filterData('malam', this)">Malam (18+)</button>
-    </div>
+    <div class="grid-cards" id="cardsContainer">
+        </div>
+  </div>
 
-    <div class="reservation-grid" id="reservationGrid">
-      <p style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">
-        <i class="fas fa-spinner fa-spin"></i> Menghubungkan ke database...
-      </p>
+  <div id="view-kitchen" class="content-area">
+    <div class="prep-list">
+      <div class="prep-header">
+        <span>Nama Menu</span>
+        <span>Total Porsi</span>
+      </div>
+      <div id="prepContainer">
+        </div>
     </div>
   </div>
 
-  <script>
-    // --- 1. KONFIGURASI FIREBASE (SAMA PERSIS DENGAN ADMIN) ---
+<script>
+    // --- KONFIGURASI FIREBASE ---
     const firebaseConfig = {
       apiKey: "AIzaSyA_c1tU70FM84Qi_f_aSaQ-YVLo_18lCkI",
       authDomain: "reservasi-dolan-sawah.firebaseapp.com",
@@ -284,234 +230,222 @@
       messagingSenderId: "213151400721",
       appId: "1:213151400721:web:e51b0d8cdd24206cf682b0"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // --- 2. GLOBAL VARIABLES ---
-    let allReservations = []; // Cache semua data bulan ini
-    let detailMenus = {};     // Cache detail menu
-    let selectedDateStr = ""; // Format YYYY-MM-DD
-    let currentDate = new Date();
+    // --- STATE VARIABLES ---
+    let allReservations = [];
+    let menuDetailsCache = {};
+    let currentFilter = 'all'; // 'all', 'siang', 'malam'
 
-    // --- 3. INIT & CLOCK ---
+    // --- INIT ---
     document.addEventListener('DOMContentLoaded', async () => {
-        updateClock();
-        setInterval(updateClock, 1000);
-        
-        await loadMenuDetails(); // Load detail menu dulu
-        generateDateScroller();  // Buat navigasi tanggal
-        selectDate(new Date());  // Pilih hari ini otomatis
+        startClock();
+        await loadMenuDetails();
+        initRealtimeListener();
     });
 
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('live-clock').innerText = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+    // --- CLOCK & DATE ---
+    function startClock() {
+        const update = () => {
+            const now = new Date();
+            document.getElementById('clockTime').innerText = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('clockDate').innerText = now.toLocaleDateString('id-ID', {weekday: 'long', day:'numeric', month:'short'});
+            updateCountdowns(); // Update "akan datang dalam X menit" setiap detik
+        };
+        setInterval(update, 1000);
+        update();
     }
 
-    // --- 4. LOAD DATA (HANYA BACA) ---
+    // --- DATA LOADING ---
     async function loadMenuDetails() {
         try {
-            const snapshot = await db.collection('menus').get();
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                detailMenus[doc.id] = data.details || [];
-            });
-        } catch (e) { console.error("Gagal load menu", e); }
+            const snap = await db.collection('menus').get();
+            snap.forEach(doc => { menuDetailsCache[doc.id] = doc.data().details || []; });
+        } catch(e) { console.error("Menu load error", e); }
     }
 
-    // Fungsi Utama: Mengambil data real-time
-    function loadReservationsByDate(dateObj) {
-        document.getElementById('loader').style.display = 'block';
-        const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const day = String(dateObj.getDate()).padStart(2, '0');
-        
-        // Format tanggal database YYYY-MM-DD
-        const dateKey = `${year}-${month}-${day}`; 
-        selectedDateStr = dateKey;
-
-        // Tampilkan tanggal di UI
-        const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-        document.getElementById('displayDate').innerText = dateObj.toLocaleDateString('id-ID', options);
-
-        // Listener Real-time
-        db.collection('reservations')
-            .where('date', '==', dateKey)
-            .onSnapshot((snapshot) => {
-                let tempRes = [];
-                snapshot.forEach(doc => {
-                    tempRes.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Urutkan berdasarkan Jam
-                allReservations = tempRes.sort((a, b) => a.jam.localeCompare(b.jam));
-                
-                updateStats();
-                renderCards('all'); // Render semua data
-                document.getElementById('loader').style.display = 'none';
-            }, (error) => {
-                console.error("Error getting documents: ", error);
-                document.getElementById('reservationGrid').innerHTML = `<p style="text-align:center; padding:20px; color:red;">Gagal memuat data. Periksa koneksi internet.</p>`;
-                document.getElementById('loader').style.display = 'none';
-            });
-    }
-
-    // --- 5. RENDER UI ---
-    
-    // Generate Scroller 14 hari (7 hari lalu - 7 hari depan)
-    function generateDateScroller() {
-        const scroller = document.getElementById('dateScroller');
-        scroller.innerHTML = '';
-        
+    function initRealtimeListener() {
         const today = new Date();
-        // Mulai dari 2 hari yang lalu
-        const startDay = new Date(today);
-        startDay.setDate(today.getDate() - 2);
+        const y = today.getFullYear();
+        const m = String(today.getMonth()+1).padStart(2,'0');
+        const d = String(today.getDate()).padStart(2,'0');
+        const dateStr = `${y}-${m}-${d}`;
 
-        for (let i = 0; i < 14; i++) {
-            const d = new Date(startDay);
-            d.setDate(startDay.getDate() + i);
-            
-            const isToday = d.toDateString() === today.toDateString();
-            const dayName = d.toLocaleDateString('id-ID', { weekday: 'short' });
-            const dateNum = d.getDate();
-            const dateStr = d.toISOString().split('T')[0];
-
-            const el = document.createElement('div');
-            el.className = `date-card ${isToday ? 'active' : ''}`;
-            el.dataset.date = dateStr;
-            el.onclick = () => selectDate(d);
-            el.innerHTML = `
-                <span class="day-name">${dayName}</span>
-                <span class="day-num">${dateNum}</span>
-                <span class="res-dot"></span>
-            `;
-            scroller.appendChild(el);
-        }
+        db.collection('reservations')
+          .where('date', '==', dateStr)
+          .onSnapshot(snapshot => {
+              let temp = [];
+              snapshot.forEach(doc => {
+                  temp.push({ id: doc.id, ...doc.data() });
+              });
+              // Sort by Time
+              allReservations = temp.sort((a,b) => a.jam.localeCompare(b.jam));
+              
+              renderAll();
+              document.getElementById('loader').style.display = 'none';
+          }, err => {
+              console.error(err);
+              document.getElementById('cardsContainer').innerHTML = '<p>Gagal memuat data.</p>';
+          });
     }
 
-    function selectDate(dateObj) {
-        // Update UI Active State
-        document.querySelectorAll('.date-card').forEach(el => el.classList.remove('active'));
-        const dateStr = dateObj.toISOString().split('T')[0];
-        const activeCard = document.querySelector(`.date-card[data-date="${dateStr}"]`);
-        if(activeCard) activeCard.classList.add('active');
-
-        loadReservationsByDate(dateObj);
-    }
-
-    function updateStats() {
-        document.getElementById('totalRes').innerText = allReservations.length;
-        const totalPax = allReservations.reduce((sum, r) => sum + parseInt(r.jumlah || 0), 0);
-        document.getElementById('totalPax').innerText = totalPax;
-    }
-
-    function filterData(filterType, btnEl) {
-        if(btnEl) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btnEl.classList.add('active');
-        }
-        renderCards(filterType);
-    }
-
-    function renderCards(filterType) {
-        const grid = document.getElementById('reservationGrid');
-        grid.innerHTML = '';
-
-        if (allReservations.length === 0) {
-            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; opacity:0.6;">
-                <i class="fas fa-calendar-times fa-3x" style="color:var(--secondary)"></i>
-                <h3 style="margin-top:15px;">Tidak ada reservasi</h3>
-                <p>Belum ada data masuk untuk tanggal ini.</p>
-            </div>`;
-            return;
-        }
-
+    // --- LOGIC: PROCESS & RENDER ---
+    function renderAll() {
+        // 1. Filter Data
         let filtered = allReservations;
-        if (filterType !== 'all') {
-            filtered = allReservations.filter(r => {
-                const hour = parseInt(r.jam.split(':')[0]);
-                if (filterType === 'siang') return hour < 15;
-                if (filterType === 'sore') return hour >= 15 && hour < 18;
-                if (filterType === 'malam') return hour >= 18;
-            });
+        if (currentFilter === 'siang') filtered = allReservations.filter(r => parseInt(r.jam) < 16);
+        if (currentFilter === 'malam') filtered = allReservations.filter(r => parseInt(r.jam) >= 16);
+
+        // 2. Update Dashboard Stats
+        document.getElementById('totalRes').innerText = filtered.length;
+        document.getElementById('totalPax').innerText = filtered.reduce((acc, r) => acc + parseInt(r.jumlah||0), 0);
+        
+        // Cari Next Reservation (yang belum lewat jamnya)
+        const nowH = new Date().getHours();
+        const nowM = new Date().getMinutes();
+        const currentMins = (nowH * 60) + nowM;
+        
+        const upcoming = filtered.find(r => {
+             const [h, m] = r.jam.split(':').map(Number);
+             return (h * 60 + m) > currentMins;
+        });
+        document.getElementById('nextResTime').innerText = upcoming ? upcoming.jam : '-';
+
+        // 3. Render Cards (Floor View)
+        const container = document.getElementById('cardsContainer');
+        container.innerHTML = '';
+        
+        if (filtered.length === 0) {
+            container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; opacity:0.5;">Belum ada reservasi untuk sesi ini.</div>`;
         }
 
         filtered.forEach(r => {
-            // Tentukan kategori waktu untuk warna border
-            const hour = parseInt(r.jam.split(':')[0]);
-            let timeClass = 'malam';
-            if (hour < 15) timeClass = 'siang';
-            else if (hour < 18) timeClass = 'sore';
+            // Urgency Logic
+            const [h, m] = r.jam.split(':').map(Number);
+            const resMins = (h * 60) + m;
+            const diff = resMins - currentMins;
+            
+            let statusClass = 'safe';
+            let statusText = 'Akan datang';
+            
+            if (diff < 0) { statusText = 'Tamu Sudah Hadir (Estimasi)'; statusClass = 'safe'; } // Lewat jam
+            else if (diff <= 30) { statusClass = 'urgent'; statusText = `Segera! ${diff} menit lagi`; }
+            else if (diff <= 60) { statusClass = 'soon'; statusText = `${diff} menit lagi`; }
 
-            // Proses Menu
+            // Menu Formatting
             let menuHtml = '';
-            if (Array.isArray(r.menus) && r.menus.length > 0) {
-                menuHtml = r.menus.map(m => {
-                    const details = detailMenus[m.name] || [];
-                    const detailStr = details.length > 0 ? `<span class="menu-details">(${details.join(', ')})</span>` : '';
-                    return `<li><span class="menu-qty">${m.quantity}</span> <div><strong>${m.name}</strong>${detailStr}</div></li>`;
-                }).join('');
+            if (r.menus && r.menus.length) {
+                menuHtml = r.menus.map(menu => 
+                    `<div class="menu-item">
+                        <span><span class="qty-badge">${menu.quantity}</span> ${menu.name}</span>
+                    </div>`
+                ).join('');
             } else if (r.menu) {
-                // Fallback data lama
-                const details = detailMenus[r.menu] || [];
-                const detailStr = details.length > 0 ? `<span class="menu-details">(${details.join(', ')})</span>` : '';
-                menuHtml = `<li><span class="menu-qty">1</span> <div><strong>${r.menu}</strong>${detailStr}</div></li>`;
-            } else {
-                menuHtml = `<li style="color:#999; font-style:italic;">Belum pilih menu</li>`;
+                menuHtml = `<div class="menu-item"><span><span class="qty-badge">1</span> ${r.menu}</span></div>`;
             }
 
-            // Status Checked (Local Storage)
-            const storageKey = `done-${r.id}`;
-            const isChecked = localStorage.getItem(storageKey) === 'true';
-
-            // HTML Card
             const card = document.createElement('div');
-            card.className = `res-card ${timeClass}`;
-            card.style.opacity = isChecked ? '0.6' : '1'; // Visual cue jika sudah done
-            
-            // LOGIKA PRIVASI: Tidak menampilkan r.dp atau r.nomorHp sama sekali
+            card.className = `res-card ${statusClass}`;
             card.innerHTML = `
-                <div class="card-header">
-                    <span class="time-badge"><i class="far fa-clock"></i> ${r.jam}</span>
-                    <span class="table-badge"><i class="fas fa-map-marker-alt"></i> ${r.tempat || '?'}</span>
+                <div class="badge-new">BARU</div>
+                <div class="card-top">
+                    <div class="res-time">${r.jam}</div>
+                    <div class="res-countdown">${statusText}</div>
                 </div>
-                <div class="card-body">
-                    <div class="guest-name">${r.nama}</div>
-                    <span class="pax-badge"><i class="fas fa-users"></i> ${r.jumlah} Orang</span>
-                    
-                    <div class="menu-section">
-                        <div class="menu-title">Pesanan</div>
-                        <ul class="menu-list">${menuHtml}</ul>
+                <div class="res-name">${r.nama}</div>
+                <div class="res-meta">
+                    <span><i class="fas fa-users"></i> ${r.jumlah} Org</span>
+                    <span><i class="fas fa-map-marker-alt"></i> ${r.tempat || '?'}</span>
+                </div>
+                <div class="menu-compact">
+                    ${menuHtml || '<small style="color:#888">Belum ada menu</small>'}
+                </div>
+                ${r.tambahan ? `<div class="note-box"><i class="fas fa-exclamation-circle"></i> <span>${r.tambahan}</span></div>` : ''}
+            `;
+            container.appendChild(card);
+        });
+
+        // 4. Render Kitchen Recap (Aggregated)
+        renderKitchenView(filtered);
+    }
+
+    function renderKitchenView(data) {
+        const aggMenu = {};
+        
+        data.forEach(r => {
+            if (r.menus && r.menus.length) {
+                r.menus.forEach(m => {
+                    if (!aggMenu[m.name]) aggMenu[m.name] = 0;
+                    aggMenu[m.name] += parseInt(m.quantity);
+                });
+            } else if (r.menu) { // Fallback
+                if (!aggMenu[r.menu]) aggMenu[r.menu] = 0;
+                aggMenu[r.menu] += 1;
+            }
+        });
+
+        // Sort by quantity desc
+        const sortedMenu = Object.entries(aggMenu).sort((a,b) => b[1] - a[1]);
+        
+        const container = document.getElementById('prepContainer');
+        container.innerHTML = '';
+
+        if(sortedMenu.length === 0) {
+            container.innerHTML = `<div style="padding:20px; text-align:center;">Tidak ada pesanan menu.</div>`;
+            return;
+        }
+
+        sortedMenu.forEach(([name, count]) => {
+            // Get details if available
+            const details = menuDetailsCache[name] || [];
+            const detailStr = details.length ? `(${details.join(', ')})` : '';
+
+            container.innerHTML += `
+                <div class="prep-item">
+                    <div>
+                        <div class="prep-name">${name}</div>
+                        <small class="prep-details">${detailStr}</small>
                     </div>
-                    
-                    ${r.tambahan ? `<div class="card-note"><i class="fas fa-sticky-note"></i> <strong>Note:</strong> ${r.tambahan}</div>` : ''}
-                </div>
-                <div class="card-footer">
-                    <label class="prep-check">
-                        <input type="checkbox" onchange="toggleDone('${r.id}', this)" ${isChecked ? 'checked' : ''}>
-                        Sudah Disiapkan
-                    </label>
-                    <span class="status-tag">#${r.id.substring(0,4)}</span>
+                    <div class="prep-total">${count}</div>
                 </div>
             `;
-            grid.appendChild(card);
         });
     }
 
-    // Fitur Simpan Status "Selesai" di Local Browser
-    window.toggleDone = function(id, checkbox) {
-        const storageKey = `done-${id}`;
-        if (checkbox.checked) {
-            localStorage.setItem(storageKey, 'true');
-            checkbox.closest('.res-card').style.opacity = '0.6';
-        } else {
-            localStorage.removeItem(storageKey);
-            checkbox.closest('.res-card').style.opacity = '1';
-        }
+    // --- INTERACTION ---
+    function switchTab(tabName) {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.content-area').forEach(c => c.classList.remove('active'));
+        
+        // Simple logic for buttons based on index is fragile, better use IDs or event target
+        // For now just resetting buttons style manually for tab switching
+        const buttons = document.querySelectorAll('.nav-tabs .nav-btn');
+        if(tabName === 'floor') { buttons[0].classList.add('active'); document.getElementById('view-floor').classList.add('active'); }
+        if(tabName === 'kitchen') { buttons[1].classList.add('active'); document.getElementById('view-kitchen').classList.add('active'); }
     }
 
-  </script>
+    function filterTime(type) {
+        currentFilter = (currentFilter === type) ? 'all' : type; // Toggle logic
+        
+        // Reset styles
+        document.getElementById('btnSiang').classList.remove('active');
+        document.getElementById('btnMalam').classList.remove('active');
+        
+        if (currentFilter === 'siang') document.getElementById('btnSiang').classList.add('active');
+        if (currentFilter === 'malam') document.getElementById('btnMalam').classList.add('active');
+        
+        renderAll(); // Re-render with new filter
+    }
+
+    // Update countdown text without re-rendering everything (Performance optimization)
+    function updateCountdowns() {
+        // Implementation simplified: we rely on re-render for color changes, 
+        // but for text only we could target classes. 
+        // Since dataset is small (<50 usually), full render is fine.
+        renderAll();
+    }
+
+</script>
 </body>
 </html>
