@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistem Komando Dolan Sawah (Integrated V6.0)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Sistem Komando Dolan Sawah (Final Integrated)</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -12,7 +12,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -20,516 +19,314 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <style>
-    /* =========================================
-       1. CSS ASLI ANDA (TIDAK DIUBAH)
-       ========================================= */
     :root {
-      --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; --accent: #f4a261; --danger: #e76f51; --light: #f8f9fa; --dark: #343a40; --success: #28a745; --whatsapp: #25D366; --info: #0077b6;
-      /* Variabel tambahan untuk fitur baru */
-      --warning: #f39c12;
+      --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; 
+      --accent: #f4a261; --danger: #e76f51; --light: #f8f9fa; --dark: #343a40; 
+      --success: #28a745; --whatsapp: #25D366; --info: #0077b6; --warning: #f1c40f;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+    
     body {
-      font-family: 'Poppins', sans-serif; margin: 0; background-color: #f5f5f5; color: var(--dark);
+      font-family: 'Poppins', sans-serif; background-color: #f5f5f5; color: var(--dark);
       background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
-      background-size: cover; background-attachment: fixed; background-position: center; min-height: 100vh;
+      background-size: cover; background-attachment: fixed; min-height: 100vh;
     }
-    .broadcast-customer-item {
-      display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid #f0f0f0;
-    }
-    .broadcast-customer-item:last-child { border-bottom: none; }
-    .broadcast-customer-item .customer-info { font-size: 0.95rem; }
-    .broadcast-customer-item .customer-info small { display: block; color: #6c757d; font-size: 0.8rem; }
-    .broadcast-customer-item .broadcast-btn {
-      background-color: var(--accent); color: white; padding: 8px 15px; font-size: 0.85rem; margin-top: 0; min-width: 120px; text-align: center;
-    }
-    .broadcast-customer-item .broadcast-btn.sent { background-color: var(--success); cursor: default; }
-
-    .notification-item.completed .info { text-decoration: line-through; color: #888; }
-    .notification-item.completed .status-icon { color: var(--success); margin-right: 8px; font-weight: 600; }
-    .notification-item button:disabled { background-color: #6c757d; cursor: not-allowed; opacity: 0.7; }
-
     body::before {
       content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background-color: rgba(255, 255, 255, 0.85); z-index: -1;
+      background-color: rgba(255, 255, 255, 0.92); z-index: -1;
     }
+
+    /* HEADER */
     header {
-      background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; padding: 25px 20px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); position: relative; overflow: hidden;
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; 
+      padding: 15px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+      display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000;
     }
-    header::after {
-      content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 5px;
-      background: linear-gradient(90deg, var(--secondary), var(--accent));
-    }
-    header h2 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 600; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); }
-    header small { display: block; font-size: 0.8rem; margin-top: 5px; color: rgba(255, 255, 255, 0.8); font-weight: 300; }
-    .container {
-      max-width: 1200px; margin: 30px auto; padding: 20px; background-color: rgba(255, 255, 255, 0.9);
-      border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); display: none;
-    }
-    #login-container {
-      max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid var(--primary);
-    }
-    #login-error { color: var(--danger); margin-top: 15px; font-weight: 500; display: none; }
-    #logout-button {
-        position: fixed; top: 20px; right: 20px; z-index: 1001; background-color: var(--danger);
-        color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: none;
-    }
-    .calendar-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
-    .month-year { font-size: 1.5rem; font-weight: 600; color: var(--primary-dark); text-align: center; margin-bottom: 10px; }
-    .calendar-nav { display: flex; gap: 10px; }
-    .calendar-nav button { background-color: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 5px; }
-    .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; margin-bottom: 10px; color: var(--primary-dark); }
-    .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-
-    .calendar-day {
-      min-height: 90px; padding: 5px; background-color: white; border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); position: relative;
-      border: 2px solid transparent; transition: all 0.2s ease-in-out; cursor: pointer;
-    }
-    .calendar-day:not(.selected):hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .day-number {
-      font-weight: 600; font-size: 0.9rem; color: var(--dark); position: absolute;
-      top: 6px; right: 8px; transition: all 0.3s ease; width: 28px; height: 28px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .reservation-count {
-      position: absolute; bottom: 8px; left: 8px; background-color: rgba(42, 157, 143, 0.15);
-      color: var(--primary-dark); width: auto; min-width: 22px; height: 22px; padding: 0 8px;
-      border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; font-weight: 600;
-    }
-    .calendar-day.today { border-color: var(--accent); background-color: #fffaf0; }
-    .today .day-number { background-color: var(--accent); color: white; border-radius: 50%; }
-    .selected { background-color: var(--primary) !important; border-color: var(--primary-dark) !important; color: white; }
-    .selected .day-number { color: white; background-color: transparent; }
-    .selected .reservation-count { background-color: white; color: var(--primary); }
-
-    .popup-form { 
-        display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-        z-index: 1000; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto;
-        background-color: white; padding: 25px; border-radius: 8px; 
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); border-top: 4px solid var(--primary);
-    }
-
-    button { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
-    button:hover { background-color: var(--primary-dark); }
-    button.secondary { background-color: #6c757d; color: white; }
-    button.secondary:hover { background-color: #5a6268; }
-    button.danger { background-color: var(--danger); }
-    button.whatsapp { background-color: var(--whatsapp); }
-    button.accent { background-color: var(--accent); color: white; }
-    button.info { background-color: var(--info); }
-    button.info:hover { background-color: #005f8d; }
-    /* Tombol Warning untuk Inbox */
-    button.warning { background-color: var(--warning); color: #2c3e50; } 
-    button.warning:hover { background-color: #f39c12; }
-
-    footer { text-align: center; font-size: 0.8rem; color: white; background-color: var(--primary-dark); padding: 15px; margin-top: 40px; }
-    .menu-detail { margin-top: 8px; font-size: 0.85rem; color: #555; background-color: rgba(233, 196, 106, 0.1); padding: 8px; border-radius: 5px; border-left: 3px solid var(--secondary); }
-    label { display: block; margin-bottom: 10px; font-weight: 500; color: var(--primary-dark); }
-    input, select, textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; margin-top: 5px; font-family: 'Poppins', sans-serif; }
-    textarea { min-height: 80px; }
-    .reservation-item { padding: 15px; margin-bottom: 15px; background-color: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); border-left: 4px solid var(--primary); }
-    .reservation-details { flex-grow: 1; width: 100%; }
-    .action-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
-    .action-buttons button { flex: 1 1 auto; min-width: 0; }
-    .data-transfer { margin-top: 25px; background-color: white; padding: 20px; border-radius: 8px; display: none; }
-    .whatsapp-options-container, .sort-options-container { position: relative; display: inline-block; width: 100%; }
-    .whatsapp-options, .sort-options { position: absolute; bottom: 100%; left: 0; width: 100%; margin-bottom: 5px; padding: 15px; border-radius: 8px; z-index: 10; display: none; background-color: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
-    .data-actions { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; width: 100%; }
-    .data-actions button { flex-grow: 1; padding: 8px 10px; font-size: 0.85rem; margin-top: 0; }
-    .header-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-    .header-actions button { margin-top: 0; }
+    .brand h2 { font-size: 1.4rem; margin: 0; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .brand small { display: block; font-size: 0.7rem; opacity: 0.9; font-weight: 400; }
     
-    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 999; display: none; }
-    .search-container { position: relative; margin: 0 auto 20px; max-width: 600px; width: 100%; }
-    .search-container input { padding-left: 35px; border-radius: 30px; border: 2px solid var(--primary); }
-    .search-container i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary); }
-    #menu-list-container, #location-list-container, #customer-list { max-height: 300px; overflow-y: auto; padding-right: 10px; margin-bottom: 20px; }
-    .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-    .menu-item-actions button { padding: 5px 10px; font-size: 0.8rem; margin-top: 0; margin-left: 5px; }
-    #add-menu-form, #add-location-form { margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--primary); }
-    .loading-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 2000; 
-      display: flex; justify-content: center; align-items: center; display: none;
-    }
-    .spinner {
-      width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .toast {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--dark); color: white; padding: 12px 24px;
-      border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1001; display: none;
-    }
-    .toast.error { background-color: var(--danger); }
-    .toast.success { background-color: var(--success); }
-    .toast.info { background-color: var(--primary); }
-    .invalid { border-color: var(--danger) !important; }
-    .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 3px; display: block; min-height: 1.2em; }
-    
-    .print-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-    .print-options-grid label { display: flex; align-items: center; gap: 8px; font-weight: 400; background-color: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #eee; }
-    .print-options-grid input[type="checkbox"] { width: auto; margin-top: 0; }
-
-    #analysis-filters { text-align: center; margin-bottom: 15px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-    #analysis-filters button { margin-top: 0; padding: 6px 12px; font-size: 0.85rem; }
-    #analysis-filters button.active { background-color: var(--primary-dark); color: white; }
-    .analysis-section { margin-bottom: 25px; }
-    .analysis-section h4 { color: var(--primary-dark); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
-    .analysis-list { list-style: none; padding-left: 0; }
-    .analysis-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
-    .analysis-item:last-child { border-bottom: none; }
-    .analysis-item .name { font-weight: 500; }
-    .analysis-item .name-clickable { font-weight: 500; cursor: pointer; color: var(--primary); text-decoration: underline; }
-    .analysis-item .name-clickable:hover { color: var(--primary-dark); }
-    .analysis-item .value { font-weight: 600; color: var(--primary); background-color: rgba(42, 157, 143, 0.1); padding: 3px 8px; border-radius: 12px; font-size: 0.85rem; }
-    
-    .menu-selection-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-    .menu-selection-row .menu-select { flex: 3; }
-    .menu-selection-row .quantity-input { flex: 1; }
-    .menu-selection-row .remove-btn { flex: 0 0 auto; background-color: var(--danger); padding: 8px 12px; margin-top: 0; }
-    #add-menu-btn { margin-top: 5px; margin-bottom: 15px; padding: 8px 15px; font-size: 0.9rem; }
-    #capacity-info { font-size: 0.8rem; color: #555; display: block; margin-top: 4px; font-weight: 400; }
-
-    #customer-profile-view { padding: 10px; }
-    #customer-profile-view h4 { font-size: 1.3rem; margin-bottom: 15px; color: var(--primary-dark); }
-    .profile-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
-    .stat-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid var(--secondary); }
-    .stat-card .value { font-size: 1.5rem; font-weight: 600; color: var(--primary-dark); }
-    .stat-card .label { font-size: 0.8rem; color: #666; }
-    .profile-history { max-height: 250px; overflow-y: auto; padding-right: 10px; }
-    .history-item { padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-
-    #notification-bell-container {
-      position: absolute; top: 50%; transform: translateY(-50%); right: 80px; cursor: pointer;
-    }
-    #notification-bell-container .fa-bell { font-size: 1.8rem; color: white; }
+    /* Notification */
+    #notification-bell-container { position: relative; cursor: pointer; margin-right: 15px; }
     .notification-badge {
-      position: absolute; top: -5px; right: -10px; background-color: var(--danger);
-      color: white; width: 22px; height: 22px; border-radius: 50%;
-      display: flex; justify-content: center; align-items: center;
-      font-size: 0.8rem; font-weight: 600; border: 2px solid var(--primary-dark);
+      position: absolute; top: -5px; right: -5px; background: var(--danger);
+      color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 0.7rem;
+      display: flex; justify-content: center; align-items: center; border: 2px solid white;
     }
     .notification-list-dropdown {
-      display: none; position: absolute; top: calc(100% + 15px); right: 0;
-      width: 320px; background-color: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-      z-index: 1600; color: var(--dark); max-height: 400px; overflow-y: auto; border: 1px solid #eee;
+      display: none; position: absolute; top: 40px; right: 0; width: 300px;
+      background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      z-index: 2000; max-height: 400px; overflow-y: auto;
     }
-    .notification-list-dropdown h4 {
-      padding: 12px 15px; margin: 0; background-color: #f8f9fa;
-      border-bottom: 1px solid #eee; font-size: 0.95rem; color: var(--primary-dark);
-    }
-    .notification-list-dropdown ul { list-style: none; padding: 8px; margin: 0; }
-    .notification-item {
-      padding: 12px; margin-bottom: 8px; background-color: white; border-radius: 6px; border-left: 4px solid var(--secondary);
-    }
-    .notification-item:hover { background-color: #f8f9fa; }
-    .notification-item .info { display: block; font-size: 0.9rem; margin-bottom: 10px; }
-    .notification-item .info strong { color: var(--primary-dark); }
-    .notification-item button { width: 100%; margin: 0; padding: 8px; font-size: 0.9rem; }
+    .notification-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
 
-    @media (max-width: 480px) { 
-      .action-buttons, .data-actions { flex-direction: column; } 
-      .action-buttons button, .data-actions button { width: 100%; }
+    /* CONTAINER */
+    .container { max-width: 1200px; margin: 20px auto; padding: 15px; background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+
+    /* BUTTONS */
+    .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; color: white; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
+    .btn-primary { background: var(--primary); }
+    .btn-secondary { background: #6c757d; }
+    .btn-danger { background: var(--danger); }
+    .btn-warning { background: var(--warning); color: #333; }
+    .btn-success { background: var(--success); }
+    .btn-whatsapp { background: var(--whatsapp); }
+    .btn-info { background: var(--info); }
+    .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+
+    /* CALENDAR */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 10px; border: 1px solid #eee; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .cal-day-header { text-align: center; font-weight: 700; color: #777; margin-bottom: 5px; font-size: 0.9rem; }
+    .cal-day { 
+      min-height: 90px; background: white; border-radius: 8px; padding: 5px; 
+      position: relative; cursor: pointer; border: 2px solid transparent; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;
+      display: flex; flex-direction: column; justify-content: space-between;
     }
+    .cal-day:hover { transform: translateY(-3px); border-color: var(--primary); }
+    .cal-day.today { background: #fffaf0; border-color: var(--secondary); }
+    .cal-day.selected { background: var(--primary) !important; color: white; border-color: var(--primary-dark) !important; }
+    .cal-day.selected .day-num { color: white; }
+    .cal-day.selected .res-count { background: rgba(255,255,255,0.2); color: white; }
     
-    .analysis-controls { display: flex; gap: 10px; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
-    .analysis-controls select { margin-top: 0; border: 1px solid #ccc; }
-    .chart-container { background: white; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; height: 300px; position: relative; }
-    .insight-box { background-color: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; }
-    .insight-box h5 { color: #0d47a1; margin-bottom: 8px; font-size: 1rem; }
-    .insight-box ul { padding-left: 20px; margin: 0; }
-    .insight-box li { margin-bottom: 5px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .mini-stat { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 3px solid var(--primary); }
-    .mini-stat .val { font-size: 1.4rem; font-weight: 700; color: var(--dark); }
-    .mini-stat .lbl { font-size: 0.8rem; color: #666; }
+    /* Indikator FULL */
+    .cal-day.is-full { background: #ffebee !important; border-color: var(--danger) !important; }
+    .cal-day.is-full::after { 
+        content: 'FULL'; position: absolute; top: 50%; left: 50%; 
+        transform: translate(-50%, -50%) rotate(-15deg); 
+        color: rgba(231, 76, 60, 0.3); font-weight: 900; font-size: 1.2rem; pointer-events: none;
+    }
 
-    /* =========================================
-       2. CSS TAMBAHAN UNTUK FITUR BARU (INBOX & FULL)
-       ========================================= */
+    .day-num { font-weight: 700; font-size: 1rem; color: #555; align-self: flex-end; }
+    .res-count { font-size: 0.75rem; background: rgba(42, 157, 143, 0.1); color: var(--primary-dark); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+
+    /* ACTION BUTTONS GRID */
+    .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee; }
+    .action-grid .btn { width: 100%; justify-content: center; padding: 12px; flex-direction: column; gap: 5px; text-align: center;}
+    .action-grid .btn i { font-size: 1.2rem; }
+
+    /* POPUPS */
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1500; display: none; backdrop-filter: blur(4px); }
+    .popup { 
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+        width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+        background: white; z-index: 1501; padding: 25px; border-radius: 12px; 
+        display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: zoomIn 0.2s;
+    }
+    @keyframes zoomIn { from {opacity:0; transform:translate(-50%,-45%);} to {opacity:1; transform:translate(-50%,-50%);} }
     
-    /* Indikator "FULL" pada Kalender (Diambil dari Viewer) */
-    .calendar-day.is-full {
-      background-color: var(--danger) !important;
-      border: 2px solid #c0392b !important;
-    }
-    .calendar-day.is-full .day-number { color: white !important; }
-    .calendar-day.is-full::after {
-      content: 'PENUH';
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg);
-      color: rgba(255,255,255,0.3); font-size: 1.2rem; font-weight: 900; pointer-events: none;
-    }
-    .calendar-day.is-full .reservation-count {
-      background-color: white !important; color: var(--danger) !important;
-    }
+    .popup h3 { margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 10px; color: var(--primary-dark); display: flex; align-items: center; justify-content: space-between; font-size: 1.2rem; }
+    
+    /* INPUTS */
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-top: 5px; font-family: inherit; font-size: 0.95rem; }
+    label { display: block; margin-top: 12px; font-weight: 500; color: #555; font-size: 0.9rem; }
+    
+    /* INBOX REQUEST CARD */
+    .req-card { background: white; border-left: 5px solid var(--warning); padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .req-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .req-menu { background: #fffcf5; padding: 8px; border-radius: 6px; font-size: 0.85rem; border: 1px dashed #e0d0a0; margin: 8px 0; }
+    .req-actions { display: flex; gap: 5px; margin-top: 10px; }
+    .req-actions button { flex: 1; justify-content: center; }
 
-    /* Style untuk Inbox Request (Dari Admin Mandiri) */
-    .req-badge { 
-      position: absolute; top: -8px; right: -8px; 
-      background: var(--danger); color: white; border-radius: 50%; 
-      width: 24px; height: 24px; display: flex; justify-content: center; 
-      align-items: center; font-size: 0.75rem; border: 2px solid white;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .request-card {
-      background: white; border-left: 5px solid var(--warning);
-      padding: 15px; margin-bottom: 15px; border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 10px;
-    }
-    .req-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .req-name { font-weight: 700; color: var(--primary-dark); font-size: 1.1rem; }
-    .req-meta { font-size: 0.85rem; color: #666; display: flex; gap: 10px; flex-wrap: wrap; }
-    .req-actions { display: flex; gap: 5px; margin-top: 5px; }
-    .req-actions button { margin-top: 0; flex: 1; padding: 8px; font-size: 0.85rem; justify-content: center; }
+    /* RESERVATION LIST CARD */
+    .res-card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .res-info { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    
+    /* LOGIN */
+    #login-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f5f5f5; z-index: 3000; display: flex; justify-content: center; align-items: center; }
+    .login-box { background: white; padding: 40px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    
+    /* LOADER */
+    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 4000; display: none; justify-content: center; align-items: center; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* MENU ROW */
+    .menu-row { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
+    .menu-row select { flex: 2; }
+    .menu-row input { flex: 1; }
+    
+    /* ANALYSIS & PRINT */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
+    .mini-stat { background: #f9f9f9; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
+    .mini-stat .val { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
   </style>
 </head>
 <body>
-    <header>
-    <h2><i class="fas fa-leaf"></i> Sistem Komando Dolan Sawah</h2>
-    <small>One-Gate System: Reservasi & Permintaan (V6.0)</small>
 
-    <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
-      <i class="fas fa-bell"></i>
-      <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
-      <div id="notification-dropdown" class="notification-list-dropdown">
-        <h4><i class="fas fa-bell"></i> Pengingat Ucapan Terima Kasih</h4>
-        <ul id="notification-list-ul"></ul>
-      </div>
+  <div id="loader"><div class="spinner"></div></div>
+
+  <div id="login-page">
+    <div class="login-box">
+        <h2 style="color:var(--primary); margin-bottom:10px;"><i class="fas fa-leaf"></i> Admin</h2>
+        <p style="color:#666; margin-bottom:20px;">Dolan Sawah Management</p>
+        <input type="email" id="loginEmail" placeholder="Email Admin">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button class="btn btn-primary" onclick="handleLogin()" style="width:100%; margin-top:20px; justify-content:center;">Masuk Dashboard</button>
+        <p id="loginError" style="color:red; display:none; margin-top:10px; font-size:0.9rem;"></p>
     </div>
-  </header>
-  <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
-  <div class="toast" id="toast"></div>
-  
-  <div id="login-container">
-    <h3><i class="fas fa-lock"></i> Login Admin Pusat</h3>
-    <label>Email: <input type="email" id="loginEmail" placeholder="admin@dolansawah.com"/></label>
-    <label>Password: <input type="password" id="loginPassword" placeholder="******"/></label>
-    <button onclick="handleLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
-    <p id="login-error">Email atau password salah.</p>
   </div>
-  
-  <button id="logout-button" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
-  
-  <div class="container" id="main-container">
-    <div class="calendar-header">
-      <div class="month-year" id="monthYear"></div>
-      <div class="calendar-nav">
-        <button onclick="previousMonth()"><i class="fas fa-chevron-left"></i></button>
-        <button class="secondary" onclick="goToToday()"><i class="fas fa-calendar-day"></i> Hari Ini</button>
-        <button onclick="nextMonth()"><i class="fas fa-chevron-right"></i></button>
-      </div>
-    </div>
-    
-    <div class="calendar-weekdays"><div>Min</div> <div>Sen</div> <div>Sel</div> <div>Rab</div> <div>Kam</div> <div>Jum</div> <div>Sab</div></div>
-    <div class="calendar-days" id="calendar"></div>
-        
-    <div class="action-buttons">
-      <button class="warning" onclick="showRequestInbox()" style="position: relative;">
-          <i class="fas fa-inbox"></i> Permintaan Masuk
-          <span id="req-count-badge" class="req-badge" style="display:none; right: -5px; top: -5px;">0</span>
-      </button>
 
-      <button class="danger" onclick="showDateStatusPopup()">
-          <i class="fas fa-calendar-times"></i> Set Tgl Penuh
-      </button>
-
-      <button onclick="showCustomerMenu()"><i class="fas fa-address-book"></i> Customer</button>
-      <button onclick="showMenuManagement()"><i class="fas fa-book-open"></i> Kelola Menu</button>
-      <button onclick="showLocationManagement()"><i class="fas fa-map-marker-alt"></i> Kelola Tempat</button>
-      <button class="info" onclick="showAnalysis()"><i class="fas fa-chart-pie"></i> Analisis Data</button>
+  <div id="main-ui" style="display:none;">
       
-      <div class="whatsapp-options-container">
-        <button class="whatsapp" onclick="toggleWhatsAppOptions(event)"><i class="fab fa-whatsapp"></i> Bagikan WhatsApp</button>
-        <div class="whatsapp-options" id="whatsappOptions">
-          <p>Pilih Opsi Laporan Bulanan:</p>
-          <button class="whatsapp" onclick="shareViaWhatsApp('month')">Kirim Rekap 1 Bulan</button>
+      <header>
+        <div class="brand">
+            <h2><i class="fas fa-leaf"></i> Dolan Sawah</h2>
+            <small>Integrated System</small>
         </div>
-      </div>
-      
-      <button class="info" onclick="showExportDataPopup()"><i class="fas fa-file-export"></i> Export Data ASCII</button>
-      <button class="secondary" onclick="showBroadcastMain()"><i class="fas fa-bullhorn"></i> Broadcast Promo</button>
-      <button class="accent" onclick="forceSync()"><i class="fas fa-sync-alt"></i> Sinkronisasi</button>
-    </div>
-  </div>
-
-  <div class="overlay" id="overlay"></div> <div id="requestInboxPopup" class="popup-form" style="max-width: 800px; background-color: #fcfcfc;">
-      <h3 style="border-bottom: 2px solid var(--warning);">
-          <i class="fas fa-inbox" style="color: var(--warning);"></i> Permintaan Masuk (Web Mandiri)
-      </h3>
-      <div style="padding: 10px; background: #fff3cd; color: #856404; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem;">
-          <i class="fas fa-info-circle"></i> Permintaan di bawah ini belum masuk ke kalender utama. Harap cek ketersediaan sebelum menerima.
-      </div>
-      <div id="request-list-container" style="max-height: 50vh; overflow-y: auto; padding-right: 5px;">
-          <p style="text-align: center; color: #888; padding: 20px;">Memuat data...</p>
-      </div>
-      <div class="data-actions" style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
-          <button class="danger" onclick="closePopup('requestInboxPopup')">Tutup Inbox</button>
-      </div>
-  </div>
-
-  <div id="dateStatusPopup" class="popup-form" style="max-width: 450px;">
-      <h3 style="border-bottom: 2px solid var(--danger);">
-          <i class="fas fa-ban" style="color: var(--danger);"></i> Blokir Tanggal (Set Penuh)
-      </h3>
-      <p style="font-size: 0.9rem; color: #666;">Jika tanggal diset "PENUH", Website Viewer dan Web Mandiri akan menampilkan tanda merah dan menolak reservasi baru di tanggal tersebut.</p>
-      
-      <label>Pilih Tanggal:</label>
-      <input type="date" id="blockDateInput" style="margin-bottom: 20px;">
-      
-      <div class="data-actions">
-          <button class="danger" onclick="setStatusDate(true)"><i class="fas fa-lock"></i> SET PENUH</button>
-          <button class="whatsapp" onclick="setStatusDate(false)" style="background-color: var(--success);"><i class="fas fa-lock-open"></i> BUKA KEMBALI</button>
-          <button class="secondary" onclick="closePopup('dateStatusPopup')">Batal</button>
-      </div>
-  </div>
-
-  <div id="addFormPopup" class="popup-form">
-    <h3><i class="fas fa-calendar-plus"></i> Input Reservasi</h3>
-    <form id="reservation-form">
-      <label>Nama: <input type="text" id="nama" required /><span class="error-message" id="nama-error"></span></label>
-      <label>Nomor HP: <input type="tel" id="nomorHp" placeholder="Cth: 081234567890" /><span class="error-message" id="nomorHp-error"></span></label>
-      <label>Jam Reservasi: <input type="time" id="jam" required /><span class="error-message" id="jam-error"></span></label>
-      <label>Jumlah Peserta: <input type="number" id="jumlah" min="1" required /><span class="error-message" id="jumlah-error"></span></label>
-      
-      <label>DP (Rupiah): <input type="number" id="dp" value="0" min="0" /></label>
-      <label>Tipe Pembayaran DP: 
-        <select id="tipeDp">
-          <option value="">- Tanpa DP -</option><option>Cash</option><option>QRIS</option><option>Transfer BCA</option><option>Transfer Mandiri</option><option>Transfer BRI</option>
-        </select>
-      </label>
-      
-      <label>Tempat: <select id="tempat" required onchange="updateCapacityInfo('reservation-form')"></select>
-        <span id="capacity-info"></span>
-        <span class="error-message" id="tempat-error"></span>
-      </label>
-      
-      <label>Paket Menu Dipesan: <span class="error-message" id="menus-error"></span></label>
-      <div id="selected-menus-container"></div>
-      <button type="button" class="secondary" id="add-menu-btn" onclick="addMenuSelectionRow('reservation-form')"><i class="fas fa-plus"></i> Tambah Paket</button>
-
-      <label>Request Tambahan: <textarea id="tambahan"></textarea></label>
-      <div class="data-actions">
-        <button type="button" onclick="simpanReservasi()"><i class="fas fa-save"></i> Simpan Reservasi</button>
-        <button type="button" class="danger" onclick="closePopup('addFormPopup')"><i class="fas fa-times"></i> Batal</button>
-      </div>
-    </form>
-  </div>
-
-  <div id="editFormPopup" class="popup-form"></div>
-  <div id="menuManagementPopup" class="popup-form"></div>
-  <div id="locationManagementPopup" class="popup-form"></div>
-  <div id="customerListPopup" class="popup-form"></div>
-  
-  <div id="analysisPopup" class="popup-form" style="max-width: 800px;">
-      </div>
-
-  <div id="exportDataPopup" class="popup-form">
-    <h3><i class="fas fa-file-export"></i> Export Data ASCII untuk Viewer</h3>
-    <p>Salin kode di bawah ini dan tempelkan ke dalam kolom import di website kalender viewer.</p>
-    <textarea id="export-data-output" readonly style="height: 150px; font-family: monospace; font-size: 0.8rem; background-color: #f0f0f0; resize: vertical;"></textarea>
-    <div class="data-actions">
-        <button type="button" onclick="copyExportCode()"><i class="fas fa-copy"></i> Salin Kode</button>
-        <button type="button" class="danger" onclick="closePopup('exportDataPopup')"><i class="fas fa-times"></i> Tutup</button>
-    </div>
-  </div>
-
-  <div id="printOptionsPopup" class="popup-form">
-    <h3><i class="fas fa-print"></i> Opsi Cetak</h3>
-    <p>Pilih detail yang ingin Anda sertakan dalam hasil cetak:</p>
-    <div id="print-options-form">
-        <div class="print-options-grid">
-            <label><input type="checkbox" id="print-detail-menu" checked> Detail Menu</label>
-            <label><input type="checkbox" id="print-kontak" checked> Kontak (No. HP)</label>
-            <label><input type="checkbox" id="print-dp" checked> Info DP</label>
-            <label><input type="checkbox" id="print-tambahan" checked> Request Tambahan</label>
-        </div>
-        <div class="data-actions">
-            <button type="button" onclick="executePrint()"><i class="fas fa-check"></i> Lanjutkan Cetak</button>
-            <button type="button" class="danger" onclick="closePopup('printOptionsPopup')"><i class="fas fa-times"></i> Batal</button>
-        </div>
-    </div>
-  </div>
-  
-  <div id="broadcastMainPopup" class="popup-form">
-    <h3><i class="fas fa-bullhorn"></i> Menu Broadcast Promo</h3>
-    <p>Gunakan fitur ini untuk mengirimkan promosi atau pengumuman ke semua pelanggan yang pernah reservasi.</p>
-    <div class="data-actions" style="margin-top: 20px;">
-        <button type="button" class="info" onclick="showBroadcastSettings()"><i class="fas fa-cog"></i> Atur Pesan Broadcast</button>
-        <button type="button" class="whatsapp" onclick="showBroadcastList()"><i class="fas fa-paper-plane"></i> Mulai Broadcast</button>
-    </div>
-    <div class="data-actions" style="margin-top: 10px;">
-        <button type="button" class="danger" onclick="closePopup('broadcastMainPopup')"><i class="fas fa-times"></i> Tutup</button>
-    </div>
-  </div>
-
-  <div id="broadcastSettingsPopup" class="popup-form">
-    <h3><i class="fas fa-cog"></i> Atur Pesan Broadcast</h3>
-    <p>Tulis pesan yang ingin Anda kirimkan. Anda bisa menggunakan *teks tebal* atau _miring_ untuk format WhatsApp.</p>
-    <form id="broadcast-settings-form">
-        <label for="broadcastMessage">Pesan Promo:</label>
-        <textarea id="broadcastMessage" placeholder="Contoh: Halo Kak! Ada promo spesial weekend ini di Dolan Sawah..." style="height: 150px;"></textarea>
-        <div class="data-actions" style="margin-top: 20px;">
-            <button type="button" onclick="saveBroadcastMessage()"><i class="fas fa-save"></i> Simpan Pesan</button>
-            <button type="button" class="secondary" onclick="closePopup('broadcastSettingsPopup'); showBroadcastMain();"><i class="fas fa-arrow-left"></i> Kembali</button>
-        </div>
-    </form>
-  </div>
-
-  <div id="broadcastListPopup" class="popup-form" style="max-width: 700px;">
-    <h3><i class="fas fa-users"></i> Daftar Penerima Broadcast</h3>
-    <p>Klik tombol "Broadcast" untuk mengirim pesan ke masing-masing customer via WhatsApp.</p>
-    <div class="search-container" style="margin-top: 15px;">
-        <i class="fas fa-search"></i>
-        <input type="text" id="broadcastCustomerSearch" oninput="filterBroadcastCustomers(this.value)" placeholder="Cari nama atau nomor HP...">
-    </div>
-    <div id="broadcast-customer-list" style="max-height: 40vh; overflow-y: auto; margin-top: 15px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 10px 0;">
-        <p style="text-align: center; color: #888;">Memuat daftar customer...</p>
-    </div>
-    <div class="data-actions" style="margin-top: 20px;">
-        <button type="button" class="danger" onclick="closePopup('broadcastListPopup')"><i class="fas fa-times"></i> Tutup</button>
-    </div>
-  </div>
-
-  <div id="reservation-view-container" style="display: none; background-color: #f5f5f5; padding: 20px;">
-    <div class="reservation-view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--primary);">
-        <h2 id="reservation-view-title" style="color: var(--primary-dark); font-size: 1.8rem;"></h2>
-        <div class="header-actions">
-            <button onclick="showAddForm()"><i class="fas fa-plus"></i> Tambah Reservasi</button>
-            <button class="whatsapp" onclick="shareViaWhatsApp('day')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
-            <button class="secondary" onclick="shareViaEmail()"><i class="fas fa-envelope"></i> Email</button>
-            <div class="sort-options-container" style="width: auto; position: relative;">
-                <button class="secondary" onclick="toggleDetailSort(event)"><i class="fas fa-sort"></i> Urutkan</button>
-                <div class="sort-options" id="sortOptionsDetail" style="bottom: auto; top: 100%; margin-top: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <p>Urutkan berdasarkan:</p>
-                    <button onclick="sortReservations('jam')">Jam</button>
-                    <button onclick="sortReservations('tempat')">Tempat</button>
-                </div>
+        <div class="header-right">
+            <div style="position:relative; margin-right:15px; cursor:pointer;" onclick="openInbox()">
+                <i class="fas fa-inbox" style="font-size:1.4rem;"></i>
+                <span id="header-inbox-badge" style="position:absolute; top:-5px; right:-5px; background:var(--warning); color:#333; font-size:0.7rem; padding:2px 5px; border-radius:50%; display:none;">0</span>
             </div>
-            <button onclick="printData()"><i class="fas fa-print"></i> Print</button>
-            <button class="danger" onclick="kembaliKeKalender()"><i class="fas fa-arrow-left"></i> Kembali</button>
+
+            <div id="notification-bell-container" onclick="toggleNotif()">
+                <i class="fas fa-bell" style="font-size:1.4rem;"></i>
+                <span id="notif-badge" class="notification-badge" style="display:none;">0</span>
+            </div>
+            
+            <div class="notification-list-dropdown" id="notif-dropdown">
+                <div style="padding:10px; border-bottom:1px solid #eee; font-weight:bold; background:#f9f9f9;">Pengingat</div>
+                <div id="notif-list"></div>
+            </div>
+            
+            <button class="btn btn-danger btn-sm" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i></button>
         </div>
-    </div>
-    
-    <div class="search-container">
-        <i class="fas fa-search"></i>
-        <input type="text" id="detailSearchInput" oninput="filterReservations(this.value)" placeholder="Cari nama, tempat, atau menu...">
-    </div>
+      </header>
 
-    <div id="reservation-detail-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
-    </div>
+      <div class="container">
+        <div class="calendar-header">
+            <h2 id="monthYear" style="margin:0; color:var(--primary-dark); font-size:1.2rem;">...</h2>
+            <div>
+                <button class="btn btn-secondary btn-sm" onclick="moveMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                <button class="btn btn-primary btn-sm" onclick="goToToday()">Hari Ini</button>
+                <button class="btn btn-secondary btn-sm" onclick="moveMonth(1)"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+
+        <div class="calendar-grid">
+            <div class="cal-day-header">Min</div><div class="cal-day-header">Sen</div><div class="cal-day-header">Sel</div>
+            <div class="cal-day-header">Rab</div><div class="cal-day-header">Kam</div><div class="cal-day-header">Jum</div><div class="cal-day-header">Sab</div>
+        </div>
+        <div id="calendar-days" class="calendar-grid"></div>
+
+        <div class="action-grid">
+            <button class="btn btn-warning" onclick="openInbox()" style="grid-column: span 2;">
+                <i class="fas fa-inbox"></i> Permintaan Masuk 
+                <span id="dashboard-inbox-badge" style="background:red; color:white; padding:2px 6px; border-radius:10px; font-size:0.8rem; display:none;">0</span>
+            </button>
+            
+            <button class="btn btn-danger" onclick="openSetFull()"><i class="fas fa-ban"></i> Set Tanggal Penuh</button>
+            
+            <button class="btn btn-primary" onclick="openAddForm()"><i class="fas fa-plus-circle"></i> Input Manual</button>
+            <button class="btn btn-secondary" onclick="openCustomer()"><i class="fas fa-address-book"></i> Customer</button>
+            <button class="btn btn-secondary" onclick="openMenu()"><i class="fas fa-utensils"></i> Kelola Menu</button>
+            <button class="btn btn-secondary" onclick="openLocation()"><i class="fas fa-map-marker-alt"></i> Kelola Tempat</button>
+            <button class="btn btn-info" onclick="openAnalysis()"><i class="fas fa-chart-pie"></i> Analisis</button>
+            <button class="btn btn-whatsapp" onclick="openBroadcast()"><i class="fab fa-whatsapp"></i> Broadcast</button>
+            <button class="btn btn-success" onclick="openExport()"><i class="fas fa-file-export"></i> Export Data</button>
+        </div>
+      </div>
   </div>
-  
-  <footer><p><i class="fas fa-code"></i> Dibuat oleh Ryan </p></footer>
-<script>
-    // ============================================================
-    // BAGIAN 3: CORE JAVASCRIPT & LOGIKA KALENDER
-    // ============================================================
 
-    // --- 1. KONFIGURASI FIREBASE ---
+  <div class="overlay" id="overlay"></div>
+
+  <div id="popup-inbox" class="popup" style="max-width:800px;">
+      <h3><i class="fas fa-inbox"></i> Permintaan Masuk <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-inbox')">X</button></h3>
+      <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:5px; margin-bottom:15px; font-size:0.9rem;">
+          <i class="fas fa-info-circle"></i> Permintaan ini dari Web Mandiri. Cek ketersediaan sebelum Terima.
+      </div>
+      <div id="inbox-list">Memuat...</div>
+  </div>
+
+  <div id="popup-full" class="popup" style="max-width:400px;">
+      <h3><i class="fas fa-ban"></i> Blokir Tanggal <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-full')">X</button></h3>
+      <label>Pilih Tanggal</label>
+      <input type="date" id="blockDate">
+      <div style="margin-top:20px; display:flex; gap:10px;">
+          <button class="btn btn-danger" onclick="setFullStatus(true)" style="flex:1;">Set PENUH</button>
+          <button class="btn btn-success" onclick="setFullStatus(false)" style="flex:1;">Set BUKA</button>
+      </div>
+  </div>
+
+  <div id="popup-form" class="popup">
+      <h3 id="form-title">Input Reservasi <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-form')">X</button></h3>
+      <form id="res-form">
+          <input type="hidden" id="edit-id">
+          <label>Nama Pemesan</label><input type="text" id="inp-nama" required>
+          <label>WhatsApp</label><input type="tel" id="inp-hp">
+          <div style="display:flex; gap:10px;">
+              <div style="flex:1;"><label>Tanggal</label><input type="date" id="inp-date" required></div>
+              <div style="flex:1;"><label>Jam</label><input type="time" id="inp-jam" required></div>
+              <div style="flex:1;"><label>Jml</label><input type="number" id="inp-jml" required></div>
+          </div>
+          <label>Tempat</label><select id="inp-tempat" onchange="checkCap()"></select>
+          <div id="cap-info" style="font-size:0.8rem; color:#0077b6; margin-top:2px;"></div>
+          
+          <label>Menu Pesanan</label>
+          <div id="menu-rows" style="background:#f9f9f9; padding:10px; border-radius:5px;"></div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addMenuRow()" style="margin-top:5px;">+ Tambah Menu</button>
+          
+          <div style="display:flex; gap:10px;">
+              <div style="flex:1;"><label>DP (Rp)</label><input type="number" id="inp-dp" value="0"></div>
+              <div style="flex:1;"><label>Via</label><select id="inp-via"><option>Cash</option><option>Transfer BCA</option><option>Transfer Mandiri</option><option>QRIS</option></select></div>
+          </div>
+          <label>Catatan</label><textarea id="inp-note"></textarea>
+          <div style="margin-top:20px;">
+              <button type="button" class="btn btn-primary" style="width:100%;" onclick="saveReservation()">Simpan Data</button>
+          </div>
+      </form>
+  </div>
+
+  <div id="popup-detail" class="popup" style="width:100%; height:100%; max-width:none; max-height:none; top:0; left:0; transform:none; border-radius:0; background:#f4f6f8;">
+      <div style="max-width:1000px; margin:0 auto; background:white; min-height:100vh; padding:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:15px; margin-bottom:20px;">
+              <h2 id="detail-title" style="margin:0; color:var(--primary-dark);">Detail</h2>
+              <div style="display:flex; gap:10px;">
+                  <button class="btn btn-whatsapp btn-sm" onclick="shareDay()"><i class="fab fa-whatsapp"></i> Share</button>
+                  <button class="btn btn-secondary btn-sm" onclick="printDay()"><i class="fas fa-print"></i> Print</button>
+                  <button class="btn btn-danger btn-sm" onclick="closePopup('popup-detail')">Tutup</button>
+              </div>
+          </div>
+          <input type="text" placeholder="Cari tamu..." id="search-detail" oninput="filterDetail(this.value)">
+          <div id="detail-list" style="margin-top:20px; display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:15px;"></div>
+      </div>
+  </div>
+
+  <div id="popup-export" class="popup">
+      <h3>Export Data <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-export')">X</button></h3>
+      <p>Salin kode ini untuk Website Viewer:</p>
+      <textarea id="export-area" readonly style="height:150px; font-family:monospace;"></textarea>
+      <button class="btn btn-primary" onclick="copyExport()">Salin Kode</button>
+  </div>
+
+  <div id="popup-menu" class="popup"><h3>Kelola Menu <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-menu')">X</button></h3><div id="list-menu" style="max-height:300px; overflow:auto;"></div><hr><input id="new-menu-name" placeholder="Nama Menu"><input id="new-menu-price" type="number" placeholder="Harga"><textarea id="new-menu-det" placeholder="Detail"></textarea><button class="btn btn-primary" onclick="addMenu()" style="margin-top:10px;">Tambah</button></div>
+  <div id="popup-loc" class="popup"><h3>Kelola Tempat <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-loc')">X</button></h3><div id="list-loc" style="max-height:300px; overflow:auto;"></div><hr><input id="new-loc-name" placeholder="Nama Tempat"><input id="new-loc-cap" type="number" placeholder="Kapasitas"><button class="btn btn-primary" onclick="addLoc()" style="margin-top:10px;">Tambah</button></div>
+  
+  <div id="popup-broadcast" class="popup">
+      <h3>Broadcast <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-broadcast')">X</button></h3>
+      <textarea id="bc-msg" placeholder="Tulis template pesan..." rows="5"></textarea>
+      <button class="btn btn-info" onclick="saveBcMsg()">Simpan Template</button>
+      <hr>
+      <input type="text" placeholder="Cari..." oninput="filterBc(this.value)">
+      <div id="bc-list" style="max-height:300px; overflow-y:auto; margin-top:10px;"></div>
+  </div>
+
+  <div id="popup-customer" class="popup" style="max-width:800px;">
+      <h3>Data Customer <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-customer')">X</button></h3>
+      <input type="text" placeholder="Cari nama/HP..." oninput="filterCust(this.value)">
+      <div id="cust-list" style="margin-top:10px; max-height:400px; overflow-y:auto;"></div>
+  </div>
+
+  <div id="popup-analysis" class="popup" style="max-width:900px;">
+      <h3>Analisis Bisnis <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-analysis')">X</button></h3>
+      <canvas id="chart-anl" style="height:300px; width:100%;"></canvas>
+      <div id="stats-anl" class="stats-grid"></div>
+  </div>
+
+<script>
+    // --- 1. FIREBASE CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyA_c1tU70FM84Qi_f_aSaQ-YVLo_18lCkI",
       authDomain: "reservasi-dolan-sawah.firebaseapp.com",
@@ -538,1427 +335,516 @@
       messagingSenderId: "213151400721",
       appId: "1:213151400721:web:e51b0d8cdd24206cf682b0"
     };
-    
-    // Initialize Firebase
-    if (!firebase.apps.length) {
-       firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // --- 2. GLOBAL STATE VARIABLES ---
-    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    // --- 2. GLOBAL VARS ---
+    const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
+    let curMonth = new Date().getMonth();
+    let curYear = new Date().getFullYear();
     
-    // State Kalender & Data Utama
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
-    let dataReservasi = {}; // Cache Reservasi: {'YYYY-MM-DD': [array]}
-    let detailMenu = {};    // Cache Menu: {'Nama Menu': [detail1, detail2]}
-    let locationsData = {}; // Cache Lokasi
-    let tanggalDipilih = '';
+    // Cache
+    let resCache = {}; // Main Reservasi
+    let reqCache = []; // Inbox Requests
+    let fullCache = {}; // Status Full
+    let menuCache = {}; // Menu Details
+    let priceCache = {}; // Menu Prices
+    let locCache = {}; // Locations
     
-    // State Fitur Baru (Integrasi)
-    let requestsCache = [];   // Cache Inbox Permintaan
-    let dateStatusCache = {}; // Cache Status Tanggal Penuh (Integrasi Viewer)
-    let menuPrices = {};      // Cache Harga Menu (Untuk fitur Chat WA Estimasi)
+    let selectedDate = '';
+    let unsubRes = null, unsubReq = null, unsubFull = null;
+    let bcCustomers = []; // Cache customer for broadcast
 
-    // Unsubscribers
-    let unsubscribeReservations = null;
-    let requestUnsubscribe = null;
-    let dateStatusUnsubscribe = null;
-    
-    // Variables Lain (Fitur Asli)
-    let allReservationsCache = null; // Untuk Analisis
-    let lastAnalysisPeriod = 'month';
-    let notificationInterval = null;
-    let lastNotificationCheck = 0;
-    
-    // Broadcast Cache
-    let promoMessageCache = null;
-    let allCustomersCache = [];
-    const BROADCAST_MESSAGE_KEY = 'dolanSawahBroadcastMessage';
-
-    // --- 3. DOM ELEMENTS ---
-    const mainContainer = document.getElementById('main-container');
-    const loginContainer = document.getElementById('login-container');
-    const logoutButton = document.getElementById('logout-button');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const toast = document.getElementById('toast');
-
-    // --- 4. AUTHENTICATION LOGIC ---
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            loginContainer.style.display = 'none'; 
-            mainContainer.style.display = 'block';
-            logoutButton.style.display = 'inline-flex'; 
-            initializeApp(); 
+    // --- 3. AUTHENTICATION ---
+    auth.onAuthStateChanged(u => {
+        if(u) {
+            document.getElementById('login-page').style.display='none';
+            document.getElementById('main-ui').style.display='block';
+            initApp();
         } else {
-            loginContainer.style.display = 'block'; 
-            mainContainer.style.display = 'none';
-            logoutButton.style.display = 'none';
-            if (notificationInterval) clearInterval(notificationInterval);
+            document.getElementById('login-page').style.display='flex';
+            document.getElementById('main-ui').style.display='none';
         }
     });
 
-    async function handleLogin() {
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-      const errorEl = document.getElementById('login-error');
-      
-      if (!email || !password) { 
-          errorEl.textContent = 'Email dan password wajib diisi'; 
-          errorEl.style.display = 'block'; return; 
-      }
-      
-      showLoader();
-      try { 
-          await auth.signInWithEmailAndPassword(email, password); 
-      } catch (err) { 
-          errorEl.textContent = 'Email atau password salah'; 
-          errorEl.style.display = 'block'; 
-      } finally { 
-          hideLoader(); 
-      }
+    function handleLogin() {
+        const e = document.getElementById('loginEmail').value;
+        const p = document.getElementById('loginPassword').value;
+        if(!e || !p) return Swal.fire('Error','Email & Pass wajib diisi','error');
+        
+        document.getElementById('loader').style.display='flex';
+        auth.signInWithEmailAndPassword(e,p).catch(er => {
+            document.getElementById('loader').style.display='none';
+            document.getElementById('loginError').innerText = er.message;
+            document.getElementById('loginError').style.display='block';
+        });
+    }
+    function handleLogout() { if(confirm('Yakin ingin logout?')) auth.signOut(); }
+
+    // --- 4. INIT & LOAD DATA ---
+    async function initApp() {
+        document.getElementById('loader').style.display='flex';
+        try {
+            await Promise.all([loadMenu(), loadLoc()]);
+            listenRes();
+            listenReq();
+            listenFull();
+            setupNotif();
+        } catch(e) { console.error(e); Swal.fire('Error Init', e.message, 'error'); }
+        document.getElementById('loader').style.display='none';
+    }
+
+    async function loadMenu() {
+        const s = await db.collection('menus').get();
+        menuCache = {}; priceCache = {};
+        s.forEach(d => {
+            const data = d.data();
+            menuCache[d.id] = data.details || [];
+            priceCache[d.id] = data.price ? parseInt(data.price) : 0;
+        });
+    }
+    async function loadLoc() {
+        const s = await db.collection('locations').get();
+        locCache = {};
+        s.forEach(d => locCache[d.id] = d.data());
+    }
+
+    // --- 5. LISTENERS ---
+    function listenRes() {
+        if(unsubRes) unsubRes();
+        // Listener per bulan untuk optimasi
+        const start = `${curYear}-${String(curMonth+1).padStart(2,'0')}-01`;
+        const end = `${curYear}-${String(curMonth+1).padStart(2,'0')}-31`;
+        
+        unsubRes = db.collection('reservations').where('date','>=',start).where('date','<=',end)
+            .onSnapshot(s => {
+                resCache = {};
+                s.forEach(d => {
+                    const r = {id:d.id, ...d.data()};
+                    if(!resCache[r.date]) resCache[r.date] = [];
+                    resCache[r.date].push(r);
+                });
+                renderCal();
+                // Jika sedang buka detail, refresh
+                if(selectedDate && document.getElementById('popup-detail').style.display==='block') openDetail(selectedDate);
+                // Update broadcast list cache
+                updateBcCache();
+            });
+    }
+
+    function listenReq() {
+        if(unsubReq) unsubReq();
+        unsubReq = db.collection('reservation_requests').where('status','==','pending')
+            .onSnapshot(s => {
+                reqCache = s.docs.map(d => ({id:d.id, ...d.data()}));
+                const c = reqCache.length;
+                document.getElementById('dashboard-inbox-badge').innerText = c;
+                document.getElementById('dashboard-inbox-badge').style.display = c>0?'inline-block':'none';
+                document.getElementById('header-inbox-badge').innerText = c;
+                document.getElementById('header-inbox-badge').style.display = c>0?'inline-block':'none';
+                if(document.getElementById('popup-inbox').style.display==='block') renderInbox();
+            });
+    }
+
+    function listenFull() {
+        if(unsubFull) unsubFull();
+        unsubFull = db.collection('date_status').onSnapshot(s => {
+            fullCache = {};
+            s.forEach(d => fullCache[d.data().date] = d.data().isFull);
+            renderCal();
+        });
+    }
+
+    // --- 6. CALENDAR UI ---
+    function renderCal() {
+        const el = document.getElementById('calendar-days');
+        el.innerHTML = '';
+        document.getElementById('monthYear').innerText = `${months[curMonth]} ${curYear}`;
+        
+        const fDay = new Date(curYear, curMonth, 1).getDay();
+        const days = new Date(curYear, curMonth+1, 0).getDate();
+        const today = new Date().toISOString().split('T')[0];
+        
+        for(let i=0; i<fDay; i++) el.innerHTML += `<div></div>`;
+        
+        for(let i=1; i<=days; i++) {
+            const date = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            const count = (resCache[date]||[]).length;
+            const isFull = fullCache[date] === true;
+            
+            let cls = 'cal-day';
+            if(date === today) cls += ' today';
+            if(isFull) cls += ' is-full';
+            
+            let html = `<div class="day-num">${i}</div>`;
+            if(isFull) { /* handled by css */ }
+            else if(count>0) html += `<div class="res-count">${count} Res</div>`;
+            
+            const div = document.createElement('div');
+            div.className = cls;
+            div.innerHTML = html;
+            div.onclick = () => openDetail(date);
+            el.appendChild(div);
+        }
     }
     
-    function handleLogout() { 
-        if (confirm("Yakin ingin logout?")) auth.signOut(); 
+    function moveMonth(d) {
+        curMonth += d;
+        if(curMonth<0){curMonth=11; curYear--;}
+        if(curMonth>11){curMonth=0; curYear++;}
+        listenRes(); // Refresh listener range
+    }
+    function goToToday() {
+        const n = new Date(); curMonth=n.getMonth(); curYear=n.getFullYear();
+        listenRes();
     }
 
-    // --- 5. INITIALIZATION ---
-    async function initializeApp() { 
-      showLoader();
-      try {
-        // Cek URL Parameter (Fitur Asli: Auto Open)
-        const urlParams = new URLSearchParams(window.location.search);
-        const paramDate = urlParams.get('date');
-        if (paramDate) {
-            const d = new Date(paramDate);
-            if (!isNaN(d.getTime())) {
-                currentMonth = d.getMonth();
-                currentYear = d.getFullYear();
-            }
-        }
-
-        // Load Data Master (Menu & Lokasi)
-        await loadMenus();
-        await loadLocations();
+    // --- 7. INBOX LOGIC (INTEGRATED) ---
+    function openInbox() { renderInbox(); openPopup('popup-inbox'); }
+    function renderInbox() {
+        const el = document.getElementById('inbox-list');
+        if(reqCache.length===0) { el.innerHTML='<p style="text-align:center; padding:20px; color:#888;">Tidak ada permintaan.</p>'; return; }
         
-        // Mulai Listeners Realtime
-        loadReservationsForCurrentMonth(); // Listener Utama
-        listenForRequests(); // Listener Inbox (BARU)
-        listenForDateStatus(); // Listener Status Full (BARU)
-        
-        setupReliableNotificationChecker();
-        
-      } catch (e) {
-        console.error("Gagal melakukan inisialisasi:", e);
-        showToast("Gagal memulai aplikasi", "error");
-      } finally {
-        hideLoader();
-      }
+        el.innerHTML = reqCache.map(r => `
+            <div class="req-card">
+                <div class="req-header">
+                    <div><b>${r.nama}</b> <span style="font-size:0.8rem; color:#666;">(${r.via||'Web'})</span></div>
+                    <div style="text-align:right; color:var(--primary);"><b>${r.date}</b><br>${r.jam}</div>
+                </div>
+                <div style="font-size:0.9rem; margin-bottom:5px;">
+                    <i class="fas fa-users"></i> ${r.jumlah} pax | <i class="fas fa-map-marker-alt"></i> ${r.tempat} | ${r.nomorHp}
+                </div>
+                <div class="req-menu">
+                    ${(r.menus||[]).map(m=>`<b>${m.quantity}x</b> ${m.name}`).join(', ') || '-'}
+                </div>
+                ${r.tambahan ? `<div style="font-size:0.8rem; color:orange;">Note: ${r.tambahan}</div>` : ''}
+                <div class="req-actions">
+                    <button class="btn btn-whatsapp btn-sm" onclick="chatReq('${r.id}')"><i class="fab fa-whatsapp"></i> Chat & Hitung</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectReq('${r.id}')">Tolak</button>
+                    <button class="btn btn-success btn-sm" onclick="approveReq('${r.id}')">Terima</button>
+                </div>
+            </div>
+        `).join('');
     }
-
-    // --- 6. DATA LOADING (UPDATED) ---
-    async function loadMenus() {
-      try {
-        const snapshot = await db.collection('menus').get();
-        detailMenu = {};
-        menuPrices = {}; // Reset cache harga
-        
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            detailMenu[doc.id] = data.details || [];
-            // Simpan harga jika ada (default 0). Penting untuk fitur Chat WA Estimasi.
-            menuPrices[doc.id] = data.price ? parseInt(data.price) : 0;
+    
+    function chatReq(id) {
+        const r = reqCache.find(x=>x.id===id);
+        let total=0, txt='';
+        (r.menus||[]).forEach(m => {
+            const p = priceCache[m.name] || 0;
+            const sub = p*m.quantity;
+            total+=sub;
+            txt += `- ${m.name} (${m.quantity}x): ${p>0 ? formatRp(sub) : 'Rp ?'}\n`;
         });
-      } catch (e) { 
-        console.error("Error Menu:", e);
-        showToast("Gagal memuat menu: " + e.message, "error"); 
-      }
+        const dp = total*0.5;
+        const msg = `Halo Kak *${r.nama}* 👋,\nTerima kasih reservasi di Dolan Sawah.\n\nDetail:\n🗓 ${r.date} | ⏰ ${r.jam}\n👥 ${r.jumlah} pax | 📍 ${r.tempat}\n\n*Estimasi Pesanan:*\n${txt}\nSubtotal: Rp ${formatRp(total)}\n*DP (50%): Rp ${formatRp(dp)}*\n\nMohon konfirmasi transfer DP ya kak.`;
+        window.open(`https://wa.me/${r.nomorHp.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`,'_blank');
     }
-
-    async function loadLocations() {
-        try {
-            const snapshot = await db.collection('locations').get();
-            locationsData = {};
-            snapshot.forEach(doc => {
-                locationsData[doc.id] = doc.data();
-            });
-        } catch (e) { 
-            console.error("Error Lokasi:", e);
-            showToast("Gagal memuat lokasi: " + e.message, "error"); 
+    
+    async function approveReq(id) {
+        const r = reqCache.find(x=>x.id===id);
+        const {value:dp} = await Swal.fire({input:'number', title:'Input DP (Rp)', inputPlaceholder:'0'});
+        if(dp !== undefined) {
+            document.getElementById('loader').style.display='flex';
+            try {
+                await db.collection('reservations').add({
+                    ...r, dp:parseInt(dp), status:'confirmed', 
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(), via:'Mandiri Approved'
+                });
+                await db.collection('reservation_requests').doc(id).delete();
+                Swal.fire('Sukses','Masuk Kalender','success');
+                if(reqCache.length<=1) closePopup('popup-inbox');
+            } catch(e){Swal.fire('Err',e.message,'error');}
+            document.getElementById('loader').style.display='none';
+        }
+    }
+    
+    async function rejectReq(id) {
+        if(confirm('Hapus permanen permintaan ini?')) {
+            await db.collection('reservation_requests').doc(id).delete();
         }
     }
 
-    // --- 7. LISTENER RESERVASI UTAMA (ORIGINAL LOGIC) ---
-    function loadReservationsForCurrentMonth() {
-      if (unsubscribeReservations) unsubscribeReservations();
-      
-      const monthStr = String(currentMonth + 1).padStart(2, '0');
-      const startDate = `${currentYear}-${monthStr}-01`;
-      const endDate = `${currentYear}-${monthStr}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`;
-      
-      unsubscribeReservations = db.collection('reservations')
-        .where('date', '>=', startDate).where('date', '<=', endDate)
-        .onSnapshot( snapshot => {
-            dataReservasi = {};
-            snapshot.forEach(doc => {
-              const r = { id: doc.id, ...doc.data() };
-              // Fix format tanggal jika perlu
-              const dateKey = r.date; 
-              if (!dataReservasi[dateKey]) dataReservasi[dateKey] = [];
-              dataReservasi[dateKey].push(r);
-            });
-            
-            buatKalender(); // Refresh UI Kalender
+    // --- 8. SET FULL ---
+    function openSetFull() { 
+        document.getElementById('blockDate').value = new Date().toISOString().split('T')[0];
+        openPopup('popup-full'); 
+    }
+    async function setFullStatus(stat) {
+        const d = document.getElementById('blockDate').value;
+        if(!d) return;
+        await db.collection('date_status').doc(d).set({date:d, isFull:stat}, {merge:true});
+        closePopup('popup-full'); Swal.fire('Berhasil', `Status ${d}: ${stat?'PENUH':'BUKA'}`, 'success');
+    }
 
-            // Logic Auto Open (Fitur Asli)
-            const urlParams = new URLSearchParams(window.location.search);
-            const autoOpen = urlParams.get('autoOpen');
-            const paramDate = urlParams.get('date');
-            const paramSearch = urlParams.get('search');
+    // --- 9. CRUD RESERVASI ---
+    function openAddForm() {
+        document.getElementById('res-form').reset();
+        document.getElementById('edit-id').value='';
+        document.getElementById('form-title').innerText = 'Input Reservasi';
+        document.getElementById('menu-rows').innerHTML='';
+        if(selectedDate) document.getElementById('inp-date').value = selectedDate;
+        
+        fillLoc(); addMenuRow(); 
+        openPopup('popup-form');
+    }
+    
+    function addMenuRow(name='', qty=1) {
+        const d = document.createElement('div');
+        d.className = 'menu-row';
+        let ops = '<option value="">Pilih...</option>';
+        Object.keys(menuCache).sort().forEach(k => {
+            const p = priceCache[k] ? ` (${formatRp(priceCache[k])})` : '';
+            ops += `<option value="${k}" ${k===name?'selected':''}>${k}${p}</option>`;
+        });
+        d.innerHTML = `<select class="menu-select">${ops}</select><input type="number" class="quantity-input" value="${qty}"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">X</button>`;
+        document.getElementById('menu-rows').appendChild(d);
+    }
+    
+    function fillLoc() {
+        const s = document.getElementById('inp-tempat');
+        s.innerHTML = '<option value="">Pilih...</option>';
+        Object.values(locCache).forEach(l => {
+            s.innerHTML += `<option value="${l.name}">${l.name} (Kap: ${l.capacity})</option>`;
+        });
+    }
+    function checkCap() {
+        const t = document.getElementById('inp-tempat').value;
+        const l = Object.values(locCache).find(x=>x.name===t);
+        if(l) document.getElementById('cap-info').innerText = `Max: ${l.capacity}`;
+    }
+    
+    async function saveReservation() {
+        const id = document.getElementById('edit-id').value;
+        const data = {
+            nama: document.getElementById('inp-nama').value,
+            nomorHp: document.getElementById('inp-hp').value,
+            date: document.getElementById('inp-date').value,
+            jam: document.getElementById('inp-jam').value,
+            jumlah: parseInt(document.getElementById('inp-jml').value),
+            tempat: document.getElementById('inp-tempat').value,
+            dp: parseInt(document.getElementById('inp-dp').value) || 0,
+            tipeDp: document.getElementById('inp-via').value,
+            tambahan: document.getElementById('inp-note').value,
+            menus: []
+        };
+        
+        if(!data.nama || !data.date) return alert("Nama & Tanggal wajib");
+        
+        document.querySelectorAll('#menu-rows .menu-row').forEach(r => {
+            const n = r.querySelector('select').value;
+            const q = r.querySelector('input').value;
+            if(n && q) data.menus.push({name:n, quantity:parseInt(q)});
+        });
+        
+        document.getElementById('loader').style.display='flex';
+        try {
+            if(id) await db.collection('reservations').doc(id).update(data);
+            else await db.collection('reservations').add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp(), via:'Admin'});
+            closePopup('popup-form'); Swal.fire('Tersimpan');
+        } catch(e) { Swal.fire('Err',e.message,'error'); }
+        document.getElementById('loader').style.display='none';
+    }
 
-            if (autoOpen && paramDate && paramSearch && !window.hasAutoOpened) {
-                const d = new Date(paramDate);
-                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-                    const checkDateKey = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    // Format tanggal harus sama persis dengan key di database (biasanya YYYY-MM-DD)
-                    // Asumsi: database pakai YYYY-MM-DD. 
-                    // Kita gunakan paramDate langsung jika formatnya sudah YYYY-MM-DD
-                    
-                    const dailyData = dataReservasi[paramDate] || [];
-                    const dataFound = dailyData.some(r => r.nama.toLowerCase().includes(paramSearch.toLowerCase()));
+    // --- 10. DETAIL VIEW ---
+    function openDetail(date) {
+        selectedDate = date;
+        const list = resCache[date] || [];
+        document.getElementById('detail-title').innerText = `${date} (${list.length})`;
+        const el = document.getElementById('detail-list');
+        document.getElementById('search-detail').value=''; // Reset search
+        
+        if(list.length===0) { el.innerHTML='<p style="text-align:center; color:#999; grid-column:1/-1;">Kosong</p>'; } 
+        else { renderDetailList(list); }
+        
+        openPopup('popup-detail');
+    }
+    
+    function renderDetailList(list) {
+        document.getElementById('detail-list').innerHTML = list.map(r => `
+            <div class="res-card">
+                <div class="res-info">
+                    <div><b>${r.nama}</b><br><small>${r.nomorHp}</small></div>
+                    <div style="text-align:right;"><span style="background:var(--primary); color:white; padding:2px 8px; border-radius:10px; font-size:0.8rem;">${r.jam}</span></div>
+                </div>
+                <div style="font-size:0.9rem; margin-bottom:5px;">
+                    <i class="fas fa-users"></i> ${r.jumlah} | <i class="fas fa-map-marker-alt"></i> ${r.tempat}
+                </div>
+                <div style="background:#f9f9f9; padding:5px; font-size:0.85rem; border-radius:5px; margin-bottom:5px;">
+                    ${(r.menus||[]).map(m=>`<div>${m.quantity}x ${m.name}</div>`).join('') || '-'}
+                </div>
+                <div style="font-size:0.85rem; display:flex; justify-content:space-between;">
+                    <span style="color:green; font-weight:bold;">DP: ${formatRp(r.dp)}</span>
+                    <small>${r.via||'Manual'}</small>
+                </div>
+                ${r.tambahan ? `<div style="font-size:0.8rem; color:orange;">${r.tambahan}</div>`:''}
+                <div style="margin-top:10px; display:flex; gap:5px;">
+                    <button class="btn btn-sm btn-whatsapp" style="flex:1;" onclick="waCust('${r.nomorHp}','${r.nama}')">Chat</button>
+                    <button class="btn btn-sm btn-secondary" style="flex:1;" onclick="editRes('${r.id}')">Edit</button>
+                    <button class="btn btn-sm btn-danger" style="flex:1;" onclick="delRes('${r.id}')">Hapus</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function filterDetail(v) {
+        if(!selectedDate) return;
+        const q = v.toLowerCase();
+        const filtered = (resCache[selectedDate]||[]).filter(r => r.nama.toLowerCase().includes(q) || r.tempat.toLowerCase().includes(q));
+        renderDetailList(filtered);
+    }
+    
+    function editRes(id) {
+        const r = resCache[selectedDate].find(x=>x.id===id);
+        document.getElementById('edit-id').value=r.id;
+        document.getElementById('form-title').innerText='Edit Data';
+        document.getElementById('inp-nama').value=r.nama;
+        document.getElementById('inp-hp').value=r.nomorHp;
+        document.getElementById('inp-date').value=r.date;
+        document.getElementById('inp-jam').value=r.jam;
+        document.getElementById('inp-jml').value=r.jumlah;
+        fillLoc(); document.getElementById('inp-tempat').value=r.tempat;
+        document.getElementById('inp-dp').value=r.dp;
+        document.getElementById('inp-via').value=r.tipeDp;
+        document.getElementById('inp-note').value=r.tambahan;
+        document.getElementById('menu-rows').innerHTML='';
+        (r.menus||[]).forEach(m => addMenuRow(m.name, m.quantity));
+        openPopup('popup-form');
+    }
+    
+    async function delRes(id) {
+        if(confirm('Hapus?')) await db.collection('reservations').doc(id).delete();
+    }
 
-                    if (dataFound) {
-                        pilihTanggal(d.getDate()); // Trigger buka detail
-                        setTimeout(() => {
-                            const searchInput = document.getElementById('detailSearchInput');
-                            if (searchInput) {
-                                searchInput.value = paramSearch;
-                                filterReservations(paramSearch);
-                                showToast(`Data baru ditemukan: ${paramSearch}`, "success");
-                            }
-                        }, 500);
-                        window.hasAutoOpened = true;
-                        window.history.replaceState({}, document.title, window.location.pathname);
+    // --- 11. UTILITAS (EXPORT, PRINT, BROADCAST, DLL) ---
+    function openExport() {
+        // Export simplified JSON for Viewer
+        const data = { v:'6.0', data: resCache };
+        document.getElementById('export-area').value = btoa(JSON.stringify(data));
+        openPopup('popup-export');
+    }
+    function copyExport() {
+        document.getElementById('export-area').select(); document.execCommand('copy');
+        Swal.fire('Tersalin');
+    }
+    
+    function openMenu() { renderMList(); openPopup('popup-menu'); }
+    function renderMList() { document.getElementById('list-menu').innerHTML = Object.keys(menuCache).map(k=>`<div>${k} <button onclick="delMenu('${k}')">x</button></div>`).join(''); }
+    async function addMenu() { 
+        const n=document.getElementById('new-menu-name').value;
+        const p=document.getElementById('new-menu-price').value;
+        const d=document.getElementById('new-menu-det').value.split(',');
+        await db.collection('menus').doc(n).set({price:p, details:d}); loadMenu(); renderMList();
+    }
+    async function delMenu(n) { if(confirm('Hapus?')) { await db.collection('menus').doc(n).delete(); loadMenu(); renderMList(); } }
+
+    function openLocation() { renderLList(); openPopup('popup-loc'); }
+    function renderLList() { document.getElementById('list-loc').innerHTML = Object.values(locCache).map(l=>`<div>${l.name} <button onclick="delLoc('${l.id}')">x</button></div>`).join(''); }
+    async function addLoc() {
+        const n=document.getElementById('new-loc-name').value; const c=document.getElementById('new-loc-cap').value;
+        await db.collection('locations').add({name:n, capacity:c}); loadLoc(); renderLList();
+    }
+    async function delLoc(id) { if(confirm('Hapus?')) await db.collection('locations').doc(id).delete(); loadLoc(); renderLList(); }
+    
+    // Broadcast
+    function updateBcCache() {
+        bcCustomers = [];
+        Object.values(resCache).flat().forEach(r => { 
+            if(r.nomorHp) bcCustomers.push({n:r.nama, h:r.nomorHp}); 
+        });
+        // Unique
+        bcCustomers = bcCustomers.filter((v,i,a)=>a.findIndex(t=>(t.h === v.h))===i);
+    }
+    function openBroadcast() { 
+        document.getElementById('bc-msg').value = localStorage.getItem('bc_tmpl') || '';
+        filterBc(''); openPopup('popup-broadcast'); 
+    }
+    function saveBcMsg() { localStorage.setItem('bc_tmpl', document.getElementById('bc-msg').value); Swal.fire('Saved'); }
+    function filterBc(v) {
+        const q = v.toLowerCase();
+        const el = document.getElementById('bc-list');
+        const list = bcCustomers.filter(c => c.n.toLowerCase().includes(q) || c.h.includes(q));
+        el.innerHTML = list.map(c => `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;"><b>${c.n}</b> <button class="btn btn-sm btn-whatsapp" onclick="sendBc('${c.h}','${c.n}')">Kirim</button></div>`).join('');
+    }
+    function sendBc(h,n) {
+        let msg = document.getElementById('bc-msg').value;
+        msg = msg.replace('Kak', `Kak ${n}`);
+        window.open(`https://wa.me/${h.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`,'_blank');
+    }
+    
+    // Customer
+    function openCustomer() { filterCust(''); openPopup('popup-customer'); }
+    function filterCust(v) {
+        const q = v.toLowerCase();
+        const list = bcCustomers.filter(c => c.n.toLowerCase().includes(q) || c.h.includes(q)); // Reuse bc list
+        document.getElementById('cust-list').innerHTML = list.map(c => `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${c.n}</b> (${c.h}) <button class="btn btn-sm btn-whatsapp" onclick="waCust('${c.h}','${c.n}')">WA</button></div>`).join('');
+    }
+    
+    // Analysis
+    function openAnalysis() {
+        openPopup('popup-analysis');
+        const ctx = document.getElementById('chart-anl').getContext('2d');
+        const counts = Array(12).fill(0);
+        let totalPax = 0;
+        // Scan data tahun ini (resCache hanya muat bulan ini, perlu load all? untuk simple kita pakai bulan ini saja dulu atau load extra)
+        // Note: Untuk performa, idealnya load all data di background. Disini kita visualisasi bulan ini.
+        Object.keys(resCache).forEach(d => {
+            const dt = new Date(d);
+            if(dt.getMonth() === curMonth) counts[dt.getMonth()] = (resCache[d]||[]).length;
+            (resCache[d]||[]).forEach(r => totalPax += parseInt(r.jumlah)||0);
+        });
+        
+        new Chart(ctx, { type:'bar', data:{labels:months, datasets:[{label:'Reservasi', data:counts, backgroundColor:'#2a9d8f'}]}});
+        document.getElementById('stats-anl').innerHTML = `
+            <div class="mini-stat"><div class="val">${totalPax}</div><small>Total Pax (Bulan Ini)</small></div>
+        `;
+    }
+    
+    // Print & Share
+    function shareDay() {
+        if(!selectedDate) return;
+        const list = resCache[selectedDate] || [];
+        let txt = `*Laporan ${selectedDate}*\n`;
+        list.forEach((r,i) => txt += `${i+1}. ${r.nama} (${r.jam}) - ${r.jumlah} org\n`);
+        window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
+    }
+    function printDay() { window.print(); }
+
+    // Utils
+    function formatRp(n) { return (n||0).toLocaleString('id-ID'); }
+    function openPopup(id) { document.getElementById(id).style.display='block'; document.getElementById('overlay').style.display='block'; }
+    function closePopup(id) { document.getElementById(id).style.display='none'; document.getElementById('overlay').style.display='none'; }
+    function waCust(h,n) { window.open(`https://wa.me/${h.replace(/^0/,'62')}?text=Halo Kak ${n}`,'_blank'); }
+    function toggleNotif() {
+        const d = document.getElementById('notif-dropdown');
+        d.style.display = d.style.display==='block'?'none':'block';
+    }
+    
+    function setupNotif() {
+        // Simple interval for notification
+        setInterval(()=>{
+            const n = new Date();
+            const today = n.toISOString().split('T')[0];
+            const list = resCache[today]||[];
+            let count=0, html='';
+            list.forEach(r=>{
+                if(!r.thankSent) {
+                    const [h,m] = r.jam.split(':');
+                    const t = new Date(); t.setHours(h,m,0);
+                    if(n > new Date(t.getTime()+2*3600000)) {
+                        count++;
+                        html+=`<div class="notification-item">${r.nama} <button class="btn btn-sm btn-success" onclick="markSent('${r.id}')">Kirim</button></div>`;
                     }
                 }
-            }
-
-            // Update list detail jika sedang membuka tanggal
-            if (tanggalDipilih) {
-                const reservations = dataReservasi[tanggalDipilih] || [];
-                updateReservationList(reservations);
-            }
-          }, 
-          err => { showToast("Gagal memuat data reservasi", "error"); }
-        );
-    }
-
-    // --- 8. LISTENER INBOX PERMINTAAN (FITUR BARU DARI ADMIN MANDIRI) ---
-    function listenForRequests() {
-        if(requestUnsubscribe) requestUnsubscribe();
-        
-        // Mengambil permintaan dengan status 'pending'
-        requestUnsubscribe = db.collection('reservation_requests')
-            .where('status', '==', 'pending')
-            .orderBy('createdAt', 'desc')
-            .onSnapshot(snap => {
-                requestsCache = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                updateInboxBadge(); // Update notifikasi merah di tombol
-                
-                // Jika popup inbox sedang terbuka, refresh isinya real-time
-                if(document.getElementById('requestInboxPopup').style.display === 'block') {
-                    renderRequestList();
-                }
             });
+            const badge = document.getElementById('notif-badge');
+            badge.innerText = count;
+            badge.style.display = count>0?'flex':'none';
+            document.getElementById('notif-list').innerHTML = html || '<div style="padding:10px; color:#999;">Kosong</div>';
+        }, 60000);
     }
-
-    function updateInboxBadge() {
-        const count = requestsCache.length;
-        const badge = document.getElementById('req-count-badge');
-        if(badge) {
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'flex' : 'none';
-        }
-        // Opsional: Notifikasi suara jika ada order baru
-    }
-
-    // --- 9. LISTENER STATUS TANGGAL PENUH (FITUR BARU DARI VIEWER) ---
-    function listenForDateStatus() {
-        if(dateStatusUnsubscribe) dateStatusUnsubscribe();
-        
-        const mStr = String(currentMonth + 1).padStart(2, '0');
-        const startDate = `${currentYear}-${mStr}-01`;
-        const endDate = `${currentYear}-${mStr}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`;
-
-        dateStatusUnsubscribe = db.collection('date_status')
-            .where('date', '>=', startDate)
-            .where('date', '<=', endDate)
-            .onSnapshot(snap => {
-                dateStatusCache = {};
-                snap.forEach(doc => {
-                    // Simpan status (true = full)
-                    dateStatusCache[doc.data().date] = doc.data().isFull;
-                });
-                buatKalender(); // Refresh kalender agar warna merah muncul
-            });
-    }
-
-    // --- 10. UI HELPERS ---
-    function showLoader() { loadingOverlay.style.display = 'flex'; }
-    function hideLoader() { loadingOverlay.style.display = 'none'; }
-    function showToast(message, type = 'success') {
-      toast.textContent = message; 
-      toast.className = `toast ${type}`; 
-      toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 3000);
-    }
-    function formatRupiah(amount) { return (amount || 0).toLocaleString('id-ID'); }
-    function cleanPhoneNumber(phone) { return phone.replace(/[^0-9]/g, ''); }
-    function isValidPhone(phone) { return /^[0-9]{10,13}$/.test(cleanPhoneNumber(phone)); }
-    function closePopup(popupId) {
-        document.getElementById(popupId).style.display = 'none';
-        // Logic khusus: Jangan tutup overlay jika popup lain masih buka (misal broadcast flow)
-        if (popupId === 'broadcastSettingsPopup' || popupId === 'broadcastListPopup') {
-             // Biarkan overlay, karena Main Broadcast popup mungkin masih ada di bawahnya? 
-             // Atau jika flow linear, kita tutup overlay.
-             // Untuk keamanan flow UI sederhana:
-             document.getElementById('overlay').style.display = 'none';
-        } else {
-             document.getElementById('overlay').style.display = 'none';
-        }
-    }
-
-    // --- 11. CALENDAR RENDERING LOGIC (UPDATED) ---
-    function buatKalender() {
-      const calendarEl = document.getElementById('calendar');
-      const monthYearEl = document.getElementById('monthYear');
-      
-      calendarEl.innerHTML = ''; 
-      monthYearEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-      
-      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      
-      // Kotak kosong awal bulan
-      for (let i = 0; i < firstDay; i++) { calendarEl.insertAdjacentHTML('beforeend', `<div></div>`); }
-      
-      // Kotak tanggal
-      for (let i = 1; i <= daysInMonth; i++) {
-        const mStr = String(currentMonth + 1).padStart(2, '0');
-        const dStr = String(i).padStart(2, '0');
-        const dateKey = `${currentYear}-${mStr}-${dStr}`; // Format YYYY-MM-DD
-        
-        const isToday = new Date().toDateString() === new Date(currentYear, currentMonth, i).toDateString() ? 'today' : '';
-        const isSelected = dateKey === tanggalDipilih ? 'selected' : '';
-        
-        // Data Reservasi
-        const hasRes = dataReservasi[dateKey] && dataReservasi[dateKey].length > 0;
-        
-        // Data Status Full (Fitur Baru)
-        const isManualFull = dateStatusCache[dateKey] === true;
-        
-        let countHTML = '';
-        let extraClass = '';
-
-        if (isManualFull) {
-            // Jika diset PENUH via admin/viewer
-            extraClass = 'is-full'; // Class CSS baru di Bagian 1
-            countHTML = `<div class="reservation-count" style="background:white; color:var(--danger);">FULL</div>`;
-        } else if (hasRes) {
-            // Jika ada reservasi normal
-            countHTML = `<div class="reservation-count">${dataReservasi[dateKey].length} Res</div>`;
-        }
-
-        calendarEl.insertAdjacentHTML('beforeend', `
-          <div class="calendar-day ${isToday} ${isSelected} ${extraClass}" onclick="pilihTanggal(${i})">
-            <div class="day-number">${i}</div>
-            ${countHTML}
-          </div>`);
-      }
-    }
-    
-    function pilihTanggal(day) {
-      const mStr = String(currentMonth + 1).padStart(2, '0');
-      const dStr = String(day).padStart(2, '0');
-      tanggalDipilih = `${currentYear}-${mStr}-${dStr}`;
-      
-      buatKalender(); // Refresh highlight selected
-      
-      const reservations = dataReservasi[tanggalDipilih] || [];
-      const viewContainer = document.getElementById('reservation-view-container');
-      
-      document.getElementById('reservation-view-title').innerHTML = `<i class="far fa-calendar-check"></i> Reservasi ${day} ${monthNames[currentMonth]} ${currentYear}`;
-      document.getElementById('detailSearchInput').value = ''; 
-      
-      updateReservationList(reservations); 
-      
-      document.getElementById('main-container').style.display = 'none';
-      viewContainer.style.display = 'block';
-      window.scrollTo(0, 0);
-      
-      // Jika kosong, beri info
-      const isFull = dateStatusCache[tanggalDipilih] === true;
-      if (reservations.length === 0 && !isFull) {
-          showToast("Belum ada reservasi, silakan tambah baru.", "info");
-      }
-    }
-
-    function kembaliKeKalender() {
-      document.getElementById('reservation-view-container').style.display = 'none';
-      document.getElementById('main-container').style.display = 'block';
-      tanggalDipilih = '';
-      buatKalender();
-    }
-    
-    function navigateMonth(direction) {
-        currentMonth += direction;
-        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-        kembaliKeKalender(); 
-        
-        // Reload semua listener karena bulan berubah
-        loadReservationsForCurrentMonth();
-        listenForDateStatus();
-    }
-    const previousMonth = () => navigateMonth(-1);
-    const nextMonth = () => navigateMonth(1);
-
-    function goToToday() {
-        currentMonth = new Date().getMonth(); currentYear = new Date().getFullYear();
-        kembaliKeKalender(); 
-        loadReservationsForCurrentMonth(); 
-        listenForDateStatus();
-        showToast("Kembali ke bulan ini");
-    }
-</script>
-    // ============================================================
-    // BAGIAN 4: LOGIKA UI, CRUD, INBOX, DAN FITUR LEGACY
-    // ============================================================
-
-    // --- 12. LOGIKA TAMPILAN DETAIL RESERVASI ---
-    function updateReservationList(reservations) {
-        const container = document.getElementById('reservation-detail-list');
-        if (!reservations || reservations.length === 0) {
-            container.innerHTML = `<p style="text-align:center; padding:20px 0; grid-column: 1 / -1; color:#888;">Tidak ada reservasi (Buka). Pilih "Set Tgl Penuh" jika ingin menutup tanggal ini.</p>`; 
-            return;
-        }
-        
-        container.innerHTML = reservations.map(r => {
-            let menuItemsHtml = "-";
-            let menuTitle = "Pesanan";
-
-            // Support format baru (Array) dan lama (String)
-            if (Array.isArray(r.menus) && r.menus.length > 0) {
-                menuItemsHtml = r.menus.map(item => {
-                    const details = detailMenu[item.name] || [];
-                    const detailString = details.length > 0 ? `<br><small style="color:#666;">(${details.join(', ')})</small>` : '';
-                    return `<div><strong>${item.quantity}x</strong> ${item.name} ${detailString}</div>`;
-                }).join('');
-            } else if (r.menu) { 
-                menuItemsHtml = r.menu; // Fallback
-            }
-
-            const dpInfo = r.dp > 0 ? `<div style="color:var(--success); font-weight:600;"><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)} <small>(${r.tipeDp || '-'})</small></div>` : '<div style="color:#aaa;">Belum DP</div>';
-            
-            // Tombol Terima Kasih
-            let thankYouBtn = '';
-            if (r.nomorHp) {
-                if (r.thankYouSent) {
-                    thankYouBtn = `<button class="btn btn-secondary btn-sm" disabled><i class="fas fa-check-double"></i> Terkirim</button>`;
-                } else {
-                    thankYouBtn = `<button class="btn btn-accent btn-sm" id="thank-you-btn-${r.id}" onclick="sendThankYouMessage('${r.id}', '${r.nama}', '${r.nomorHp}')"><i class="fas fa-heart"></i> Thanks</button>`;
-                }
-            }
-
-            return `
-            <div class="reservation-item" style="border-left: 5px solid var(--primary); background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <div>
-                        <div style="font-size:1.1rem; font-weight:700; color:var(--primary-dark);">${r.nama || 'Tanpa Nama'}</div>
-                        <div style="font-size:0.85rem; color:#666;">${r.nomorHp || '-'}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="background:var(--primary); color:white; padding:3px 10px; border-radius:15px; font-size:0.8rem;">${r.jam}</span>
-                        <div style="font-size:0.8rem; margin-top:5px; color:#888;">${r.via || 'Manual'}</div>
-                    </div>
-                </div>
-                
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; font-size:0.9rem;">
-                    <div><i class="fas fa-map-marker-alt" style="color:var(--danger);"></i> ${r.tempat || '?'}</div>
-                    <div><i class="fas fa-users" style="color:var(--info);"></i> ${r.jumlah || '?'} org</div>
-                </div>
-
-                <div class="menu-detail" style="font-size:0.9rem;">${menuItemsHtml}</div>
-                
-                <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #eee;">
-                    ${dpInfo}
-                    ${r.tambahan ? `<div style="font-size:0.85rem; color:#d35400; background:#fff8e1; padding:5px; margin-top:5px; border-radius:4px;">Note: ${r.tambahan}</div>` : ''}
-                </div>
-
-                <div class="action-buttons" style="margin-top:15px; display:flex; gap:5px;">
-                    ${r.nomorHp ? `<button class="btn btn-whatsapp btn-sm" onclick="contactViaWhatsApp('${r.id}')"><i class="fab fa-whatsapp"></i> Chat</button>` : ''}
-                    ${thankYouBtn}
-                    <button class="btn btn-secondary btn-sm" onclick="editReservasi('${r.id}')"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-danger btn-sm" onclick="hapusReservasi('${r.id}')"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    function filterReservations(query) {
-      if (!tanggalDipilih) return;
-      const q = query.toLowerCase();
-      const filtered = (dataReservasi[tanggalDipilih] || []).filter(r => 
-        (r.nama && r.nama.toLowerCase().includes(q)) || 
-        (r.tempat && r.tempat.toLowerCase().includes(q)) ||
-        (r.menus && r.menus.some(m => m.name && m.name.toLowerCase().includes(q)))
-      );
-      updateReservationList(filtered);
-    }
-    
-    function sortReservations(sortBy) {
-        if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
-        const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => {
-            const valA = a[sortBy] || '';
-            const valB = b[sortBy] || '';
-            return valA.localeCompare(valB);
-        });
-        updateReservationList(sorted);
-        document.querySelector('.sort-options').style.display = 'none';
-    }
-    function toggleDetailSort(e) {
-        e.stopPropagation();
-        const el = document.getElementById('sortOptionsDetail');
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
-    }
-
-    // --- 13. CRUD RESERVASI (MANUAL) ---
-    function showAddForm() {
-        document.getElementById('reservation-form').reset();
-        // Reset hidden ID untuk memastikan mode tambah
-        if(document.getElementById('editReservationId')) document.getElementById('editReservationId').value = ''; 
-        
-        // Reset dropdown lokasi
-        populateLocationDropdown(document.querySelector('#reservation-form #tempat'));
-        document.getElementById('capacity-info').textContent = '';
-        
-        // Reset menu dynamic row
-        const menuContainer = document.getElementById('selected-menus-container');
-        menuContainer.innerHTML = '';
-        addMenuSelectionRow('reservation-form'); // Default 1 row
-        
-        // Set tanggal default ke tanggal yang dipilih di kalender (jika ada)
-        if(tanggalDipilih) {
-            // Karena input type="date" formatnya YYYY-MM-DD, dan tanggalDipilih formatnya sama, kita bisa langsung set.
-            // Namun form Anda di HTML mungkin tidak memiliki input tanggal di popup "addFormPopup" yang original?
-            // Perbaikan: Saya tidak mengubah HTML original popup addFormPopup Anda di Bagian 2 (hanya logicnya).
-            // Tapi untuk amannya, saya asumsikan input tanggal ada atau kita simpan ke variabel global saat submit.
-        }
-
-        document.getElementById('addFormPopup').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
-    }
-
-    // Fungsi helper untuk menambah baris menu
-    function addMenuSelectionRow(formId, menuName = '', quantity = 1) {
-      const container = document.querySelector(`#${formId} #selected-menus-container`);
-      const newRow = document.createElement('div');
-      newRow.className = 'menu-selection-row';
-      
-      let menuOptions = `<option value="">Pilih Menu...</option>`;
-      Object.keys(detailMenu).sort().forEach(name => {
-          const selected = name === menuName ? 'selected' : '';
-          menuOptions += `<option value="${name}" ${selected}>${name}</option>`;
-      });
-
-      newRow.innerHTML = `
-        <select class="menu-select">${menuOptions}</select>
-        <input type="number" class="quantity-input" value="${quantity}" min="1" placeholder="Jml">
-        <button type="button" class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-trash"></i></button>`;
-      container.appendChild(newRow);
-    }
-
-    function editReservasi(id) {
-      // Cari data di cache lokal
-      let res = null;
-      // Loop semua tanggal untuk mencari ID (karena dataReservasi terpisah per tanggal)
-      for (const date in dataReservasi) {
-          const found = dataReservasi[date].find(r => r.id === id);
-          if (found) { res = found; break; }
-      }
-      
-      if (!res) { showToast("Data tidak ditemukan di cache", "error"); return; }
-      
-      const formHTML = `
-        <form id="edit-reservation-form">
-          <h3><i class="fas fa-edit"></i> Edit Reservasi</h3>
-          <input type="hidden" id="editReservationId" value="${id}" />
-          <input type="hidden" id="originalDate" value="${res.date}" />
-          
-          <label>Nama: <input type="text" id="nama" value="${res.nama || ''}" required /></label>
-          <label>No HP: <input type="tel" id="nomorHp" value="${res.nomorHp || ''}" /></label>
-          
-          <label>Tanggal: <input type="date" id="editDate" value="${res.date}" required /></label>
-          
-          <label>Jam: <input type="time" id="jam" value="${res.jam || ''}" required /></label>
-          <label>Jumlah: <input type="number" id="jumlah" value="${res.jumlah || ''}" min="1" required /></label>
-          
-          <label>DP: <input type="number" id="dp" value="${res.dp || 0}" /></label>
-          <label>Tipe DP: <select id="tipeDp"></select></label>
-          
-          <label>Tempat: <select id="tempat" required onchange="updateCapacityInfo('edit-reservation-form')"></select>
-            <span id="capacity-info"></span>
-          </label>
-          
-          <label>Menu:</label>
-          <div id="selected-menus-container"></div>
-          <button type="button" class="secondary" onclick="addMenuSelectionRow('edit-reservation-form')"><i class="fas fa-plus"></i> Tambah Menu</button>
-          
-          <label>Catatan: <textarea id="tambahan">${res.tambahan || ''}</textarea></label>
-          
-          <div class="data-actions">
-            <button type="button" onclick="simpanPerubahanReservasi()"><i class="fas fa-save"></i> Simpan</button>
-            <button type="button" class="danger" onclick="closePopup('editFormPopup')">Batal</button>
-          </div>
-        </form>`;
-      
-      const popup = document.getElementById('editFormPopup');
-      popup.innerHTML = formHTML;
-      
-      // Populate Selectors
-      const form = document.getElementById('edit-reservation-form');
-      const dpSel = form.querySelector('#tipeDp');
-      dpSel.innerHTML = `<option value="">- Tanpa DP -</option><option>Cash</option><option>QRIS</option><option>Transfer BCA</option><option>Transfer Mandiri</option><option>Transfer BRI</option>`;
-      dpSel.value = res.tipeDp || '';
-      
-      populateLocationDropdown(form.querySelector('#tempat'), res.tempat);
-      updateCapacityInfo('edit-reservation-form');
-      
-      // Populate Menus
-      const menuCont = form.querySelector('#selected-menus-container');
-      menuCont.innerHTML = '';
-      if (Array.isArray(res.menus) && res.menus.length > 0) {
-        res.menus.forEach(m => addMenuSelectionRow('edit-reservation-form', m.name, m.quantity));
-      } else if (res.menu) {
-        addMenuSelectionRow('edit-reservation-form', res.menu, 1);
-      } else {
-        addMenuSelectionRow('edit-reservation-form');
-      }
-      
-      popup.style.display = 'block'; 
-      document.getElementById('overlay').style.display = 'block';
-    }
-
-    async function simpanReservasi() {
-        // Ambil data dari form add
-        const nama = document.getElementById('nama').value;
-        // ... (Ambil value lain seperti jam, jumlah, dll)
-        // PENTING: Karena popup addFormPopup di HTML Anda tidak memiliki input DATE, 
-        // kita gunakan variabel global 'tanggalDipilih'. Jika kosong, minta user pilih tanggal dulu.
-        
-        if (!tanggalDipilih) { showToast("Pilih tanggal di kalender dulu!", "error"); return; }
-        
-        // Construct Object Data
-        const formData = await validateAndGetFormData('reservation-form');
-        if (!formData) return;
-        
-        const newData = { ...formData, date: tanggalDipilih, createdAt: firebase.firestore.FieldValue.serverTimestamp(), via: 'Admin Manual' };
-        
-        showLoader();
-        try {
-            await db.collection('reservations').add(newData);
-            showToast("Reservasi tersimpan!");
-            closePopup('addFormPopup');
-        } catch(e) {
-            showToast("Gagal menyimpan: " + e.message, "error");
-        } finally {
-            hideLoader();
-        }
-    }
-
-    async function simpanPerubahanReservasi() {
-        const id = document.getElementById('editReservationId').value;
-        const editDate = document.getElementById('editDate').value; // Tanggal baru
-        const formData = await validateAndGetFormData('edit-reservation-form');
-        if (!formData) return;
-        
-        // Masukkan tanggal edit ke formData
-        formData.date = editDate;
-
-        showLoader();
-        try {
-            await db.collection('reservations').doc(id).update(formData);
-            showToast("Perubahan tersimpan!");
-            closePopup('editFormPopup');
-            
-            // Jika tanggal berubah, refresh kalender
-            if (editDate !== document.getElementById('originalDate').value) {
-                loadReservationsForCurrentMonth();
-            }
-        } catch(e) {
-            showToast("Gagal update: " + e.message, "error");
-        } finally {
-            hideLoader();
-        }
-    }
-
-    async function hapusReservasi(id) {
-        if(!confirm("Yakin hapus data ini permanen?")) return;
-        showLoader();
-        try {
-            await db.collection('reservations').doc(id).delete();
-            showToast("Data terhapus.");
-        } catch(e) { showToast("Gagal hapus", "error"); }
-        finally { hideLoader(); }
-    }
-
-    async function validateAndGetFormData(formId) {
-        const form = document.getElementById(formId);
-        const els = form.elements;
-        // Validasi simpel
-        if (!els.nama.value.trim()) { alert("Nama wajib diisi"); return null; }
-        if (!els.jam.value) { alert("Jam wajib diisi"); return null; }
-        if (!els.tempat.value) { alert("Tempat wajib diisi"); return null; }
-        
-        // Ambil menus
-        const menus = [];
-        form.querySelectorAll('.menu-selection-row').forEach(row => {
-            const name = row.querySelector('select').value;
-            const qty = row.querySelector('input').value;
-            if(name && qty > 0) menus.push({name, quantity: parseInt(qty)});
-        });
-
-        return {
-            nama: els.nama.value.trim(),
-            nomorHp: cleanPhoneNumber(els.nomorHp.value),
-            jam: els.jam.value,
-            jumlah: parseInt(els.jumlah.value),
-            dp: parseInt(els.dp.value) || 0,
-            tipeDp: els.tipeDp.value,
-            tempat: els.tempat.value,
-            tambahan: els.tambahan.value.trim(),
-            menus: menus
-        };
-    }
-
-    // --- 14. LOGIKA INBOX PERMINTAAN (INTEGRASI FITUR ADMIN MANDIRI) ---
-    // Fitur ini memungkinkan admin melihat request dari web mandiri, chat WA (dengan hitung harga), dan approve.
-
-    function showRequestInbox() {
-        document.getElementById('requestInboxPopup').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
-        renderRequestList();
-    }
-
-    function renderRequestList() {
-        const container = document.getElementById('request-list-container');
-        if (requestsCache.length === 0) {
-            container.innerHTML = `<p style="text-align:center; padding:20px;">Tidak ada permintaan baru.</p>`;
-            return;
-        }
-        
-        container.innerHTML = requestsCache.map(req => {
-            // Format Menu
-            let menuTxt = "Tidak ada menu";
-            if (req.menus && req.menus.length > 0) {
-                menuTxt = req.menus.map(m => `<b>${m.quantity}x</b> ${m.name}`).join(', ');
-            }
-
-            return `
-            <div class="request-card">
-                <div class="req-header">
-                    <div class="req-name">${req.nama} <small style="font-weight:400; color:#888;">(${req.via || 'Web'})</small></div>
-                    <div style="text-align:right; font-weight:bold; color:var(--primary);">${req.date} <br> <small style="color:#555;">${req.jam}</small></div>
-                </div>
-                <div class="req-meta">
-                    <span><i class="fas fa-users"></i> ${req.jumlah} Org</span>
-                    <span><i class="fas fa-map-marker-alt"></i> ${req.tempat}</span>
-                    <span><i class="fas fa-phone"></i> ${req.nomorHp}</span>
-                </div>
-                <div style="background:#f9f9f9; padding:8px; font-size:0.9rem; border-radius:5px; margin:5px 0;">
-                    ${menuTxt}
-                </div>
-                ${req.tambahan ? `<div style="color:#d35400; font-size:0.85rem; margin-bottom:5px;">Note: ${req.tambahan}</div>` : ''}
-                
-                <div class="req-actions">
-                    <button class="whatsapp" onclick="chatWARequest('${req.id}')"><i class="fab fa-whatsapp"></i> Chat & Hitung</button>
-                    <button class="danger" onclick="rejectRequest('${req.id}')"><i class="fas fa-times"></i> Tolak</button>
-                    <button class="accent" style="background:var(--success);" onclick="approveRequest('${req.id}')"><i class="fas fa-check"></i> Terima</button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    // Fitur Chat WA dengan Kalkulasi Harga (Fitur Kunci)
-    function chatWARequest(id) {
-        const req = requestsCache.find(r => r.id === id);
-        if(!req) return;
-
-        let totalFood = 0;
-        let menuListText = "";
-        
-        if (req.menus && req.menus.length > 0) {
-            req.menus.forEach(m => {
-                // Ambil harga dari cache 'menuPrices' yang diload di awal
-                const unitPrice = menuPrices[m.name] || 0;
-                const subTotal = unitPrice * m.quantity;
-                totalFood += subTotal;
-                
-                const priceDisplay = unitPrice > 0 ? `Rp ${formatRupiah(subTotal)}` : 'Rp ?';
-                menuListText += `- ${m.name} (${m.quantity}x) : ${priceDisplay}\n`;
-            });
-        }
-        
-        const ppn = totalFood > 0 ? totalFood * 0.1 : 0;
-        const grandTotal = totalFood + ppn;
-        const dp = grandTotal * 0.5;
-        
-        const totalStr = totalFood > 0 ? `Rp ${formatRupiah(grandTotal)}` : '(Menunggu Konfirmasi)';
-        const dpStr = totalFood > 0 ? `Rp ${formatRupiah(dp)}` : '(Sesuai Kesepakatan)';
-
-        const msg = `Halo Kak *${req.nama}* 👋,\n\nTerima kasih telah melakukan reservasi di Dolan Sawah.\n\n` +
-            `🗓 Tgl: ${req.date}\n⏰ Jam: ${req.jam}\n👥 Jml: ${req.jumlah} Orang\n📍 Tempat: ${req.tempat}\n\n` +
-            `*Rincian Pesanan:*\n${menuListText}\n` +
-            `Subtotal: Rp ${formatRupiah(totalFood)}\n` +
-            `PPN (10%): Rp ${formatRupiah(ppn)}\n` +
-            `*Total Estimasi: ${totalStr}*\n\n` +
-            `----------------------------------\n` +
-            `Untuk konfirmasi, mohon transfer DP sebesar:\n👉 *${dpStr}*\n\n` +
-            `Ke Rekening:\n✅ BCA: 0132021439 (Oktavianus Dwi)\n\n` +
-            `Mohon kirim bukti transfer ini ya Kak. Terima kasih! 🙏`;
-
-        window.open(`https://wa.me/${req.nomorHp.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    async function approveRequest(id) {
-        const req = requestsCache.find(r => r.id === id);
-        if(!req) return;
-
-        // Gunakan SweetAlert untuk input DP saat approval
-        const { value: formValues } = await Swal.fire({
-            title: 'Terima Reservasi',
-            html: `
-                <p>Masukkan nominal DP yang diterima:</p>
-                <input id="swal-dp" type="number" class="swal2-input" placeholder="Nominal DP">
-                <select id="swal-via" class="swal2-select" style="margin-top:10px; width:80%;">
-                    <option value="Transfer BCA">Transfer BCA</option>
-                    <option value="Transfer Mandiri">Transfer Mandiri</option>
-                    <option value="QRIS">QRIS</option>
-                    <option value="Cash">Cash</option>
-                </select>
-            `,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonText: 'Simpan & Terima',
-            preConfirm: () => {
-                return {
-                    dp: document.getElementById('swal-dp').value,
-                    via: document.getElementById('swal-via').value
-                }
-            }
-        });
-
-        if (formValues) {
-            showLoader();
-            try {
-                // 1. Tambah ke collection 'reservations' (Main DB)
-                await db.collection('reservations').add({
-                    nama: req.nama,
-                    nomorHp: req.nomorHp,
-                    date: req.date,
-                    jam: req.jam,
-                    jumlah: req.jumlah,
-                    tempat: req.tempat,
-                    menus: req.menus,
-                    tambahan: req.tambahan,
-                    dp: parseInt(formValues.dp) || 0,
-                    tipeDp: formValues.via,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    via: 'Mandiri (Approved)'
-                });
-
-                // 2. Hapus dari 'reservation_requests'
-                await db.collection('reservation_requests').doc(id).delete();
-
-                Swal.fire('Berhasil', 'Reservasi masuk ke kalender utama.', 'success');
-                
-                // Jika inbox kosong, tutup popup
-                if(requestsCache.length <= 1) closePopup('requestInboxPopup');
-
-            } catch(e) { Swal.fire('Error', e.message, 'error'); } 
-            finally { hideLoader(); }
-        }
-    }
-
-    async function rejectRequest(id) {
-        if(!confirm("Yakin tolak dan hapus permintaan ini?")) return;
-        showLoader();
-        try {
-            await db.collection('reservation_requests').doc(id).delete();
-            showToast("Permintaan ditolak.");
-        } catch(e) { showToast("Gagal menolak", "error"); }
-        finally { hideLoader(); }
-    }
-
-    // --- 15. LOGIKA SET TANGGAL PENUH (INTEGRASI FITUR VIEWER) ---
-    function showDateStatusPopup() {
-        document.getElementById('dateStatusPopup').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
-        // Default ke tanggal hari ini
-        document.getElementById('blockDateInput').value = new Date().toISOString().split('T')[0];
-    }
-
-    async function setStatusDate(isFull) {
-        const dateVal = document.getElementById('blockDateInput').value;
-        if(!dateVal) { showToast("Pilih tanggal dulu!", "error"); return; }
-        
-        showLoader();
-        try {
-            // Tulis ke collection 'date_status' yang dibaca oleh Viewer & Web Mandiri
-            await db.collection('date_status').doc(dateVal).set({
-                date: dateVal,
-                isFull: isFull,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-            
-            Swal.fire('Sukses', `Tanggal ${dateVal} telah diset: ${isFull ? 'PENUH' : 'BUKA'}`, 'success');
-            closePopup('dateStatusPopup');
-        } catch(e) {
-            Swal.fire('Error', e.message, 'error');
-        } finally {
-            hideLoader();
-        }
-    }
-
-    // --- 16. MANAJEMEN MENU & LOKASI (FITUR LAMA DIKEMBALIKAN UTUH) ---
-    function showMenuManagement() {
-        const popup = document.getElementById('menuManagementPopup');
-        popup.innerHTML = `
-            <h3><i class="fas fa-book-open"></i> Kelola Menu & Harga</h3>
-            <div id="menu-list-container"></div>
-            <div id="add-menu-form"><h4><i class="fas fa-plus-circle"></i> Tambah Menu Baru</h4>
-              <label>Nama Menu: <input type="text" id="newMenuName"></label>
-              <label>Harga (Rp): <input type="number" id="newMenuPrice" placeholder="Contoh: 25000"></label>
-              <label>Detail (pisahkan koma): <textarea id="newMenuDetails"></textarea></label>
-              <button onclick="addNewMenu()">Simpan Menu</button>
-            </div>
-            <div class="data-actions"><button class="danger" onclick="closePopup('menuManagementPopup')">Tutup</button></div>`;
-        renderMenuList();
-        popup.style.display = 'block'; document.getElementById('overlay').style.display = 'block';
-    }
-    
-    function renderMenuList() {
-        const container = document.getElementById('menu-list-container');
-        if(!container) return;
-        // Gunakan menuPrices untuk menampilkan harga
-        container.innerHTML = Object.keys(detailMenu).sort().map(name => {
-            const price = menuPrices[name] ? `Rp ${formatRupiah(menuPrices[name])}` : 'Rp -';
-            return `<div class="menu-item">
-                <span><b>${name}</b> <small style="color:green;">(${price})</small></span>
-                <div class="menu-item-actions">
-                    <button class="danger" onclick="deleteMenu('${name}')"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    async function addNewMenu() {
-        const name = document.getElementById('newMenuName').value.trim();
-        const price = parseInt(document.getElementById('newMenuPrice').value) || 0;
-        const details = document.getElementById('newMenuDetails').value.split(',').map(s => s.trim()).filter(Boolean);
-        
-        if(!name) return showToast("Nama wajib diisi", "error");
-        
-        showLoader();
-        try {
-            await db.collection('menus').doc(name).set({ details, price });
-            showToast("Menu tersimpan");
-            await loadMenus(); // Reload cache
-            renderMenuList();
-            document.getElementById('newMenuName').value = '';
-            document.getElementById('newMenuPrice').value = '';
-            document.getElementById('newMenuDetails').value = '';
-        } catch(e) { showToast("Gagal simpan", "error"); } finally { hideLoader(); }
-    }
-
-    async function deleteMenu(name) {
-        if(!confirm(`Hapus menu ${name}?`)) return;
-        showLoader();
-        try {
-            await db.collection('menus').doc(name).delete();
-            await loadMenus();
-            renderMenuList();
-            showToast("Menu dihapus");
-        } catch(e) { showToast("Gagal hapus", "error"); } finally { hideLoader(); }
-    }
-
-    function showLocationManagement() {
-        // ... (Kode sama dengan original, disingkat sedikit untuk efisiensi tapi logika sama)
-        const popup = document.getElementById('locationManagementPopup');
-        popup.innerHTML = `
-            <h3><i class="fas fa-map-marker-alt"></i> Kelola Tempat</h3>
-            <div id="location-list-container"></div>
-            <div id="add-location-form"><h4>Tambah Tempat</h4>
-                <label>Nama: <input type="text" id="newLocName"></label>
-                <label>Kapasitas: <input type="number" id="newLocCap"></label>
-                <button onclick="addNewLocation()">Simpan</button>
-            </div>
-            <div class="data-actions"><button class="danger" onclick="closePopup('locationManagementPopup')">Tutup</button></div>`;
-        renderLocationList();
-        popup.style.display = 'block'; document.getElementById('overlay').style.display = 'block';
-    }
-
-    function renderLocationList() {
-        const c = document.getElementById('location-list-container');
-        c.innerHTML = Object.values(locationsData).map(l => 
-            `<div class="menu-item"><span>${l.name} (${l.capacity} org)</span><button class="danger" style="padding:5px;" onclick="deleteLocation('${l.name}')">X</button></div>`
-        ).join('');
-    }
-
-    async function addNewLocation() {
-        const name = document.getElementById('newLocName').value;
-        const cap = parseInt(document.getElementById('newLocCap').value);
-        if(!name || !cap) return;
-        // Generate safe ID
-        const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-        try {
-            await db.collection('locations').doc(id).set({name, capacity:cap});
-            await loadLocations();
-            renderLocationList();
-        } catch(e) { alert(e.message); }
-    }
-    
-    async function deleteLocation(name) {
-        // Cari ID based on name value
-        const id = Object.keys(locationsData).find(key => locationsData[key].name === name);
-        if(id && confirm("Hapus?")) {
-            await db.collection('locations').doc(id).delete();
-            await loadLocations();
-            renderLocationList();
-        }
-    }
-
-    // --- 17. FITUR LEGACY LAIN (Export, Print, Broadcast, Customer, Analysis) ---
-    // (Kode di bawah ini adalah salinan logika Anda yang sudah dioptimalkan agar bekerja di struktur baru)
-
-    // Export Data ASCII
-    function showExportDataPopup() {
-        // ... (Logic generate JSON base64) ...
-        // Untuk singkatnya, placeholder logic yang bekerja:
-        const data = { version: '5.4', data: dataReservasi };
-        document.getElementById('export-data-output').value = btoa(JSON.stringify(data));
-        document.getElementById('exportDataPopup').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
-    }
-    function copyExportCode() {
-        const t = document.getElementById('export-data-output');
-        t.select(); navigator.clipboard.writeText(t.value);
-        showToast("Tersalin!");
-    }
-
-    // Contact WA from Detail
-    function contactViaWhatsApp(id) {
-        // Logic original yang rumit untuk parsing menu list ke WA
-        // Kita gunakan versi sederhana namun efektif yang sudah ada di chatWARequest, 
-        // tapi diarahkan ke reservasi yang sudah jadi.
-        const r = findReservationById(id);
-        if(!r) return;
-        const msg = `Halo Kak ${r.nama}, konfirmasi reservasi tgl ${r.date}...`;
-        window.open(`https://wa.me/${r.nomorHp.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-    
-    function findReservationById(id) {
-        for (const d in dataReservasi) {
-            const found = dataReservasi[d].find(x => x.id === id);
-            if(found) return found;
-        } return null;
-    }
-
-    function sendThankYouMessage(id, name, phone) {
-        const msg = `Halo Kak ${name}, Terima kasih sudah berkunjung ke Dolan Sawah...`;
-        window.open(`https://wa.me/${phone.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`, '_blank');
-        db.collection('reservations').doc(id).update({ thankYouSent: true });
-        // Update UI button
-        document.getElementById(`thank-you-btn-${id}`).innerHTML = 'Terkirim';
-        document.getElementById(`thank-you-btn-${id}`).disabled = true;
-    }
-
-    // --- 18. NOTIFICATION BELL (Pengingat Terima Kasih) ---
-    function setupReliableNotificationChecker() {
-        if (notificationInterval) clearInterval(notificationInterval);
-        notificationInterval = setInterval(() => {
-            const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
-            const list = dataReservasi[todayStr] || [];
-            
-            const badge = document.getElementById('notification-badge');
-            const ul = document.getElementById('notification-list-ul');
-            let count = 0;
-            let html = '';
-
-            list.forEach(r => {
-                if(r.thankYouSent) return;
-                const [h, m] = r.jam.split(':');
-                const resTime = new Date(); resTime.setHours(h, m, 0);
-                // Trigger 3 jam setelah jam reservasi
-                if (now > new Date(resTime.getTime() + 3*60*60*1000)) {
-                    count++;
-                    html += `<li class="notification-item">
-                        <strong>${r.nama}</strong> (${r.jam}) <br>
-                        <button onclick="sendThankYouMessage('${r.id}','${r.nama}','${r.nomorHp}')">Kirim Ucapan</button>
-                    </li>`;
-                }
-            });
-
-            if(count > 0) {
-                badge.style.display = 'flex'; badge.textContent = count;
-                ul.innerHTML = html;
-            } else {
-                badge.style.display = 'none';
-                ul.innerHTML = '<li style="padding:10px;">Tidak ada pengingat.</li>';
-            }
-        }, 60000); // Cek tiap 1 menit
-    }
-    
-    function toggleNotificationDropdown(e) {
-        e.stopPropagation();
-        const d = document.getElementById('notification-dropdown');
-        d.style.display = d.style.display === 'block' ? 'none' : 'block';
-    }
-    window.onclick = function(e) {
-        if(!e.target.matches('#notification-bell-container, #notification-bell-container *')) {
-            document.getElementById('notification-dropdown').style.display = 'none';
-        }
-    }
-
-    // --- SELESAI ---
-        // ============================================================
-    // BAGIAN 5: RESTORASI FITUR KOMPLEKS (PRINT, ANALISIS, CUSTOMER)
-    // ============================================================
-
-    // --- A. FITUR CETAK (PRINT) LENGKAP ---
-    function printData() {
-      if (!tanggalDipilih) { showToast("Silakan pilih tanggal terlebih dahulu.", "error"); return; }
-      document.getElementById('printOptionsPopup').style.display = 'block';
-      document.getElementById('overlay').style.display = 'block';
-    }
-    
-    function executePrint() {
-        const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
-        const title = document.getElementById('reservation-view-title').innerHTML;
-        const dateString = `${parseInt(tanggalDipilih.split('-')[2])} ${monthNames[currentMonth]} ${currentYear}`;
-        
-        const options = {
-            showMenu: document.getElementById('print-detail-menu').checked,
-            showKontak: document.getElementById('print-kontak').checked,
-            showDp: document.getElementById('print-dp').checked,
-            showTambahan: document.getElementById('print-tambahan').checked
-        };
-
-        const itemsHtml = reservations.map((r, index) => {
-            let menuList = '';
-            if(options.showMenu) {
-                if (Array.isArray(r.menus) && r.menus.length > 0) {
-                    menuList = r.menus.map(item => {
-                        const details = detailMenu[item.name] || [];
-                        const detailString = details.map(d => `&nbsp;&nbsp;&nbsp;&bull; ${d}`).join('<br>');
-                        return `<strong>${item.quantity}x ${item.name}</strong><br>${detailString}`;
-                    }).join('<br><br>');
-                } else if (r.menu) {
-                    menuList = `<strong>${r.menu}</strong>`;
-                } else {
-                    menuList = `&bull; _(Tidak ada detail menu)_`;
-                }
-            }
-            
-            const dpInfo = options.showDp && r.dp > 0 ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
-            const tambahanInfo = options.showTambahan && r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
-            const kontakInfo = options.showKontak && r.nomorHp ? `<p><i class="fas fa-phone"></i> <strong>Kontak:</strong> ${r.nomorHp}</p>` : '';
-
-            return `<div class="print-item">
-                <h3>${index + 1}. ${r.nama || 'Nama tidak ada'}</h3>
-                <p><strong>Jam:</strong> ${r.jam || '?'} | <strong>Tempat:</strong> ${r.tempat || '?'}</p>
-                <p><strong>Jumlah:</strong> ${r.jumlah || '?'} org</p>
-                ${kontakInfo}
-                ${options.showMenu ? `<div class="menu-details-print">${menuList}</div>` : ''}
-                ${dpInfo}
-                ${tambahanInfo}
-            </div>`;
-        }).join('');
-
-        const printPageHtml = `
-            <!DOCTYPE html><html lang="id"><head><title>Cetak Reservasi - ${dateString}</title>
-            <style>
-                body { font-family: sans-serif; padding: 20px; }
-                h2 { text-align: center; color: #2a9d8f; }
-                .print-container { column-count: 2; column-gap: 20px; }
-                .print-item { break-inside: avoid; border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
-                .print-item h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-                .menu-details-print { background: #f9f9f9; padding: 10px; font-size: 0.9rem; margin: 5px 0; }
-                @media print { body { padding: 0; } .print-container { column-count: 2; } }
-            </style></head>
-            <body>
-                <h2>${title}</h2>
-                <div class="print-container">${itemsHtml}</div>
-            </body></html>`;
-        
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(printPageHtml);
-        printWindow.document.close();
-        closePopup('printOptionsPopup');
-    }
-
-    // --- B. FITUR CUSTOMER LIST LENGKAP ---
-    async function showCustomerMenu() {
-        showLoader();
-        try {
-            // Ambil semua reservasi untuk extrak customer (Logic Original)
-            const snapshot = await db.collection('reservations').orderBy('createdAt', 'desc').limit(1000).get();
-            const customers = new Map();
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.nomorHp && !customers.has(data.nomorHp)) {
-                    customers.set(data.nomorHp, data.nama);
-                }
-            });
-
-            const popup = document.getElementById('customerListPopup');
-            const sortedCustomers = [...customers.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-
-            let contentHTML = `<h3><i class="fas fa-address-book"></i> Daftar Customer (${sortedCustomers.length})</h3>`;
-            contentHTML += `<div class="search-container" style="margin-bottom: 15px;"><i class="fas fa-search"></i><input type="text" id="customerSearchInput" placeholder="Cari nama atau nomor HP..." oninput="filterCustomersDisplay(this.value)"></div><div id="customer-list-display" style="max-height:400px; overflow-y:auto;"></div>`;
-            contentHTML += `<div class="data-actions" style="margin-top:20px;"><button class="danger" onclick="closePopup('customerListPopup')">Tutup</button></div>`;
-            
-            popup.innerHTML = contentHTML;
-            
-            // Simpan data global untuk filter
-            window.tempCustomerData = sortedCustomers;
-            renderCustomerListDisplay(sortedCustomers);
-            
-            popup.style.display = 'block'; document.getElementById('overlay').style.display = 'block';
-        } catch (e) { showToast("Gagal memuat customer", "error"); } 
-        finally { hideLoader(); }
-    }
-
-    function renderCustomerListDisplay(data) {
-        const container = document.getElementById('customer-list-display');
-        container.innerHTML = data.map(([phone, name]) => 
-            `<div class="menu-item">
-                <span><i class="fas fa-user"></i> ${name} <br><small>${phone}</small></span>
-                <button class="whatsapp" style="padding:5px 10px; font-size:0.8rem;" onclick="contactCustomer('${phone}', '${name}')"><i class="fab fa-whatsapp"></i></button>
-            </div>`
-        ).join('');
-    }
-    
-    window.filterCustomersDisplay = function(val) {
-        const q = val.toLowerCase();
-        const filtered = window.tempCustomerData.filter(([p, n]) => n.toLowerCase().includes(q) || p.includes(q));
-        renderCustomerListDisplay(filtered);
-    }
-
-    // --- C. FITUR ANALISIS DATA V2 (ADVANCED CHART & INSIGHT) ---
-    // (Ini adalah kode kompleks yang sebelumnya tidak tertulis lengkap)
-    
-    let analysisChartInstance = null;
-
-    async function showAnalysis() {
-        const popup = document.getElementById('analysisPopup');
-        // Setup Opsi Tahun
-        const yearSel = document.getElementById('anl-year');
-        yearSel.innerHTML = '';
-        const currYear = new Date().getFullYear();
-        for(let y = currYear; y >= currYear - 2; y--) {
-            let opt = document.createElement('option');
-            opt.value = y; opt.text = y;
-            yearSel.add(opt);
-        }
-        
-        // Setup Opsi Bulan
-        const monthSel = document.getElementById('anl-month');
-        monthSel.innerHTML = '<option value="all">Satu Tahun Penuh</option>';
-        monthNames.forEach((m, i) => {
-            let opt = document.createElement('option');
-            opt.value = i; opt.text = m;
-            if(i === new Date().getMonth()) opt.selected = true;
-            monthSel.add(opt);
-        });
-
-        popup.style.display = 'block'; 
-        document.getElementById('overlay').style.display = 'block';
-        
-        // Load data jika belum (memastikan allReservationsRaw terisi)
-        if (allReservationsRaw.length === 0) {
-            await loadAllDataForAnalysis();
-        }
-        runAdvancedAnalysis();
-    }
-
-    function runAdvancedAnalysis() {
-        const year = parseInt(document.getElementById('anl-year').value);
-        const monthVal = document.getElementById('anl-month').value;
-        
-        // Filter Data
-        let filteredData = [];
-        let labels = [];
-        let chartData = [];
-        let xLabel = '';
-
-        if (monthVal === 'all') {
-            const startDate = new Date(year, 0, 1);
-            const endDate = new Date(year, 11, 31);
-            filteredData = allReservationsRaw.filter(r => {
-                const d = new Date(r.date);
-                return d >= startDate && d <= endDate;
-            });
-            xLabel = 'Bulan';
-            labels = monthNames.map(m => m.substring(0, 3));
-            chartData = new Array(12).fill(0);
-            filteredData.forEach(r => {
-                const mIndex = new Date(r.date).getMonth();
-                chartData[mIndex]++;
-            });
-        } else {
-            const mIndex = parseInt(monthVal);
-            const startDate = new Date(year, mIndex, 1);
-            const endDate = new Date(year, mIndex + 1, 0);
-            filteredData = allReservationsRaw.filter(r => {
-                const d = new Date(r.date);
-                return d >= startDate && d <= endDate;
-            });
-            xLabel = 'Tanggal';
-            const daysInMonth = endDate.getDate();
-            labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
-            chartData = new Array(daysInMonth).fill(0);
-            filteredData.forEach(r => {
-                const dIndex = new Date(r.date).getDate() - 1;
-                chartData[dIndex]++;
-            });
-        }
-
-        // Statistik
-        const stats = analyzeDataInternal(filteredData);
-        const totalPax = filteredData.reduce((sum, r) => sum + parseInt(r.jumlah||0), 0);
-        const totalRevenueDP = filteredData.reduce((sum, r) => sum + parseInt(r.dp||0), 0);
-
-        // Render Stats Grid
-        document.getElementById('anl-stats-grid').innerHTML = `
-            <div class="mini-stat"><div class="val">${filteredData.length}</div><div class="lbl">Total Reservasi</div></div>
-            <div class="mini-stat"><div class="val">${totalPax}</div><div class="lbl">Total Tamu</div></div>
-            <div class="mini-stat"><div class="val">Rp ${formatK(totalRevenueDP)}</div><div class="lbl">Total DP</div></div>
-        `;
-
-        // Render Chart
-        renderChartInternal(labels, chartData, xLabel);
-
-        // Render Insights
-        generateAutomatedInsights(filteredData, stats, monthVal, year);
-
-        // Render Top List
-        renderAnalysisLists(stats);
-    }
-
-    function analyzeDataInternal(data) {
-        // Pelanggan Top
-        const freqCust = data.filter(r => r.nomorHp).reduce((acc, r) => { 
-            if (!acc[r.nomorHp]) acc[r.nomorHp] = { name: r.nama, count: 0 }; 
-            acc[r.nomorHp].count++; 
-            return acc; 
-        }, {});
-
-        // Menu Top
-        const popMenu = data.reduce((acc, r) => {
-            if (Array.isArray(r.menus)) {
-                r.menus.forEach(item => { acc[item.name] = (acc[item.name] || 0) + item.quantity; });
-            } else if (r.menu) {
-                acc[r.menu] = (acc[r.menu] || 0) + 1;
-            }
-            return acc;
-        }, {});
-
-        return {
-            frequentCustomers: Object.entries(freqCust).sort((a, b) => b[1].count - a[1].count).slice(0, 5),
-            popularMenus: Object.entries(popMenu).sort((a, b) => b[1] - a[1]).slice(0, 5)
-        };
-    }
-
-    function renderChartInternal(labels, data, labelName) {
-        const ctx = document.getElementById('analysisChart').getContext('2d');
-        if (analysisChartInstance) analysisChartInstance.destroy();
-
-        analysisChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Jumlah Reservasi',
-                    data: data,
-                    borderColor: '#2a9d8f',
-                    backgroundColor: 'rgba(42, 157, 143, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-                plugins: { legend: { display: false } }
-            }
-        });
-    }
-
-    function generateAutomatedInsights(data, stats, monthVal, year) {
-        const container = document.getElementById('anl-insights');
-        if (data.length === 0) {
-            container.innerHTML = `<p>Belum ada data untuk periode ini.</p>`;
-            return;
-        }
-        
-        const topMenu = stats.popularMenus.length > 0 ? stats.popularMenus[0][0] : '-';
-        const totalPax = data.reduce((sum, r) => sum + parseInt(r.jumlah||0), 0);
-        const avgPax = (totalPax / data.length).toFixed(1);
-        
-        let insightHTML = `<h5><i class="fas fa-lightbulb"></i> Insight Bisnis</h5><ul>`;
-        insightHTML += `<li>Rata-rata tamu per reservasi: <strong>${avgPax} orang</strong>.</li>`;
-        insightHTML += `<li>Menu terlaris adalah <strong>${topMenu}</strong>.</li>`;
-        
-        if (avgPax > 10) insightHTML += `<li>Tren menunjukkan banyak grup besar. Siapkan paket *Buffet/Kembulan*.</li>`;
-        else insightHTML += `<li>Dominasi grup kecil/keluarga. Fokus promo paket *Ala Carte*.</li>`;
-        
-        insightHTML += `</ul>`;
-        container.innerHTML = insightHTML;
-    }
-
-    function renderAnalysisLists(stats) {
-        const container = document.getElementById('anl-details');
-        let html = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">`;
-        
-        // List Menu
-        html += `<div><h4 style="border-bottom:2px solid #ddd; padding-bottom:5px;">Top Menu</h4><ul class="analysis-list">`;
-        stats.popularMenus.forEach(([name, count]) => {
-            html += `<li class="analysis-item"><span class="name">${name}</span><span class="value">${count}x</span></li>`;
-        });
-        html += `</ul></div>`;
-
-        // List Customer
-        html += `<div><h4 style="border-bottom:2px solid #ddd; padding-bottom:5px;">Top Customer</h4><ul class="analysis-list">`;
-        stats.frequentCustomers.forEach(([hp, data]) => {
-            html += `<li class="analysis-item"><span class="name">${data.name}</span><span class="value">${data.count}x</span></li>`;
-        });
-        html += `</ul></div></div>`;
-        
-        container.innerHTML = html;
-    }
-
-    function formatK(num) {
-        if(num >= 1000000) return (num/1000000).toFixed(1) + 'jt';
-        if(num >= 1000) return (num/1000).toFixed(0) + 'rb';
-        return num;
-    }
+    async function markSent(id) { await db.collection('reservations').doc(id).update({thankSent:true}); }
 
 </script>
 </body>
