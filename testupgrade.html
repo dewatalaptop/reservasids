@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Sistem Komando Dolan Sawah (Final Integrated)</title>
+  <title>Sistem Manajemen Dolan Sawah - Unified V6.0</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -19,314 +20,700 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <style>
+    /* =========================================
+       1. VARIABEL GLOBAL & RESET
+       ========================================= */
     :root {
-      --primary: #2a9d8f; --primary-dark: #264653; --secondary: #e9c46a; 
-      --accent: #f4a261; --danger: #e76f51; --light: #f8f9fa; --dark: #343a40; 
-      --success: #28a745; --whatsapp: #25D366; --info: #0077b6; --warning: #f1c40f;
+      /* Palette Dolan Sawah Unified */
+      --primary: #2a9d8f;       /* Emerald Green */
+      --primary-dark: #21867a;  /* Darker Emerald */
+      --secondary: #264653;     /* Dark Slate */
+      --accent: #e9c46a;        /* Sandy Gold */
+      --danger: #e76f51;        /* Terracotta Red */
+      --success: #10b981;       /* Bright Green */
+      --warning: #f59e0b;       /* Amber */
+      --info: #0077b6;          /* Ocean Blue */
+      --whatsapp: #25D366;      /* WA Brand Color */
+      
+      /* Layout Colors */
+      --bg-body: #f3f4f6;
+      --bg-card: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      
+      /* Dimensions */
+      --sidebar-width: 270px;
+      --header-height: 60px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
     
-    body {
-      font-family: 'Poppins', sans-serif; background-color: #f5f5f5; color: var(--dark);
+    body { 
+      font-family: 'Inter', 'Poppins', sans-serif; 
+      background-color: var(--bg-body); 
+      color: var(--text-main); 
+      margin: 0; padding: 0; 
+      display: flex; height: 100vh; overflow: hidden; 
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    /* =========================================
+       2. LOGIN SCREEN (Full Overlay)
+       ========================================= */
+    #login-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, var(--secondary), var(--primary));
       background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
-      background-size: cover; background-attachment: fixed; min-height: 100vh;
+      background-size: cover; background-blend-mode: multiply;
+      z-index: 9999; display: flex; justify-content: center; align-items: center;
     }
-    body::before {
-      content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background-color: rgba(255, 255, 255, 0.92); z-index: -1;
+    .login-box {
+      background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 16px; width: 90%; max-width: 420px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; backdrop-filter: blur(5px);
+      border-top: 5px solid var(--accent);
     }
+    .login-box h2 { color: var(--secondary); margin-bottom: 5px; font-weight: 700; }
+    .login-box input { 
+        width: 100%; padding: 14px; margin: 10px 0; border: 1px solid var(--border); 
+        border-radius: 8px; font-size: 1rem; transition: 0.3s;
+    }
+    .login-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2); }
+    .login-box button { 
+        width: 100%; padding: 14px; background: var(--primary); color: white; border: none; 
+        border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 15px; font-size: 1rem; 
+        transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px;
+    }
+    .login-box button:hover { background: var(--primary-dark); transform: translateY(-2px); }
 
-    /* HEADER */
-    header {
-      background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; 
-      padding: 15px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-      display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000;
+    /* =========================================
+       3. SIDEBAR NAVIGATION
+       ========================================= */
+    .sidebar {
+      width: var(--sidebar-width); background: white; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; height: 100vh; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: fixed; left: 0; top: 0; z-index: 1000;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.02);
     }
-    .brand h2 { font-size: 1.4rem; margin: 0; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .brand small { display: block; font-size: 0.7rem; opacity: 0.9; font-weight: 400; }
+    .brand { 
+        padding: 25px; font-size: 1.35rem; font-weight: 800; color: var(--primary-dark); 
+        display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); 
+        background: linear-gradient(to right, rgba(42, 157, 143, 0.05), transparent);
+    }
+    .nav-menu { flex: 1; padding: 20px; overflow-y: auto; }
+    .nav-label { 
+        font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); 
+        margin: 20px 0 10px 10px; font-weight: 600; 
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+      color: var(--text-muted); text-decoration: none; border-radius: 10px;
+      margin-bottom: 5px; transition: all 0.2s; cursor: pointer; font-weight: 500;
+      position: relative;
+    }
+    .nav-item:hover { background-color: #f0fdf4; color: var(--primary); padding-left: 18px; }
+    .nav-item.active { background-color: var(--primary); color: white; box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3); }
+    .nav-item .badge { 
+        margin-left: auto; background: var(--danger); color: white; padding: 2px 8px; 
+        border-radius: 12px; font-size: 0.75rem; font-weight: 700;
+    }
     
-    /* Notification */
-    #notification-bell-container { position: relative; cursor: pointer; margin-right: 15px; }
-    .notification-badge {
-      position: absolute; top: -5px; right: -5px; background: var(--danger);
-      color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 0.7rem;
-      display: flex; justify-content: center; align-items: center; border: 2px solid white;
+    .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); background-color: #f9fafb; }
+    .btn-logout { 
+        width: 100%; padding: 12px; background: #fee2e2; color: #ef4444; border: 1px solid #fecaca;
+        border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; 
+        align-items: center; justify-content: center; gap: 8px; transition: 0.2s; 
     }
-    .notification-list-dropdown {
-      display: none; position: absolute; top: 40px; right: 0; width: 300px;
-      background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-      z-index: 2000; max-height: 400px; overflow-y: auto;
+    .btn-logout:hover { background: #ef4444; color: white; border-color: #ef4444; }
+
+    /* =========================================
+       4. MAIN CONTENT AREA
+       ========================================= */
+    .main-content {
+      flex: 1; margin-left: var(--sidebar-width); padding: 30px; overflow-y: auto; height: 100vh;
+      background-color: var(--bg-body); position: relative;
     }
-    .notification-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+    
+    /* Section Animation */
+    .section { display: none; animation: fadeIn 0.4s ease; max-width: 1400px; margin: 0 auto; }
+    .section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* CONTAINER */
-    .container { max-width: 1200px; margin: 20px auto; padding: 15px; background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+    .section-header { 
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; 
+        flex-wrap: wrap; gap: 15px; background: white; padding: 20px; border-radius: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid var(--border);
+    }
+    .section-title { font-size: 1.6rem; font-weight: 700; color: var(--secondary); margin: 0; display: flex; align-items: center; gap: 10px; }
+    .section-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; font-weight: 400; }
 
-    /* BUTTONS */
-    .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; color: white; }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
-    .btn-primary { background: var(--primary); }
-    .btn-secondary { background: #6c757d; }
-    .btn-danger { background: var(--danger); }
-    .btn-warning { background: var(--warning); color: #333; }
-    .btn-success { background: var(--success); }
-    .btn-whatsapp { background: var(--whatsapp); }
-    .btn-info { background: var(--info); }
-    .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+    /* Mobile Toggle */
+    #mobile-toggle { 
+        display: none; position: fixed; top: 15px; left: 15px; z-index: 2001;
+        background: var(--primary); color: white; border: none; width: 45px; height: 45px; 
+        border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        cursor: pointer; font-size: 1.2rem; align-items: center; justify-content: center;
+        transition: 0.3s;
+    }
 
-    /* CALENDAR */
-    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 10px; border: 1px solid #eee; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .cal-day-header { text-align: center; font-weight: 700; color: #777; margin-bottom: 5px; font-size: 0.9rem; }
+    /* =========================================
+       5. COMPONENTS: CARDS & STATS
+       ========================================= */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { 
+        background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+        border: 1px solid var(--border); display: flex; align-items: center; gap: 20px; 
+        transition: transform 0.2s; cursor: default;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+    .stat-icon { 
+        width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; 
+        justify-content: center; font-size: 1.8rem; flex-shrink: 0;
+    }
+    .stat-info h4 { margin: 0; font-size: 0.9rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-info .value { font-size: 1.8rem; font-weight: 800; color: var(--secondary); display: block; margin-top: 5px; line-height: 1.1; }
+
+    .card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid var(--border); }
+    .card h3 { margin-top: 0; margin-bottom: 20px; color: var(--secondary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; display: inline-block; }
+
+    /* =========================================
+       6. COMPONENTS: BUTTONS & FORMS
+       ========================================= */
+    .btn { 
+        padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; 
+        display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-family: 'Inter', sans-serif;
+        font-size: 0.9rem; text-decoration: none;
+    }
+    .btn:hover { filter: brightness(110%); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-info { background: var(--info); color: white; }
+    .btn-whatsapp { background: var(--whatsapp); color: white; }
+    .btn-accent { background: var(--accent); color: white; }
+
+    input, select, textarea { 
+        width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); 
+        margin-top: 6px; margin-bottom: 15px; font-family: 'Inter', sans-serif; 
+        background-color: #f9fafb; font-size: 0.95rem;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); background-color: white; }
+    label { font-weight: 600; color: var(--secondary); font-size: 0.9rem; }
+
+    /* =========================================
+       7. COMPONENTS: INBOX / REQUEST CARDS
+       ========================================= */
+    .request-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+    .request-card { 
+        background: white; border-radius: 12px; padding: 20px; border-left: 6px solid var(--warning); 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; transition: all 0.3s;
+    }
+    .request-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+    .request-header { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+    .req-name { font-weight: 700; font-size: 1.15rem; color: var(--secondary); }
+    .req-via { font-size: 0.75rem; background: #eee; padding: 4px 10px; border-radius: 20px; color: #666; font-weight: 600; text-transform: uppercase; }
+    .req-details { font-size: 0.95rem; color: #555; line-height: 1.8; margin-bottom: 15px; }
+    .req-details i { color: var(--primary); width: 25px; text-align: center; margin-right: 5px; }
+    .req-menu-box { 
+        background: #f8fafc; padding: 12px; border-radius: 8px; margin: 12px 0; font-size: 0.9rem; 
+        border: 1px dashed #cbd5e1; 
+    }
+    .req-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 15px; }
+    .req-actions button { width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px 5px; }
+
+    /* =========================================
+       8. COMPONENTS: CALENDAR & LISTS
+       ========================================= */
+    .calendar-wrapper { background: white; border-radius: 12px; overflow: hidden; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 20px; }
+    .cal-header-day { text-align: center; font-weight: 700; color: var(--primary-dark); font-size: 0.9rem; padding-bottom: 10px; }
     .cal-day { 
-      min-height: 90px; background: white; border-radius: 8px; padding: 5px; 
-      position: relative; cursor: pointer; border: 2px solid transparent; 
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.2s;
-      display: flex; flex-direction: column; justify-content: space-between;
+        min-height: 100px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; 
+        cursor: pointer; transition: 0.2s; position: relative; background: white;
+        display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-end;
     }
-    .cal-day:hover { transform: translateY(-3px); border-color: var(--primary); }
-    .cal-day.today { background: #fffaf0; border-color: var(--secondary); }
-    .cal-day.selected { background: var(--primary) !important; color: white; border-color: var(--primary-dark) !important; }
-    .cal-day.selected .day-num { color: white; }
-    .cal-day.selected .res-count { background: rgba(255,255,255,0.2); color: white; }
+    .cal-day:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); z-index: 2; }
+    .cal-day.today { background: #fffbeb; border-color: var(--warning); }
+    .cal-day.selected { border: 2px solid var(--primary); background-color: #f0fdf4; }
     
-    /* Indikator FULL */
-    .cal-day.is-full { background: #ffebee !important; border-color: var(--danger) !important; }
-    .cal-day.is-full::after { 
-        content: 'FULL'; position: absolute; top: 50%; left: 50%; 
-        transform: translate(-50%, -50%) rotate(-15deg); 
-        color: rgba(231, 76, 60, 0.3); font-weight: 900; font-size: 1.2rem; pointer-events: none;
+    .day-number { font-weight: 700; font-size: 0.9rem; margin-bottom: 5px; color: var(--text-muted); }
+    .today .day-number { background: var(--warning); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+    
+    .cal-event-dot { 
+        width: 100%; background-color: rgba(42, 157, 143, 0.15); color: var(--primary-dark);
+        border-radius: 4px; padding: 2px 4px; font-size: 0.7rem; margin-top: 2px;
+        text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;
     }
 
-    .day-num { font-weight: 700; font-size: 1rem; color: #555; align-self: flex-end; }
-    .res-count { font-size: 0.75rem; background: rgba(42, 157, 143, 0.1); color: var(--primary-dark); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-
-    /* ACTION BUTTONS GRID */
-    .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee; }
-    .action-grid .btn { width: 100%; justify-content: center; padding: 12px; flex-direction: column; gap: 5px; text-align: center;}
-    .action-grid .btn i { font-size: 1.2rem; }
-
-    /* POPUPS */
-    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1500; display: none; backdrop-filter: blur(4px); }
-    .popup { 
-        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-        width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;
-        background: white; z-index: 1501; padding: 25px; border-radius: 12px; 
-        display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: zoomIn 0.2s;
+    .reservation-list-item { 
+        background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; 
+        border-left: 5px solid var(--primary); display: flex; flex-wrap: wrap;
+        justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+        transition: 0.2s;
     }
-    @keyframes zoomIn { from {opacity:0; transform:translate(-50%,-45%);} to {opacity:1; transform:translate(-50%,-50%);} }
-    
-    .popup h3 { margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 10px; color: var(--primary-dark); display: flex; align-items: center; justify-content: space-between; font-size: 1.2rem; }
-    
-    /* INPUTS */
-    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-top: 5px; font-family: inherit; font-size: 0.95rem; }
-    label { display: block; margin-top: 12px; font-weight: 500; color: #555; font-size: 0.9rem; }
-    
-    /* INBOX REQUEST CARD */
-    .req-card { background: white; border-left: 5px solid var(--warning); padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .req-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    .req-menu { background: #fffcf5; padding: 8px; border-radius: 6px; font-size: 0.85rem; border: 1px dashed #e0d0a0; margin: 8px 0; }
-    .req-actions { display: flex; gap: 5px; margin-top: 10px; }
-    .req-actions button { flex: 1; justify-content: center; }
+    .reservation-list-item:hover { box-shadow: 0 5px 12px rgba(0,0,0,0.08); }
 
-    /* RESERVATION LIST CARD */
-    .res-card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .res-info { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    /* =========================================
+       9. MODALS & POPUPS (Unified)
+       ========================================= */
+    .overlay { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background-color: rgba(0, 0, 0, 0.6); z-index: 2100; display: none; backdrop-filter: blur(2px);
+    }
+    .popup-form { 
+        display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+        z-index: 2200; width: 95%; max-width: 650px; max-height: 90vh; overflow-y: auto;
+        background-color: white; padding: 30px; border-radius: 16px; 
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2); border-top: 6px solid var(--primary);
+        animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translate(-50%, -45%); } to { opacity: 1; transform: translate(-50%, -50%); } }
     
-    /* LOGIN */
-    #login-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f5f5f5; z-index: 3000; display: flex; justify-content: center; align-items: center; }
-    .login-box { background: white; padding: 40px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-    
-    /* LOADER */
-    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 4000; display: none; justify-content: center; align-items: center; }
-    .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    .popup-form h3 { margin-top: 0; color: var(--secondary); font-size: 1.4rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+    .close-btn { position: absolute; top: 20px; right: 20px; font-size: 1.2rem; color: #aaa; cursor: pointer; transition: 0.2s; }
+    .close-btn:hover { color: var(--danger); }
+
+    /* =========================================
+       10. UTILITIES
+       ========================================= */
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.8); z-index: 9999; 
+      display: flex; justify-content: center; align-items: center; display: none; flex-direction: column; gap: 15px;
+    }
+    .spinner {
+      width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* MENU ROW */
-    .menu-row { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
-    .menu-row select { flex: 2; }
-    .menu-row input { flex: 1; }
-    
-    /* ANALYSIS & PRINT */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
-    .mini-stat { background: #f9f9f9; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
-    .mini-stat .val { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { 
+        left: -280px; width: 280px; transition: left 0.3s ease;
+      }
+      .sidebar.open { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.3); }
+      .main-content { margin-left: 0; padding: 70px 15px 20px 15px; width: 100%; }
+      #mobile-toggle { display: flex; }
+      .req-actions { grid-template-columns: 1fr; }
+      .stat-card { padding: 15px; }
+      .stat-icon { width: 50px; height: 50px; font-size: 1.5rem; }
+    }
   </style>
 </head>
 <body>
-
-  <div id="loader"><div class="spinner"></div></div>
-
-  <div id="login-page">
+  <div id="login-overlay">
     <div class="login-box">
-        <h2 style="color:var(--primary); margin-bottom:10px;"><i class="fas fa-leaf"></i> Admin</h2>
-        <p style="color:#666; margin-bottom:20px;">Dolan Sawah Management</p>
-        <input type="email" id="loginEmail" placeholder="Email Admin">
-        <input type="password" id="loginPassword" placeholder="Password">
-        <button class="btn btn-primary" onclick="handleLogin()" style="width:100%; margin-top:20px; justify-content:center;">Masuk Dashboard</button>
-        <p id="loginError" style="color:red; display:none; margin-top:10px; font-size:0.9rem;"></p>
+      <div style="font-size: 3rem; color: var(--primary); margin-bottom: 10px;">
+        <i class="fas fa-seedling"></i>
+      </div>
+      <h2>Admin Dolan Sawah</h2>
+      <p style="color:#666; margin-bottom: 25px;">Sistem Manajemen Terintegrasi (V6.0)</p>
+      
+      <form onsubmit="event.preventDefault(); handleLogin();">
+        <input type="email" id="email" placeholder="Email Admin" required autocomplete="email">
+        <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+        <button type="submit"><i class="fas fa-sign-in-alt"></i> Masuk Dashboard</button>
+      </form>
+      <p id="login-error" style="color:var(--danger); display:none; margin-top:10px; font-size:0.9rem;">
+        Email atau password salah.
+      </p>
     </div>
   </div>
 
-  <div id="main-ui" style="display:none;">
+  <button id="mobile-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+
+  <div class="sidebar" id="sidebar">
+    <div class="brand">
+        <i class="fas fa-leaf" style="color:var(--primary);"></i> Dolan Sawah
+    </div>
+    
+    <div class="nav-menu">
+      <div class="nav-label">Utama</div>
+      <div class="nav-item active" onclick="switchTab('dashboard')" id="nav-dashboard">
+        <i class="fas fa-th-large"></i> Dashboard
+      </div>
+      <div class="nav-item" onclick="switchTab('inbox')" id="nav-inbox">
+        <i class="fas fa-inbox"></i> Permintaan
+        <span class="badge" id="sidebar-badge">0</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('calendar')" id="nav-calendar">
+        <i class="far fa-calendar-alt"></i> Kalender Reservasi
+      </div>
+
+      <div class="nav-label">Manajemen</div>
+      <div class="nav-item" onclick="switchTab('data')" id="nav-data">
+        <i class="fas fa-database"></i> Data Master
+      </div>
+      <div class="nav-item" onclick="switchTab('broadcast')" id="nav-broadcast">
+        <i class="fas fa-bullhorn"></i> Broadcast Promo
+      </div>
       
-      <header>
-        <div class="brand">
-            <h2><i class="fas fa-leaf"></i> Dolan Sawah</h2>
-            <small>Integrated System</small>
-        </div>
-        <div class="header-right">
-            <div style="position:relative; margin-right:15px; cursor:pointer;" onclick="openInbox()">
-                <i class="fas fa-inbox" style="font-size:1.4rem;"></i>
-                <span id="header-inbox-badge" style="position:absolute; top:-5px; right:-5px; background:var(--warning); color:#333; font-size:0.7rem; padding:2px 5px; border-radius:50%; display:none;">0</span>
-            </div>
+      <div class="nav-label">Wawasan</div>
+      <div class="nav-item" onclick="switchTab('analysis')" id="nav-analysis">
+        <i class="fas fa-chart-pie"></i> Analisis Data
+      </div>
+    </div>
+    
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Keluar Sistem</button>
+    </div>
+  </div>
 
-            <div id="notification-bell-container" onclick="toggleNotif()">
-                <i class="fas fa-bell" style="font-size:1.4rem;"></i>
-                <span id="notif-badge" class="notification-badge" style="display:none;">0</span>
-            </div>
-            
-            <div class="notification-list-dropdown" id="notif-dropdown">
-                <div style="padding:10px; border-bottom:1px solid #eee; font-weight:bold; background:#f9f9f9;">Pengingat</div>
-                <div id="notif-list"></div>
-            </div>
-            
-            <button class="btn btn-danger btn-sm" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i></button>
-        </div>
-      </header>
+  <div class="main-content" id="main-content">
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p style="font-weight: 500; color: var(--secondary);">Memproses Data...</p>
+    </div>
 
-      <div class="container">
-        <div class="calendar-header">
-            <h2 id="monthYear" style="margin:0; color:var(--primary-dark); font-size:1.2rem;">...</h2>
+    <div id="tab-dashboard" class="section active">
+      <div class="section-header">
+        <div>
+            <h2 class="section-title">Overview Hari Ini</h2>
+            <div class="section-subtitle" id="date-display">Memuat tanggal...</div>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="initApp()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-user-friends"></i></div>
+          <div class="stat-info"><h4>Tamu Hari Ini</h4><span class="value" id="stat-today-pax">0</span></div>
+        </div>
+        <div class="stat-card" onclick="switchTab('inbox')" style="cursor:pointer;">
+          <div class="stat-icon" style="background:#ffedd5; color:#c2410c;"><i class="fas fa-envelope-open-text"></i></div>
+          <div class="stat-info"><h4>Pending Request</h4><span class="value" id="stat-pending">0</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#dcfce7; color:#15803d;"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-info"><h4>Reservasi Bulan Ini</h4><span class="value" id="stat-month-total">0</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#f3e8ff; color:#7e22ce;"><i class="fas fa-money-bill-wave"></i></div>
+          <div class="stat-info"><h4>Est. DP Masuk</h4><span class="value" id="stat-month-dp" style="font-size:1.3rem;">Rp 0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+         <h3><i class="fas fa-history"></i> Reservasi Terbaru Masuk</h3>
+         <div id="recent-reservations-list">
+             <p style="color:#999; text-align:center; padding: 20px;">Sedang memuat data...</p>
+         </div>
+         <div style="text-align: center; margin-top: 15px;">
+            <button class="btn btn-secondary" onclick="switchTab('calendar')">Lihat Semua di Kalender</button>
+         </div>
+      </div>
+    </div>
+
+    <div id="tab-inbox" class="section">
+      <div class="section-header">
+        <div>
+            <h2 class="section-title"><i class="fas fa-inbox"></i> Inbox Permintaan</h2>
+            <div class="section-subtitle">Daftar reservasi mandiri yang menunggu persetujuan</div>
+        </div>
+        <button class="btn btn-primary" onclick="initApp()"><i class="fas fa-sync"></i> Cek Data Baru</button>
+      </div>
+      
+      <div id="inbox-container" class="request-grid">
+          </div>
+    </div>
+    <div id="tab-calendar" class="section">
+      
+      <div id="calendar-main-view">
+          <div class="section-header">
             <div>
-                <button class="btn btn-secondary btn-sm" onclick="moveMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-                <button class="btn btn-primary btn-sm" onclick="goToToday()">Hari Ini</button>
-                <button class="btn btn-secondary btn-sm" onclick="moveMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                <h2 class="section-title"><i class="far fa-calendar-alt"></i> Kalender Reservasi</h2>
+                <div class="section-subtitle">Pilih tanggal untuk melihat detail atau tambah reservasi</div>
+            </div>
+            
+            <div style="display: flex; gap:10px; align-items:center; background: #fff; padding: 5px; border-radius: 8px; border: 1px solid var(--border);">
+               <button class="btn btn-primary" onclick="navigateMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+               <span id="monthYear" style="font-weight:700; font-size:1.1rem; min-width:160px; text-align:center; color: var(--secondary);">...</span>
+               <button class="btn btn-primary" onclick="navigateMonth(1)"><i class="fas fa-chevron-right"></i></button>
+               <button class="btn btn-secondary" onclick="goToToday()" title="Hari Ini"><i class="fas fa-calendar-day"></i></button>
+            </div>
+          </div>
+          
+          <div class="calendar-wrapper">
+            <div class="calendar-grid">
+                <div class="cal-header-day" style="color:#ef4444">Minggu</div>
+                <div class="cal-header-day">Senin</div>
+                <div class="cal-header-day">Selasa</div>
+                <div class="cal-header-day">Rabu</div>
+                <div class="cal-header-day">Kamis</div>
+                <div class="cal-header-day" style="color:#10b981">Jumat</div>
+                <div class="cal-header-day">Sabtu</div>
+            </div>
+            <div id="calendar" class="calendar-grid" style="margin-top: 5px;"></div>
+          </div>
+      </div>
+
+      <div id="reservation-view-container" style="display: none;">
+        <div class="section-header" style="background: #e0f2fe; border-color: #bae6fd;">
+            <div>
+                <h2 class="section-title" id="reservation-view-title" style="color:#0369a1">Detail Tanggal</h2>
+                <div class="section-subtitle" style="color:#0c4a6e">Kelola reservasi untuk tanggal ini</div>
+            </div>
+            <button class="btn btn-danger" onclick="kembaliKeKalender()"><i class="fas fa-arrow-left"></i> Kembali ke Kalender</button>
+        </div>
+
+        <div class="card" style="padding: 15px; background: white; border-top: 4px solid var(--primary);">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="showAddForm()"><i class="fas fa-plus-circle"></i> Tambah Reservasi</button>
+                <div style="width: 1px; background: #ddd; margin: 0 5px;"></div>
+                
+                <button class="btn btn-whatsapp" onclick="shareViaWhatsApp('day')"><i class="fab fa-whatsapp"></i> Share Laporan Harian</button>
+                <button class="btn btn-secondary" onclick="shareViaEmail()"><i class="fas fa-envelope"></i> Email</button>
+                <button class="btn btn-info" onclick="printData()"><i class="fas fa-print"></i> Print Data</button>
+                
+                <div style="flex-grow: 1;"></div> <div style="position: relative; min-width: 250px;">
+                    <input type="text" id="detailSearchInput" oninput="filterReservations(this.value)" placeholder="Cari nama, menu, atau tempat..." style="margin:0; padding-right: 30px;">
+                    <i class="fas fa-search" style="position: absolute; right: 10px; top: 12px; color: #999;"></i>
+                </div>
             </div>
         </div>
 
-        <div class="calendar-grid">
-            <div class="cal-day-header">Min</div><div class="cal-day-header">Sen</div><div class="cal-day-header">Sel</div>
-            <div class="cal-day-header">Rab</div><div class="cal-day-header">Kam</div><div class="cal-day-header">Jum</div><div class="cal-day-header">Sab</div>
-        </div>
-        <div id="calendar-days" class="calendar-grid"></div>
+        <div id="reservation-detail-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+            </div>
+      </div>
+    </div>
 
-        <div class="action-grid">
-            <button class="btn btn-warning" onclick="openInbox()" style="grid-column: span 2;">
-                <i class="fas fa-inbox"></i> Permintaan Masuk 
-                <span id="dashboard-inbox-badge" style="background:red; color:white; padding:2px 6px; border-radius:10px; font-size:0.8rem; display:none;">0</span>
+    <div id="tab-data" class="section">
+       <div class="section-header">
+         <h2 class="section-title"><i class="fas fa-database"></i> Data Master</h2>
+         <div class="section-subtitle">Kelola menu makanan, daftar tempat duduk, dan data pelanggan</div>
+       </div>
+       
+       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:25px;">
+         
+         <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">
+                <h3 style="margin:0; border:none;">🍴 Daftar Menu</h3>
+                <button class="btn btn-primary" onclick="showMenuManagement()" style="padding: 6px 12px; font-size:0.85rem;"><i class="fas fa-edit"></i> Kelola Penuh</button>
+            </div>
+            <div id="master-menu-preview" style="min-height: 100px;">
+                <p style="color:#888; font-size:0.9rem;">Klik 'Kelola Penuh' untuk menambah atau mengedit harga & detail menu.</p>
+            </div>
+         </div>
+         
+         <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">
+                <h3 style="margin:0; border:none;">📍 Daftar Tempat</h3>
+                <button class="btn btn-primary" onclick="showLocationManagement()" style="padding: 6px 12px; font-size:0.85rem;"><i class="fas fa-edit"></i> Kelola Penuh</button>
+            </div>
+            <div id="master-location-preview" style="min-height: 100px;">
+                <p style="color:#888; font-size:0.9rem;">Klik 'Kelola Penuh' untuk mengatur kapasitas tempat duduk.</p>
+            </div>
+         </div>
+
+         <div class="card" style="grid-column: 1 / -1;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">
+                <h3 style="margin:0; border:none;"><i class="fas fa-address-book"></i> Database Pelanggan</h3>
+                <button class="btn btn-success" onclick="showCustomerMenu()"><i class="fas fa-search"></i> Lihat Semua Pelanggan</button>
+            </div>
+            <p style="color:#666;">Data pelanggan diambil otomatis dari riwayat reservasi yang masuk. Gunakan menu ini untuk mencari kontak atau mengirim pesan WhatsApp langsung.</p>
+         </div>
+
+       </div>
+    </div>
+
+    <div id="tab-analysis" class="section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-chart-line"></i> Analisis Bisnis</h2>
+        <button class="btn btn-primary" onclick="showAnalysis()"><i class="fas fa-filter"></i> Filter Lanjutan</button>
+      </div>
+      <div class="card" style="height: 450px;">
+          <canvas id="mainChartCanvas"></canvas>
+      </div>
+      <div id="analysis-insights-container" style="margin-top: 20px;">
+          </div>
+    </div>
+
+    <div id="tab-broadcast" class="section">
+        <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-bullhorn"></i> Broadcast Promo</h2>
+            <div class="section-subtitle">Kirim pesan massal ke pelanggan via WhatsApp</div>
+        </div>
+        
+        <div class="card" style="text-align: center; padding: 40px;">
+            <i class="fab fa-whatsapp" style="font-size: 4rem; color: var(--whatsapp); margin-bottom: 20px;"></i>
+            <h3>Kirim Promo & Pengumuman</h3>
+            <p style="max-width: 600px; margin: 0 auto 20px auto; color: #666;">
+                Fitur ini memungkinkan Anda mengirim pesan ke pelanggan yang tersimpan di database. 
+                Sangat efektif untuk meningkatkan penjualan di hari sepi atau mengumumkan menu baru.
+            </p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn btn-info" onclick="showBroadcastSettings()"><i class="fas fa-cog"></i> Atur Pesan</button>
+                <button class="btn btn-whatsapp" onclick="showBroadcastList()"><i class="fas fa-paper-plane"></i> Mulai Broadcast</button>
+            </div>
+        </div>
+    </div>
+    <div id="addFormPopup" class="popup-form">
+      <span class="close-btn" onclick="closePopup('addFormPopup')"><i class="fas fa-times"></i></span>
+      <h3><i class="fas fa-calendar-plus" style="color:var(--primary);"></i> Input Reservasi Baru</h3>
+      
+      <form id="reservation-form">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <label>Nama Pemesan</label>
+                <input type="text" id="nama" placeholder="Nama Pelanggan" required />
+                <span class="error-message" id="nama-error" style="color:var(--danger); font-size:0.8rem;"></span>
+            </div>
+            <div>
+                <label>Nomor WhatsApp</label>
+                <input type="tel" id="nomorHp" placeholder="08..." />
+                <span class="error-message" id="nomorHp-error" style="color:var(--danger); font-size:0.8rem;"></span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <label>Jam Kedatangan</label>
+                <input type="time" id="jam" required />
+                <span class="error-message" id="jam-error" style="color:var(--danger); font-size:0.8rem;"></span>
+            </div>
+            <div>
+                <label>Jumlah Orang</label>
+                <input type="number" id="jumlah" min="1" placeholder="Contoh: 4" required />
+                <span class="error-message" id="jumlah-error" style="color:var(--danger); font-size:0.8rem;"></span>
+            </div>
+        </div>
+
+        <div>
+            <label>Pilih Tempat / Meja</label>
+            <select id="tempat" required onchange="updateCapacityInfo('reservation-form')">
+                <option value="">-- Memuat Tempat --</option>
+            </select>
+            <small id="capacity-info" style="color:var(--info); font-weight:600;"></small>
+            <span class="error-message" id="tempat-error" style="color:var(--danger); font-size:0.8rem;"></span>
+        </div>
+
+        <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px dashed var(--border); margin: 15px 0;">
+            <label style="color:var(--primary-dark);">Paket Menu Makanan <span class="error-message" id="menus-error" style="color:var(--danger);"></span></label>
+            <div id="selected-menus-container" style="margin-bottom: 10px;"></div>
+            <button type="button" class="btn btn-secondary" id="add-menu-btn" onclick="addMenuSelectionRow('reservation-form')" style="width:100%; justify-content:center; font-size:0.85rem;">
+                <i class="fas fa-plus"></i> Tambah Item Menu
             </button>
-            
-            <button class="btn btn-danger" onclick="openSetFull()"><i class="fas fa-ban"></i> Set Tanggal Penuh</button>
-            
-            <button class="btn btn-primary" onclick="openAddForm()"><i class="fas fa-plus-circle"></i> Input Manual</button>
-            <button class="btn btn-secondary" onclick="openCustomer()"><i class="fas fa-address-book"></i> Customer</button>
-            <button class="btn btn-secondary" onclick="openMenu()"><i class="fas fa-utensils"></i> Kelola Menu</button>
-            <button class="btn btn-secondary" onclick="openLocation()"><i class="fas fa-map-marker-alt"></i> Kelola Tempat</button>
-            <button class="btn btn-info" onclick="openAnalysis()"><i class="fas fa-chart-pie"></i> Analisis</button>
-            <button class="btn btn-whatsapp" onclick="openBroadcast()"><i class="fab fa-whatsapp"></i> Broadcast</button>
-            <button class="btn btn-success" onclick="openExport()"><i class="fas fa-file-export"></i> Export Data</button>
         </div>
-      </div>
-  </div>
 
-  <div class="overlay" id="overlay"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <label>Nominal DP (Rp)</label>
+                <input type="number" id="dp" value="0" min="0" />
+            </div>
+            <div>
+                <label>Metode Pembayaran DP</label>
+                <select id="tipeDp">
+                  <option value="">- Tanpa DP -</option>
+                  <option>Cash</option><option>QRIS</option>
+                  <option>Transfer BCA</option><option>Transfer Mandiri</option><option>Transfer BRI</option>
+                </select>
+            </div>
+        </div>
 
-  <div id="popup-inbox" class="popup" style="max-width:800px;">
-      <h3><i class="fas fa-inbox"></i> Permintaan Masuk <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-inbox')">X</button></h3>
-      <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:5px; margin-bottom:15px; font-size:0.9rem;">
-          <i class="fas fa-info-circle"></i> Permintaan ini dari Web Mandiri. Cek ketersediaan sebelum Terima.
-      </div>
-      <div id="inbox-list">Memuat...</div>
-  </div>
+        <label>Catatan Tambahan / Request</label>
+        <textarea id="tambahan" placeholder="Contoh: Kursi bayi, jangan pedas, dll." style="height: 60px;"></textarea>
 
-  <div id="popup-full" class="popup" style="max-width:400px;">
-      <h3><i class="fas fa-ban"></i> Blokir Tanggal <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-full')">X</button></h3>
-      <label>Pilih Tanggal</label>
-      <input type="date" id="blockDate">
-      <div style="margin-top:20px; display:flex; gap:10px;">
-          <button class="btn btn-danger" onclick="setFullStatus(true)" style="flex:1;">Set PENUH</button>
-          <button class="btn btn-success" onclick="setFullStatus(false)" style="flex:1;">Set BUKA</button>
-      </div>
-  </div>
-
-  <div id="popup-form" class="popup">
-      <h3 id="form-title">Input Reservasi <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-form')">X</button></h3>
-      <form id="res-form">
-          <input type="hidden" id="edit-id">
-          <label>Nama Pemesan</label><input type="text" id="inp-nama" required>
-          <label>WhatsApp</label><input type="tel" id="inp-hp">
-          <div style="display:flex; gap:10px;">
-              <div style="flex:1;"><label>Tanggal</label><input type="date" id="inp-date" required></div>
-              <div style="flex:1;"><label>Jam</label><input type="time" id="inp-jam" required></div>
-              <div style="flex:1;"><label>Jml</label><input type="number" id="inp-jml" required></div>
-          </div>
-          <label>Tempat</label><select id="inp-tempat" onchange="checkCap()"></select>
-          <div id="cap-info" style="font-size:0.8rem; color:#0077b6; margin-top:2px;"></div>
-          
-          <label>Menu Pesanan</label>
-          <div id="menu-rows" style="background:#f9f9f9; padding:10px; border-radius:5px;"></div>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="addMenuRow()" style="margin-top:5px;">+ Tambah Menu</button>
-          
-          <div style="display:flex; gap:10px;">
-              <div style="flex:1;"><label>DP (Rp)</label><input type="number" id="inp-dp" value="0"></div>
-              <div style="flex:1;"><label>Via</label><select id="inp-via"><option>Cash</option><option>Transfer BCA</option><option>Transfer Mandiri</option><option>QRIS</option></select></div>
-          </div>
-          <label>Catatan</label><textarea id="inp-note"></textarea>
-          <div style="margin-top:20px;">
-              <button type="button" class="btn btn-primary" style="width:100%;" onclick="saveReservation()">Simpan Data</button>
-          </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="button" class="btn btn-primary" onclick="simpanReservasi()" style="flex:1;"><i class="fas fa-save"></i> Simpan Data</button>
+            <button type="button" class="btn btn-danger" onclick="closePopup('addFormPopup')">Batal</button>
+        </div>
       </form>
-  </div>
+    </div>
 
-  <div id="popup-detail" class="popup" style="width:100%; height:100%; max-width:none; max-height:none; top:0; left:0; transform:none; border-radius:0; background:#f4f6f8;">
-      <div style="max-width:1000px; margin:0 auto; background:white; min-height:100vh; padding:20px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--primary); padding-bottom:15px; margin-bottom:20px;">
-              <h2 id="detail-title" style="margin:0; color:var(--primary-dark);">Detail</h2>
-              <div style="display:flex; gap:10px;">
-                  <button class="btn btn-whatsapp btn-sm" onclick="shareDay()"><i class="fab fa-whatsapp"></i> Share</button>
-                  <button class="btn btn-secondary btn-sm" onclick="printDay()"><i class="fas fa-print"></i> Print</button>
-                  <button class="btn btn-danger btn-sm" onclick="closePopup('popup-detail')">Tutup</button>
-              </div>
-          </div>
-          <input type="text" placeholder="Cari tamu..." id="search-detail" oninput="filterDetail(this.value)">
-          <div id="detail-list" style="margin-top:20px; display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:15px;"></div>
-      </div>
-  </div>
+    <div id="editFormPopup" class="popup-form"></div>
 
-  <div id="popup-export" class="popup">
-      <h3>Export Data <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-export')">X</button></h3>
-      <p>Salin kode ini untuk Website Viewer:</p>
-      <textarea id="export-area" readonly style="height:150px; font-family:monospace;"></textarea>
-      <button class="btn btn-primary" onclick="copyExport()">Salin Kode</button>
-  </div>
+    <div id="menuManagementPopup" class="popup-form" style="max-width: 800px;">
+        </div>
 
-  <div id="popup-menu" class="popup"><h3>Kelola Menu <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-menu')">X</button></h3><div id="list-menu" style="max-height:300px; overflow:auto;"></div><hr><input id="new-menu-name" placeholder="Nama Menu"><input id="new-menu-price" type="number" placeholder="Harga"><textarea id="new-menu-det" placeholder="Detail"></textarea><button class="btn btn-primary" onclick="addMenu()" style="margin-top:10px;">Tambah</button></div>
-  <div id="popup-loc" class="popup"><h3>Kelola Tempat <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-loc')">X</button></h3><div id="list-loc" style="max-height:300px; overflow:auto;"></div><hr><input id="new-loc-name" placeholder="Nama Tempat"><input id="new-loc-cap" type="number" placeholder="Kapasitas"><button class="btn btn-primary" onclick="addLoc()" style="margin-top:10px;">Tambah</button></div>
-  
-  <div id="popup-broadcast" class="popup">
-      <h3>Broadcast <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-broadcast')">X</button></h3>
-      <textarea id="bc-msg" placeholder="Tulis template pesan..." rows="5"></textarea>
-      <button class="btn btn-info" onclick="saveBcMsg()">Simpan Template</button>
-      <hr>
-      <input type="text" placeholder="Cari..." oninput="filterBc(this.value)">
-      <div id="bc-list" style="max-height:300px; overflow-y:auto; margin-top:10px;"></div>
-  </div>
+    <div id="locationManagementPopup" class="popup-form">
+        </div>
 
-  <div id="popup-customer" class="popup" style="max-width:800px;">
-      <h3>Data Customer <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-customer')">X</button></h3>
-      <input type="text" placeholder="Cari nama/HP..." oninput="filterCust(this.value)">
-      <div id="cust-list" style="margin-top:10px; max-height:400px; overflow-y:auto;"></div>
-  </div>
+    <div id="customerListPopup" class="popup-form" style="max-width: 500px; height: 80vh;">
+        </div>
 
-  <div id="popup-analysis" class="popup" style="max-width:900px;">
-      <h3>Analisis Bisnis <button class="btn btn-sm btn-secondary" onclick="closePopup('popup-analysis')">X</button></h3>
-      <canvas id="chart-anl" style="height:300px; width:100%;"></canvas>
-      <div id="stats-anl" class="stats-grid"></div>
-  </div>
+    <div id="printOptionsPopup" class="popup-form" style="max-width: 400px;">
+        <span class="close-btn" onclick="closePopup('printOptionsPopup')"><i class="fas fa-times"></i></span>
+        <h3><i class="fas fa-print"></i> Opsi Cetak</h3>
+        <p>Pilih detail yang ingin ditampilkan pada laporan:</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0;">
+            <label style="background:#f3f4f6; padding:10px; border-radius:6px; display:flex; align-items:center; gap:8px; font-weight:400;">
+                <input type="checkbox" id="print-detail-menu" checked style="width:auto; margin:0;"> Detail Menu
+            </label>
+            <label style="background:#f3f4f6; padding:10px; border-radius:6px; display:flex; align-items:center; gap:8px; font-weight:400;">
+                <input type="checkbox" id="print-kontak" checked style="width:auto; margin:0;"> No. HP
+            </label>
+            <label style="background:#f3f4f6; padding:10px; border-radius:6px; display:flex; align-items:center; gap:8px; font-weight:400;">
+                <input type="checkbox" id="print-dp" checked style="width:auto; margin:0;"> Info DP
+            </label>
+            <label style="background:#f3f4f6; padding:10px; border-radius:6px; display:flex; align-items:center; gap:8px; font-weight:400;">
+                <input type="checkbox" id="print-tambahan" checked style="width:auto; margin:0;"> Notes
+            </label>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-primary" onclick="executePrint()" style="flex:1;"><i class="fas fa-check"></i> Cetak Sekarang</button>
+        </div>
+    </div>
 
+    <div id="analysisPopup" class="popup-form">
+        </div>
+
+    <div id="exportDataPopup" class="popup-form">
+        <span class="close-btn" onclick="closePopup('exportDataPopup')"><i class="fas fa-times"></i></span>
+        <h3><i class="fas fa-file-export"></i> Export Data Viewer</h3>
+        <p style="font-size:0.9rem; color:#666;">Salin kode di bawah ini untuk digunakan di aplikasi Viewer tim dapur/bar.</p>
+        <textarea id="export-data-output" readonly style="height: 150px; font-family: monospace; font-size: 0.8rem; background-color: #f1f5f9; border:1px solid #ccc; width:100%;"></textarea>
+        <div style="margin-top:15px; display:flex; gap:10px;">
+            <button class="btn btn-primary" onclick="copyExportCode()" style="flex:1"><i class="fas fa-copy"></i> Salin Kode</button>
+        </div>
+    </div>
+
+    <div id="broadcastMainPopup" class="popup-form" style="max-width: 400px; text-align: center;">
+         <span class="close-btn" onclick="closePopup('broadcastMainPopup')"><i class="fas fa-times"></i></span>
+         <h3><i class="fas fa-bullhorn"></i> Broadcast Promo</h3>
+         <p>Pilih tindakan:</p>
+         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-info" onclick="showBroadcastSettings()"><i class="fas fa-cog"></i> Atur Pesan Broadcast</button>
+            <button class="btn btn-whatsapp" onclick="showBroadcastList()"><i class="fas fa-paper-plane"></i> Pilih Penerima & Kirim</button>
+         </div>
+    </div>
+
+    <div id="broadcastSettingsPopup" class="popup-form">
+        <span class="close-btn" onclick="closePopup('broadcastSettingsPopup')"><i class="fas fa-times"></i></span>
+        <h3><i class="fas fa-cog"></i> Atur Pesan Promo</h3>
+        <p style="font-size:0.9rem;">Gunakan format WA (*tebal*, _miring_). Kata "Kak" akan ditambahkan otomatis dengan Nama.</p>
+        <textarea id="broadcastMessage" placeholder="Contoh: Ada menu baru lho di Dolan Sawah! Diskon 10% khusus minggu ini..." style="height: 150px;"></textarea>
+        <div style="margin-top: 15px;">
+            <button class="btn btn-primary" onclick="saveBroadcastMessage()" style="width:100%"><i class="fas fa-save"></i> Simpan Pesan</button>
+        </div>
+    </div>
+
+    <div id="broadcastListPopup" class="popup-form" style="max-width: 600px; height: 80vh;">
+        <span class="close-btn" onclick="closePopup('broadcastListPopup')"><i class="fas fa-times"></i></span>
+        <h3><i class="fas fa-users"></i> Daftar Target Broadcast</h3>
+        <input type="text" id="broadcastCustomerSearch" oninput="filterBroadcastCustomers(this.value)" placeholder="Cari nama pelanggan..." style="margin-bottom: 10px;">
+        <div id="broadcast-customer-list" style="overflow-y: auto; height: 60%; border: 1px solid #eee; border-radius: 8px; padding: 10px;">
+            </div>
+    </div>
+
+  </div> <div class="overlay" id="overlay" onclick="closePopupAll()"></div>
 <script>
-    // --- 1. FIREBASE CONFIG ---
+    // =========================================
+    // 1. KONFIGURASI FIREBASE & INISIALISASI
+    // =========================================
     const firebaseConfig = {
       apiKey: "AIzaSyA_c1tU70FM84Qi_f_aSaQ-YVLo_18lCkI",
       authDomain: "reservasi-dolan-sawah.firebaseapp.com",
@@ -335,516 +722,1737 @@
       messagingSenderId: "213151400721",
       appId: "1:213151400721:web:e51b0d8cdd24206cf682b0"
     };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    
+    // Mencegah inisialisasi ganda
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.firestore();
     const auth = firebase.auth();
-
-    // --- 2. GLOBAL VARS ---
-    const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
-    let curMonth = new Date().getMonth();
-    let curYear = new Date().getFullYear();
     
-    // Cache
-    let resCache = {}; // Main Reservasi
-    let reqCache = []; // Inbox Requests
-    let fullCache = {}; // Status Full
-    let menuCache = {}; // Menu Details
-    let priceCache = {}; // Menu Prices
-    let locCache = {}; // Locations
+    // =========================================
+    // 2. VARIABEL GLOBAL (STATE MANAGEMENT)
+    // =========================================
+    // -- Waktu & Kalender --
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let selectedDate = null; // Format YYYY-MM-DD
     
-    let selectedDate = '';
-    let unsubRes = null, unsubReq = null, unsubFull = null;
-    let bcCustomers = []; // Cache customer for broadcast
+    // -- Cache Data (Untuk Performa Cepat) --
+    let reservationsData = {};  // Object: { "MM-DD": [Array Reservasi] } -> Dioptimalkan untuk kalender
+    let requestsCache = [];     // Array: Menyimpan data Inbox
+    let allReservationsRaw = []; // Array: Untuk keperluan analisis berat
+    
+    // -- Data Master (Merged Website 1 & 2) --
+    let detailMenu = {};        // Map: Nama Menu -> Array Detail
+    let menuPrices = {};        // Map: Nama Menu -> Harga (Number)
+    let locationsData = {};     // Map: ID Lokasi -> Object {name, capacity}
+    
+    // -- System Logic --
+    let unsubscribeReservations = null;
+    let unsubscribeRequests = null;
+    let notificationInterval = null;
+    
+    // =========================================
+    // 3. UTILITIES & HELPER FUNCTIONS
+    // =========================================
+    function showLoader() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+    function hideLoader() { document.getElementById('loadingOverlay').style.display = 'none'; }
+    
+    // Format Rupiah
+    function formatMoney(amount) { 
+        return (amount || 0).toLocaleString('id-ID'); 
+    }
+    
+    // Bersihkan Nomor HP (08xx -> 628xx)
+    function cleanPhoneNumber(phone) {
+        if(!phone) return "";
+        let p = phone.replace(/[^0-9]/g, '');
+        if (p.startsWith('0')) p = '62' + p.slice(1);
+        return p;
+    }
 
-    // --- 3. AUTHENTICATION ---
-    auth.onAuthStateChanged(u => {
-        if(u) {
-            document.getElementById('login-page').style.display='none';
-            document.getElementById('main-ui').style.display='block';
-            initApp();
+    // Tampilkan Toast / Alert (Menggunakan SweetAlert2 agar modern)
+    function showToast(title, icon = 'success') {
+        const Toast = Swal.mixin({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+        Toast.fire({ icon: icon, title: title });
+    }
+
+    // Tutup Popup
+    function closePopup(id) {
+        document.getElementById(id).style.display = 'none';
+        checkOverlay();
+    }
+    
+    function closePopupAll() {
+        document.querySelectorAll('.popup-form').forEach(el => el.style.display = 'none');
+        document.getElementById('overlay').style.display = 'none';
+        
+        // Reset Sidebar Mobile jika terbuka
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('mobile-toggle').innerHTML = '<i class="fas fa-bars"></i>';
+    }
+
+    function checkOverlay() {
+        // Cek apakah masih ada popup yang terbuka
+        const anyOpen = Array.from(document.querySelectorAll('.popup-form')).some(el => el.style.display === 'block');
+        if(!anyOpen) document.getElementById('overlay').style.display = 'none';
+    }
+
+    // =========================================
+    // 4. OTENTIKASI ADMIN
+    // =========================================
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // User Login Sukses
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            initApp(); // Mulai Aplikasi
         } else {
-            document.getElementById('login-page').style.display='flex';
-            document.getElementById('main-ui').style.display='none';
+            // User Logout / Belum Login
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('main-content').style.display = 'none';
+            // Stop listeners untuk hemat data
+            if(unsubscribeReservations) unsubscribeReservations();
+            if(unsubscribeRequests) unsubscribeRequests();
         }
     });
 
-    function handleLogin() {
-        const e = document.getElementById('loginEmail').value;
-        const p = document.getElementById('loginPassword').value;
-        if(!e || !p) return Swal.fire('Error','Email & Pass wajib diisi','error');
+    async function handleLogin() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorEl = document.getElementById('login-error');
         
-        document.getElementById('loader').style.display='flex';
-        auth.signInWithEmailAndPassword(e,p).catch(er => {
-            document.getElementById('loader').style.display='none';
-            document.getElementById('loginError').innerText = er.message;
-            document.getElementById('loginError').style.display='block';
+        // Animasi tombol loading (opsional)
+        const btn = document.querySelector('.login-box button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Masuk...';
+        btn.disabled = true;
+
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            // Sukses -> ditangani onAuthStateChanged
+        } catch (error) {
+            errorEl.style.display = 'block';
+            errorEl.textContent = "Gagal Masuk: " + error.message;
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function handleLogout() {
+        Swal.fire({
+            title: 'Keluar Sistem?',
+            text: "Anda harus login kembali untuk mengakses data.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e76f51',
+            confirmButtonText: 'Ya, Keluar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                auth.signOut();
+            }
         });
     }
-    function handleLogout() { if(confirm('Yakin ingin logout?')) auth.signOut(); }
 
-    // --- 4. INIT & LOAD DATA ---
+    // =========================================
+    // 5. INISIALISASI DATA UTAMA (MASTER DATA)
+    // =========================================
     async function initApp() {
-        document.getElementById('loader').style.display='flex';
+        showLoader();
         try {
-            await Promise.all([loadMenu(), loadLoc()]);
-            listenRes();
-            listenReq();
-            listenFull();
-            setupNotif();
-        } catch(e) { console.error(e); Swal.fire('Error Init', e.message, 'error'); }
-        document.getElementById('loader').style.display='none';
+            // Update Tanggal di Header Dashboard
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date-display').textContent = new Date().toLocaleDateString('id-ID', dateOptions);
+            document.getElementById('monthYear').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+            // 1. Load Data Master (Parallel)
+            await Promise.all([
+                loadMasterMenus(),
+                loadMasterLocations()
+            ]);
+
+            // 2. Pasang Listeners Realtime
+            listenToInbox();       // Data Permintaan (Website 2)
+            listenToReservations(); // Data Utama (Website 1)
+            
+            // 3. Setup Notifikasi Background
+            setupNotificationChecker();
+
+        } catch (e) {
+            console.error("Init Error:", e);
+            showToast("Gagal memuat data awal", "error");
+        } finally {
+            hideLoader();
+        }
     }
 
-    async function loadMenu() {
-        const s = await db.collection('menus').get();
-        menuCache = {}; priceCache = {};
-        s.forEach(d => {
-            const data = d.data();
-            menuCache[d.id] = data.details || [];
-            priceCache[d.id] = data.price ? parseInt(data.price) : 0;
+    // --- LOAD MENU (MERGED LOGIC) ---
+    // Menggabungkan struktur 'price' (Web 2) dan 'details' (Web 1)
+    async function loadMasterMenus() {
+        return db.collection('menus').get().then(snapshot => {
+            detailMenu = {};
+            menuPrices = {};
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // Simpan Detail
+                detailMenu[doc.id] = data.details || [];
+                // Simpan Harga (Default 0 jika null)
+                menuPrices[doc.id] = parseInt(data.price) || 0;
+            });
+            updateMenuPreview(); // Update tampilan di Tab Data
+            console.log("Menu Loaded:", Object.keys(detailMenu).length);
         });
     }
-    async function loadLoc() {
-        const s = await db.collection('locations').get();
-        locCache = {};
-        s.forEach(d => locCache[d.id] = d.data());
+
+    // --- LOAD LOKASI ---
+    async function loadMasterLocations() {
+        return db.collection('locations').get().then(snapshot => {
+            locationsData = {};
+            snapshot.forEach(doc => {
+                locationsData[doc.id] = {
+                    id: doc.id,
+                    name: doc.data().name,
+                    capacity: parseInt(doc.data().capacity) || 0
+                };
+            });
+            updateLocationPreview(); // Update tampilan di Tab Data
+            console.log("Locations Loaded:", Object.keys(locationsData).length);
+        });
+    }
+    
+    // --- UI UPDATERS UNTUK TAB DATA MASTER ---
+    function updateMenuPreview() {
+        const container = document.getElementById('master-menu-preview');
+        const keys = Object.keys(detailMenu).sort().slice(0, 5); // Ambil 5 teratas
+        
+        if(keys.length === 0) {
+            container.innerHTML = '<p class="text-muted">Belum ada data menu.</p>';
+            return;
+        }
+
+        let html = '<ul style="padding-left: 20px; color: #555; margin-top:0;">';
+        keys.forEach(k => {
+            html += `<li><b>${k}</b> - Rp ${formatMoney(menuPrices[k])}</li>`;
+        });
+        html += '</ul>';
+        if(Object.keys(detailMenu).length > 5) {
+            html += `<small style="display:block; margin-top:5px; color:var(--primary);">+ ${Object.keys(detailMenu).length - 5} menu lainnya...</small>`;
+        }
+        container.innerHTML = html;
     }
 
-    // --- 5. LISTENERS ---
-    function listenRes() {
-        if(unsubRes) unsubRes();
-        // Listener per bulan untuk optimasi
-        const start = `${curYear}-${String(curMonth+1).padStart(2,'0')}-01`;
-        const end = `${curYear}-${String(curMonth+1).padStart(2,'0')}-31`;
+    function updateLocationPreview() {
+        const container = document.getElementById('master-location-preview');
+        const locs = Object.values(locationsData).sort((a,b) => a.name.localeCompare(b.name)).slice(0, 5);
         
-        unsubRes = db.collection('reservations').where('date','>=',start).where('date','<=',end)
-            .onSnapshot(s => {
-                resCache = {};
-                s.forEach(d => {
-                    const r = {id:d.id, ...d.data()};
-                    if(!resCache[r.date]) resCache[r.date] = [];
-                    resCache[r.date].push(r);
+        if(locs.length === 0) {
+            container.innerHTML = '<p class="text-muted">Belum ada data lokasi.</p>';
+            return;
+        }
+
+        let html = '<ul style="padding-left: 20px; color: #555; margin-top:0;">';
+        locs.forEach(l => {
+            html += `<li><b>${l.name}</b> (Kap: ${l.capacity})</li>`;
+        });
+        html += '</ul>';
+        container.innerHTML = html;
+    }
+
+    // --- TAB NAVIGATION SYSTEM ---
+    window.switchTab = function(tabId) {
+        // Hide semua section
+        document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+        // Show target
+        document.getElementById('tab-' + tabId).classList.add('active');
+        
+        // Update Sidebar Active State
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        const navItem = document.getElementById('nav-' + tabId);
+        if(navItem) navItem.classList.add('active');
+        
+        // Close sidebar di mobile
+        if(window.innerWidth < 768) {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('mobile-toggle').innerHTML = '<i class="fas fa-bars"></i>';
+        }
+
+        // Trigger render khusus jika tab tertentu dibuka
+        if (tabId === 'calendar' && !selectedDate) {
+            renderCalendar(); // Render ulang grid kalender
+        }
+        if (tabId === 'analysis') {
+            // Render chart jika belum ada
+            renderAnalysisChart();
+        }
+    };
+
+    window.toggleSidebar = function() {
+        const sb = document.getElementById('sidebar');
+        sb.classList.toggle('open');
+        const icon = sb.classList.contains('open') ? 'times' : 'bars';
+        document.getElementById('mobile-toggle').innerHTML = `<i class="fas fa-${icon}"></i>`;
+    };
+
+</script>
+    // =========================================
+    // 6. LOGIKA KALENDER & DATA RESERVASI
+    // =========================================
+
+    // --- LISTENER REALTIME (Data Utama) ---
+    function listenToReservations() {
+        // Bersihkan listener lama jika ada (untuk mencegah memory leak saat ganti bulan)
+        if (unsubscribeReservations) unsubscribeReservations();
+
+        // Tentukan Range Tanggal (Load bulan ini agar ringan)
+        // Kita load H-7 dari awal bulan s/d H+7 akhir bulan untuk cover transisi
+        const startOfView = new Date(currentYear, currentMonth, 1);
+        const endOfView = new Date(currentYear, currentMonth + 1, 0);
+        
+        // Convert ke String YYYY-MM-DD
+        const startStr = new Date(startOfView.getFullYear(), startOfView.getMonth(), 1).toISOString().split('T')[0];
+        const endStr = new Date(endOfView.getFullYear(), endOfView.getMonth() + 1, 7).toISOString().split('T')[0]; // Buffer extra days
+
+        console.log(`Memuat reservasi: ${startStr} s/d ${endStr}`);
+        showLoader();
+
+        unsubscribeReservations = db.collection('reservations')
+            .where('date', '>=', startStr)
+            .where('date', '<=', endStr)
+            .onSnapshot(snapshot => {
+                reservationsData = {}; // Reset Cache Bulan Ini
+                let totalPaxMonth = 0;
+                let totalDpMonth = 0;
+                let recentList = [];
+
+                snapshot.forEach(doc => {
+                    const r = { id: doc.id, ...doc.data() };
+                    
+                    // Grouping by Date
+                    if (!reservationsData[r.date]) reservationsData[r.date] = [];
+                    reservationsData[r.date].push(r);
+                    
+                    // Statistik
+                    totalPaxMonth += parseInt(r.jumlah) || 0;
+                    totalDpMonth += parseInt(r.dp) || 0;
+                    recentList.push(r);
                 });
-                renderCal();
-                // Jika sedang buka detail, refresh
-                if(selectedDate && document.getElementById('popup-detail').style.display==='block') openDetail(selectedDate);
-                // Update broadcast list cache
-                updateBcCache();
+
+                // Update UI
+                renderCalendar();
+                updateDashboardStats(snapshot.size, totalPaxMonth, totalDpMonth, recentList);
+                
+                // Jika sedang membuka tanggal tertentu, refresh view detailnya
+                if (selectedDate && document.getElementById('reservation-view-container').style.display === 'block') {
+                    renderDailyView(selectedDate);
+                }
+                
+                hideLoader();
+            }, error => {
+                console.error("Error Reservasi:", error);
+                showToast("Gagal memuat data reservasi", "error");
+                hideLoader();
             });
     }
 
-    function listenReq() {
-        if(unsubReq) unsubReq();
-        unsubReq = db.collection('reservation_requests').where('status','==','pending')
-            .onSnapshot(s => {
-                reqCache = s.docs.map(d => ({id:d.id, ...d.data()}));
-                const c = reqCache.length;
-                document.getElementById('dashboard-inbox-badge').innerText = c;
-                document.getElementById('dashboard-inbox-badge').style.display = c>0?'inline-block':'none';
-                document.getElementById('header-inbox-badge').innerText = c;
-                document.getElementById('header-inbox-badge').style.display = c>0?'inline-block':'none';
-                if(document.getElementById('popup-inbox').style.display==='block') renderInbox();
+    // --- UPDATE STATISTIK DASHBOARD ---
+    function updateDashboardStats(count, pax, dp, allList) {
+        // Hitung Tamu Hari Ini
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayRes = reservationsData[todayStr] || [];
+        const todayPax = todayRes.reduce((sum, r) => sum + (parseInt(r.jumlah)||0), 0);
+
+        // Render ke DOM
+        document.getElementById('stat-today-pax').textContent = todayPax;
+        document.getElementById('stat-month-total').textContent = count;
+        document.getElementById('stat-month-dp').textContent = `Rp ${formatMoney(dp)}`;
+
+        // List Reservasi Terbaru (Sort by CreatedAt Desc)
+        const recent = allList.sort((a,b) => {
+            const timeA = a.createdAt ? a.createdAt.seconds : 0;
+            const timeB = b.createdAt ? b.createdAt.seconds : 0;
+            return timeB - timeA;
+        }).slice(0, 5);
+
+        const listContainer = document.getElementById('recent-reservations-list');
+        if (recent.length === 0) {
+            listContainer.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">Belum ada reservasi bulan ini.</p>';
+        } else {
+            listContainer.innerHTML = recent.map(r => `
+                <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--secondary);">${r.nama}</div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            <i class="far fa-calendar"></i> ${r.date} &bull; <i class="far fa-clock"></i> ${r.jam}
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span class="badge" style="background:var(--primary); color:white; padding:3px 8px; border-radius:10px; font-size:0.75rem;">${r.jumlah} Org</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // --- RENDER GRID KALENDER ---
+    function renderCalendar() {
+        const grid = document.getElementById('calendar');
+        grid.innerHTML = '';
+        
+        // Header Bulan
+        document.getElementById('monthYear').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        // Filler Hari Kosong
+        for (let i = 0; i < firstDay; i++) {
+            grid.innerHTML += `<div style="background:transparent;"></div>`;
+        }
+
+        // Render Tanggal
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const list = reservationsData[dateStr] || [];
+            const count = list.length;
+            const isToday = dateStr === todayStr ? 'today' : '';
+            const isSelected = dateStr === selectedDate ? 'selected' : '';
+
+            // Cuplikan Nama (Max 2) untuk ditampilkan di kotak tanggal
+            let previewHtml = '';
+            list.slice(0, 2).forEach(r => {
+                previewHtml += `<div class="cal-event-dot">${r.jam} ${r.nama.split(' ')[0]}</div>`;
             });
-    }
+            if(count > 2) previewHtml += `<div style="font-size:0.7rem; color:#666; margin-top:2px;">+${count-2} lainnya</div>`;
 
-    function listenFull() {
-        if(unsubFull) unsubFull();
-        unsubFull = db.collection('date_status').onSnapshot(s => {
-            fullCache = {};
-            s.forEach(d => fullCache[d.data().date] = d.data().isFull);
-            renderCal();
-        });
-    }
-
-    // --- 6. CALENDAR UI ---
-    function renderCal() {
-        const el = document.getElementById('calendar-days');
-        el.innerHTML = '';
-        document.getElementById('monthYear').innerText = `${months[curMonth]} ${curYear}`;
-        
-        const fDay = new Date(curYear, curMonth, 1).getDay();
-        const days = new Date(curYear, curMonth+1, 0).getDate();
-        const today = new Date().toISOString().split('T')[0];
-        
-        for(let i=0; i<fDay; i++) el.innerHTML += `<div></div>`;
-        
-        for(let i=1; i<=days; i++) {
-            const date = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-            const count = (resCache[date]||[]).length;
-            const isFull = fullCache[date] === true;
-            
-            let cls = 'cal-day';
-            if(date === today) cls += ' today';
-            if(isFull) cls += ' is-full';
-            
-            let html = `<div class="day-num">${i}</div>`;
-            if(isFull) { /* handled by css */ }
-            else if(count>0) html += `<div class="res-count">${count} Res</div>`;
-            
             const div = document.createElement('div');
-            div.className = cls;
-            div.innerHTML = html;
-            div.onclick = () => openDetail(date);
-            el.appendChild(div);
+            div.className = `cal-day ${isToday} ${isSelected}`;
+            div.onclick = () => selectDate(dateStr);
+            div.innerHTML = `
+                <div class="day-number">${i}</div>
+                <div style="width:100%; flex:1;">${previewHtml}</div>
+                ${count > 0 ? `<div style="font-weight:700; font-size:0.8rem; color:var(--primary); align-self:flex-end;">${count} Res</div>` : ''}
+            `;
+            grid.appendChild(div);
         }
     }
-    
-    function moveMonth(d) {
-        curMonth += d;
-        if(curMonth<0){curMonth=11; curYear--;}
-        if(curMonth>11){curMonth=0; curYear++;}
-        listenRes(); // Refresh listener range
+
+    // --- NAVIGASI KALENDER ---
+    function navigateMonth(step) {
+        currentMonth += step;
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        selectedDate = null; // Reset seleksi saat ganti bulan
+        
+        // Kembali ke tampilan grid utama
+        document.getElementById('calendar-main-view').style.display = 'block';
+        document.getElementById('reservation-view-container').style.display = 'none';
+        
+        listenToReservations(); // Load data bulan baru
     }
+
     function goToToday() {
-        const n = new Date(); curMonth=n.getMonth(); curYear=n.getFullYear();
-        listenRes();
+        currentMonth = new Date().getMonth();
+        currentYear = new Date().getFullYear();
+        navigateMonth(0);
+        showToast("Kembali ke bulan ini");
     }
 
-    // --- 7. INBOX LOGIC (INTEGRATED) ---
-    function openInbox() { renderInbox(); openPopup('popup-inbox'); }
-    function renderInbox() {
-        const el = document.getElementById('inbox-list');
-        if(reqCache.length===0) { el.innerHTML='<p style="text-align:center; padding:20px; color:#888;">Tidak ada permintaan.</p>'; return; }
+    // --- VIEW DETAIL HARIAN (RESERVATION VIEW) ---
+    function selectDate(dateStr) {
+        selectedDate = dateStr;
+        renderCalendar(); // Refresh highlight
         
-        el.innerHTML = reqCache.map(r => `
-            <div class="req-card">
-                <div class="req-header">
-                    <div><b>${r.nama}</b> <span style="font-size:0.8rem; color:#666;">(${r.via||'Web'})</span></div>
-                    <div style="text-align:right; color:var(--primary);"><b>${r.date}</b><br>${r.jam}</div>
-                </div>
-                <div style="font-size:0.9rem; margin-bottom:5px;">
-                    <i class="fas fa-users"></i> ${r.jumlah} pax | <i class="fas fa-map-marker-alt"></i> ${r.tempat} | ${r.nomorHp}
-                </div>
-                <div class="req-menu">
-                    ${(r.menus||[]).map(m=>`<b>${m.quantity}x</b> ${m.name}`).join(', ') || '-'}
-                </div>
-                ${r.tambahan ? `<div style="font-size:0.8rem; color:orange;">Note: ${r.tambahan}</div>` : ''}
-                <div class="req-actions">
-                    <button class="btn btn-whatsapp btn-sm" onclick="chatReq('${r.id}')"><i class="fab fa-whatsapp"></i> Chat & Hitung</button>
-                    <button class="btn btn-danger btn-sm" onclick="rejectReq('${r.id}')">Tolak</button>
-                    <button class="btn btn-success btn-sm" onclick="approveReq('${r.id}')">Terima</button>
-                </div>
-            </div>
-        `).join('');
+        // Switch View
+        document.getElementById('calendar-main-view').style.display = 'none';
+        const viewContainer = document.getElementById('reservation-view-container');
+        viewContainer.style.display = 'block';
+        
+        // Set Header Title
+        const dateObj = new Date(dateStr);
+        const niceDate = dateObj.toLocaleDateString('id-ID', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+        document.getElementById('reservation-view-title').innerHTML = `<i class="fas fa-calendar-check"></i> ${niceDate}`;
+        
+        // Reset Search
+        document.getElementById('detailSearchInput').value = '';
+        
+        // Render List
+        renderDailyView(dateStr);
+        
+        // Scroll ke atas
+        document.querySelector('.main-content').scrollTop = 0;
     }
-    
-    function chatReq(id) {
-        const r = reqCache.find(x=>x.id===id);
-        let total=0, txt='';
-        (r.menus||[]).forEach(m => {
-            const p = priceCache[m.name] || 0;
-            const sub = p*m.quantity;
-            total+=sub;
-            txt += `- ${m.name} (${m.quantity}x): ${p>0 ? formatRp(sub) : 'Rp ?'}\n`;
-        });
-        const dp = total*0.5;
-        const msg = `Halo Kak *${r.nama}* 👋,\nTerima kasih reservasi di Dolan Sawah.\n\nDetail:\n🗓 ${r.date} | ⏰ ${r.jam}\n👥 ${r.jumlah} pax | 📍 ${r.tempat}\n\n*Estimasi Pesanan:*\n${txt}\nSubtotal: Rp ${formatRp(total)}\n*DP (50%): Rp ${formatRp(dp)}*\n\nMohon konfirmasi transfer DP ya kak.`;
-        window.open(`https://wa.me/${r.nomorHp.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`,'_blank');
+
+    function kembaliKeKalender() {
+        document.getElementById('reservation-view-container').style.display = 'none';
+        document.getElementById('calendar-main-view').style.display = 'block';
+        selectedDate = null;
+        renderCalendar(); // Hapus highlight
     }
-    
-    async function approveReq(id) {
-        const r = reqCache.find(x=>x.id===id);
-        const {value:dp} = await Swal.fire({input:'number', title:'Input DP (Rp)', inputPlaceholder:'0'});
-        if(dp !== undefined) {
-            document.getElementById('loader').style.display='flex';
-            try {
-                await db.collection('reservations').add({
-                    ...r, dp:parseInt(dp), status:'confirmed', 
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(), via:'Mandiri Approved'
+
+    function renderDailyView(dateStr) {
+        const container = document.getElementById('reservation-detail-list');
+        const list = reservationsData[dateStr] || [];
+        
+        if (list.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
+                    <i class="far fa-calendar-times" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <p>Belum ada reservasi pada tanggal ini.</p>
+                    <button class="btn btn-primary" onclick="showAddForm()"><i class="fas fa-plus"></i> Tambah Sekarang</button>
+                </div>`;
+            return;
+        }
+
+        // Sort berdasarkan Jam
+        list.sort((a, b) => a.jam.localeCompare(b.jam));
+
+        container.innerHTML = list.map(r => {
+            // Logika Menu (Support Legacy & New Array Format)
+            let menuHtml = '';
+            let subTotal = 0;
+            
+            if (Array.isArray(r.menus) && r.menus.length > 0) {
+                // Format Baru (Array)
+                menuHtml = '<ul style="margin:5px 0; padding-left:20px; color:#555; font-size:0.9rem;">';
+                r.menus.forEach(m => {
+                    const detail = detailMenu[m.name] || [];
+                    const detailStr = detail.length ? `<br><small style="color:#888;">&bull; ${detail.join(', ')}</small>` : '';
+                    
+                    // Hitung estimasi harga (jika ada di data master)
+                    const price = menuPrices[m.name] || 0;
+                    subTotal += price * m.quantity;
+                    
+                    menuHtml += `<li><b>${m.quantity}x ${m.name}</b> ${detailStr}</li>`;
                 });
-                await db.collection('reservation_requests').doc(id).delete();
-                Swal.fire('Sukses','Masuk Kalender','success');
-                if(reqCache.length<=1) closePopup('popup-inbox');
-            } catch(e){Swal.fire('Err',e.message,'error');}
-            document.getElementById('loader').style.display='none';
-        }
+                menuHtml += '</ul>';
+            } else if (r.menu) {
+                // Format Lama (String)
+                const detail = detailMenu[r.menu] || [];
+                const detailStr = detail.map(d => `&bull; ${d}`).join('<br>');
+                menuHtml = `<div style="font-weight:600; color:#333;">${r.menu}</div><div style="font-size:0.85rem; color:#666; margin-left:10px;">${detailStr}</div>`;
+            } else {
+                menuHtml = '<span style="color:#999; font-style:italic;">- Tidak ada menu -</span>';
+            }
+
+            // Estimasi Tagihan (Jika data harga tersedia)
+            let priceInfo = '';
+            if (subTotal > 0) {
+                priceInfo = `<div style="margin-top:5px; font-weight:600; color:var(--primary);">Est. Total: Rp ${formatMoney(subTotal)}</div>`;
+            }
+
+            // Info Lainnya
+            const dpInfo = r.dp > 0 ? `<span class="badge" style="background:#dcfce7; color:#166534; padding:3px 8px; border-radius:4px; font-size:0.8rem;"><i class="fas fa-money-bill"></i> DP: Rp ${formatMoney(r.dp)} (${r.tipeDp})</span>` : '';
+            const noteInfo = r.tambahan ? `<div style="background:#fffbeb; padding:8px; border-radius:6px; margin-top:8px; font-size:0.85rem; border:1px dashed #fcd34d;"><i class="fas fa-sticky-note" style="color:#d97706;"></i> <b>Note:</b> ${r.tambahan}</div>` : '';
+
+            // Tombol "Terima Kasih" Logic
+            let btnThanks = '';
+            if (r.nomorHp) {
+                if (r.thankYouSent) {
+                    btnThanks = `<button class="btn" style="background:#f3f4f6; color:#10b981; padding:6px 12px; font-size:0.8rem;" disabled><i class="fas fa-check-double"></i> Thanks Terkirim</button>`;
+                } else {
+                    btnThanks = `<button class="btn btn-accent" onclick="sendThankYouMessage('${r.id}', '${r.nama}', '${r.nomorHp}')" style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-heart"></i> Kirim Thanks</button>`;
+                }
+            }
+
+            return `
+            <div class="reservation-list-item" style="display:block; position:relative;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                    <div>
+                        <div style="font-size:1.1rem; font-weight:700; color:var(--secondary);">${r.nama}</div>
+                        <div style="color:var(--text-muted); font-size:0.9rem;">
+                            <i class="fas fa-phone" style="width:20px;"></i> ${r.nomorHp || '-'}
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                         <div style="font-size:1.2rem; font-weight:800; color:var(--primary);">${r.jam}</div>
+                         <span class="badge" style="background:var(--secondary); color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem;">${r.tempat}</span>
+                         <div style="font-size:0.85rem; margin-top:2px;">${r.jumlah} Orang</div>
+                    </div>
+                </div>
+                
+                <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+                
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:0.85rem; font-weight:600; color:#888; text-transform:uppercase;">Pesanan Menu</div>
+                    ${menuHtml}
+                    ${priceInfo}
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    ${dpInfo}
+                    ${noteInfo}
+                </div>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    ${r.nomorHp ? `<button class="btn btn-whatsapp" onclick="contactViaWhatsApp('${r.id}')" style="padding:6px 12px; font-size:0.8rem;"><i class="fab fa-whatsapp"></i> Chat</button>` : ''}
+                    ${btnThanks}
+                    <div style="flex-grow:1;"></div>
+                    <button class="btn btn-primary" onclick="editReservasi('${r.id}')" style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="btn btn-danger" onclick="hapusReservasi('${r.id}')" style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-trash"></i> Hapus</button>
+                </div>
+            </div>`;
+        }).join('');
     }
-    
-    async function rejectReq(id) {
-        if(confirm('Hapus permanen permintaan ini?')) {
-            await db.collection('reservation_requests').doc(id).delete();
+
+    // --- FITUR PENCARIAN & SORTING ---
+    function filterReservations(query) {
+        if (!selectedDate) return;
+        const q = query.toLowerCase();
+        const list = reservationsData[selectedDate] || [];
+        
+        // Filter logic yang kuat (mencari sampai ke dalam nama menu)
+        const filtered = list.filter(r => 
+            (r.nama && r.nama.toLowerCase().includes(q)) || 
+            (r.tempat && r.tempat.toLowerCase().includes(q)) ||
+            (r.menu && r.menu.toLowerCase().includes(q)) ||
+            (Array.isArray(r.menus) && r.menus.some(m => m.name.toLowerCase().includes(q)))
+        );
+        
+        // Render manual hasil filter (bypass cache render)
+        // Kita simpan hasil filter sementara di properti DOM agar tidak merusak cache data asli
+        const container = document.getElementById('reservation-detail-list');
+        
+        // Hack: Menggunakan fungsi renderDailyView tapi memanipulasi data sementara
+        // Cara lebih bersih: Render manual HTMLnya
+        if (filtered.length === 0) {
+            container.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">Tidak ditemukan hasil pencarian.</p>';
+        } else {
+            // Reuse logic render item, tapi karena fungsi renderDailyView bergantung pada reservationsData,
+            // kita buat object dummy sementara.
+            const tempDate = 'temp-search';
+            reservationsData[tempDate] = filtered;
+            renderDailyView(tempDate);
+            delete reservationsData[tempDate];
         }
     }
 
-    // --- 8. SET FULL ---
-    function openSetFull() { 
-        document.getElementById('blockDate').value = new Date().toISOString().split('T')[0];
-        openPopup('popup-full'); 
-    }
-    async function setFullStatus(stat) {
-        const d = document.getElementById('blockDate').value;
-        if(!d) return;
-        await db.collection('date_status').doc(d).set({date:d, isFull:stat}, {merge:true});
-        closePopup('popup-full'); Swal.fire('Berhasil', `Status ${d}: ${stat?'PENUH':'BUKA'}`, 'success');
+    // =========================================
+    // 7. CRUD FUNCTIONS (TAMBAH, EDIT, HAPUS)
+    // =========================================
+
+    // --- ADD RESERVATION ---
+    function showAddForm() {
+        const form = document.getElementById('reservation-form');
+        form.reset();
+        
+        // Set Default: Tanggal terpilih (jika ada) atau Hari ini
+        // Note: Form popup kita tidak ada input tanggal, karena tanggal ikut Calendar View.
+        // Tapi kita bisa tambahkan hidden input atau asumsikan `selectedDate`.
+        
+        if (!selectedDate) {
+            showToast("Pilih tanggal di kalender dulu!", "warning");
+            return;
+        }
+
+        // Reset Menu Rows
+        document.getElementById('selected-menus-container').innerHTML = '';
+        addMenuSelectionRow('reservation-form');
+        
+        // Populate Dropdown Tempat
+        populateLocationDropdown(document.querySelector('#reservation-form #tempat'));
+        
+        document.getElementById('addFormPopup').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
     }
 
-    // --- 9. CRUD RESERVASI ---
-    function openAddForm() {
-        document.getElementById('res-form').reset();
-        document.getElementById('edit-id').value='';
-        document.getElementById('form-title').innerText = 'Input Reservasi';
-        document.getElementById('menu-rows').innerHTML='';
-        if(selectedDate) document.getElementById('inp-date').value = selectedDate;
-        
-        fillLoc(); addMenuRow(); 
-        openPopup('popup-form');
-    }
-    
-    function addMenuRow(name='', qty=1) {
-        const d = document.createElement('div');
-        d.className = 'menu-row';
-        let ops = '<option value="">Pilih...</option>';
-        Object.keys(menuCache).sort().forEach(k => {
-            const p = priceCache[k] ? ` (${formatRp(priceCache[k])})` : '';
-            ops += `<option value="${k}" ${k===name?'selected':''}>${k}${p}</option>`;
-        });
-        d.innerHTML = `<select class="menu-select">${ops}</select><input type="number" class="quantity-input" value="${qty}"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">X</button>`;
-        document.getElementById('menu-rows').appendChild(d);
-    }
-    
-    function fillLoc() {
-        const s = document.getElementById('inp-tempat');
-        s.innerHTML = '<option value="">Pilih...</option>';
-        Object.values(locCache).forEach(l => {
-            s.innerHTML += `<option value="${l.name}">${l.name} (Kap: ${l.capacity})</option>`;
-        });
-    }
-    function checkCap() {
-        const t = document.getElementById('inp-tempat').value;
-        const l = Object.values(locCache).find(x=>x.name===t);
-        if(l) document.getElementById('cap-info').innerText = `Max: ${l.capacity}`;
-    }
-    
-    async function saveReservation() {
-        const id = document.getElementById('edit-id').value;
-        const data = {
-            nama: document.getElementById('inp-nama').value,
-            nomorHp: document.getElementById('inp-hp').value,
-            date: document.getElementById('inp-date').value,
-            jam: document.getElementById('inp-jam').value,
-            jumlah: parseInt(document.getElementById('inp-jml').value),
-            tempat: document.getElementById('inp-tempat').value,
-            dp: parseInt(document.getElementById('inp-dp').value) || 0,
-            tipeDp: document.getElementById('inp-via').value,
-            tambahan: document.getElementById('inp-note').value,
-            menus: []
-        };
-        
-        if(!data.nama || !data.date) return alert("Nama & Tanggal wajib");
-        
-        document.querySelectorAll('#menu-rows .menu-row').forEach(r => {
-            const n = r.querySelector('select').value;
-            const q = r.querySelector('input').value;
-            if(n && q) data.menus.push({name:n, quantity:parseInt(q)});
-        });
-        
-        document.getElementById('loader').style.display='flex';
+    async function simpanReservasi() {
+        // Validasi Form
+        const formData = validateReservationForm('reservation-form');
+        if (!formData) return;
+
+        // Tambahkan Tanggal dari View Kalender
+        formData.date = selectedDate;
+        formData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        formData.thankYouSent = false;
+
+        showLoader();
         try {
-            if(id) await db.collection('reservations').doc(id).update(data);
-            else await db.collection('reservations').add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp(), via:'Admin'});
-            closePopup('popup-form'); Swal.fire('Tersimpan');
-        } catch(e) { Swal.fire('Err',e.message,'error'); }
-        document.getElementById('loader').style.display='none';
+            await db.collection('reservations').add(formData);
+            showToast("Reservasi Berhasil Disimpan!");
+            closePopup('addFormPopup');
+        } catch (e) {
+            console.error(e);
+            showToast("Gagal menyimpan: " + e.message, "error");
+        } finally {
+            hideLoader();
+        }
     }
 
-    // --- 10. DETAIL VIEW ---
-    function openDetail(date) {
-        selectedDate = date;
-        const list = resCache[date] || [];
-        document.getElementById('detail-title').innerText = `${date} (${list.length})`;
-        const el = document.getElementById('detail-list');
-        document.getElementById('search-detail').value=''; // Reset search
+    // --- DELETE RESERVATION ---
+    async function hapusReservasi(id) {
+        Swal.fire({
+            title: 'Hapus Reservasi?',
+            text: "Data tidak bisa dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                showLoader();
+                try {
+                    await db.collection('reservations').doc(id).delete();
+                    showToast("Data dihapus.", "success");
+                } catch (e) {
+                    showToast("Gagal menghapus.", "error");
+                } finally {
+                    hideLoader();
+                }
+            }
+        });
+    }
+
+    // --- FORM VALIDATION HELPER ---
+    function validateReservationForm(formId) {
+        const form = document.getElementById(formId);
+        const name = form.querySelector('#nama').value.trim();
+        const hp = form.querySelector('#nomorHp').value;
+        const jam = form.querySelector('#jam').value;
+        const jumlah = parseInt(form.querySelector('#jumlah').value);
+        const tempat = form.querySelector('#tempat').value;
+        const dp = parseInt(form.querySelector('#dp').value) || 0;
+        const tipeDp = form.querySelector('#tipeDp').value;
+        const tambahan = form.querySelector('#tambahan').value;
+
+        // Reset Errors
+        form.querySelectorAll('.error-message').forEach(e => e.textContent = '');
+
+        let isValid = true;
+        if (!name) { document.querySelector(`#${formId} #nama-error`).textContent = 'Wajib diisi'; isValid = false; }
+        if (!jam) { document.querySelector(`#${formId} #jam-error`).textContent = 'Wajib diisi'; isValid = false; }
+        if (isNaN(jumlah) || jumlah < 1) { document.querySelector(`#${formId} #jumlah-error`).textContent = 'Min 1 org'; isValid = false; }
+        if (!tempat) { document.querySelector(`#${formId} #tempat-error`).textContent = 'Pilih tempat'; isValid = false; }
+
+        // Validasi Kapasitas
+        if (tempat && locationsData) {
+            // Cari object lokasi berdasarkan nama (agak tricky karena key kita ID, value di select nama)
+            // Jadi kita cari match by Name
+            const locKey = Object.keys(locationsData).find(k => locationsData[k].name === tempat);
+            if (locKey) {
+                const cap = locationsData[locKey].capacity;
+                if (jumlah > cap) {
+                     document.querySelector(`#${formId} #jumlah-error`).textContent = `Maks ${cap} org untuk ${tempat}`;
+                     isValid = false;
+                }
+            }
+        }
+
+        // Get Menus
+        const menus = [];
+        const menuRows = form.querySelectorAll('.menu-selection-row');
+        const selectedNames = new Set();
         
-        if(list.length===0) { el.innerHTML='<p style="text-align:center; color:#999; grid-column:1/-1;">Kosong</p>'; } 
-        else { renderDetailList(list); }
-        
-        openPopup('popup-detail');
+        if (menuRows.length === 0) {
+             document.querySelector(`#${formId} #menus-error`).textContent = '(Min 1 menu)';
+             isValid = false;
+        }
+
+        menuRows.forEach(row => {
+            const mName = row.querySelector('select').value;
+            const mQty = parseInt(row.querySelector('input').value);
+            if (mName && mQty > 0) {
+                if(selectedNames.has(mName)) {
+                     document.querySelector(`#${formId} #menus-error`).textContent = '(Menu duplikat)';
+                     isValid = false;
+                }
+                selectedNames.add(mName);
+                menus.push({ name: mName, quantity: mQty });
+            } else {
+                 // Jika row kosong tidak valid
+                 document.querySelector(`#${formId} #menus-error`).textContent = '(Lengkapi menu)';
+                 isValid = false;
+            }
+        });
+
+        if (!isValid) return null;
+
+        return {
+            nama: name,
+            nomorHp: cleanPhoneNumber(hp),
+            jam: jam,
+            jumlah: jumlah,
+            tempat: tempat,
+            dp: dp,
+            tipeDp: tipeDp,
+            tambahan: tambahan,
+            menus: menus
+        };
+    }
+    // =========================================
+    // 8. LOGIKA INBOX & PERMINTAAN (WEBSITE 2)
+    // =========================================
+
+    function listenToInbox() {
+        // Bersihkan listener lama
+        if (unsubscribeRequests) unsubscribeRequests();
+
+        unsubscribeRequests = db.collection('reservation_requests')
+            .orderBy('createdAt', 'desc')
+            .onSnapshot(snapshot => {
+                requestsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateInboxUI();
+            }, error => {
+                console.error("Error Inbox:", error);
+            });
+    }
+
+    function updateInboxUI() {
+        const count = requestsCache.length;
+        const container = document.getElementById('inbox-container');
+        const badge = document.getElementById('sidebar-badge');
+        const statPending = document.getElementById('stat-pending');
+
+        // Update Badges
+        if (badge) {
+            badge.style.display = count > 0 ? 'inline-block' : 'none';
+            badge.textContent = count;
+        }
+        if (statPending) statPending.textContent = count;
+
+        // Render UI
+        if (count === 0) {
+            container.innerHTML = `
+                <div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">
+                    <i class="fas fa-inbox fa-3x" style="opacity:0.3; margin-bottom:15px;"></i>
+                    <p>Tidak ada permintaan baru saat ini.</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = requestsCache.map(r => {
+            // Format Menu
+            let menuHtml = '<span style="color:#999; font-style:italic;">Tidak ada menu</span>';
+            if (r.menus && r.menus.length > 0) {
+                menuHtml = r.menus.map(m => `
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding:2px 0;">
+                        <span><b>${m.quantity}x</b> ${m.name}</span>
+                    </div>`).join('');
+            }
+
+            return `
+            <div class="request-card">
+                <div class="request-header">
+                    <span class="req-name">${r.nama}</span>
+                    <span class="req-via">${r.via || 'Web'}</span>
+                </div>
+                
+                <div class="req-details">
+                    <div style="display:flex; gap:15px; margin-bottom:5px;">
+                        <span><i class="fas fa-calendar-alt"></i> ${r.date}</span>
+                        <span><i class="fas fa-clock"></i> ${r.jam}</span>
+                    </div>
+                    <div style="display:flex; gap:15px;">
+                        <span><i class="fas fa-users"></i> ${r.jumlah} Org</span>
+                        <span><i class="fas fa-map-marker-alt"></i> ${r.tempat}</span>
+                    </div>
+                </div>
+
+                <div class="req-menu-box">
+                    ${menuHtml}
+                </div>
+                
+                ${r.tambahan ? `<div style="font-size:0.85rem; color:#d97706; background:#fffbeb; padding:8px; border-radius:4px; margin-bottom:10px;"><i class="fas fa-sticky-note"></i> <b>Note:</b> ${r.tambahan}</div>` : ''}
+                
+                <div class="req-actions">
+                    <button class="btn btn-whatsapp" onclick="prepareConfirmationChat('${r.id}')"><i class="fab fa-whatsapp"></i> Chat Konfirmasi</button>
+                    <button class="btn btn-danger" onclick="rejectRequest('${r.id}')"><i class="fas fa-times"></i> Tolak</button>
+                    <button class="btn btn-success" onclick="approveRequest('${r.id}')"><i class="fas fa-check"></i> Terima</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // --- INTEGRASI WHATSAPP SMART (KALKULASI HARGA) ---
+    function prepareConfirmationChat(id) {
+        const r = requestsCache.find(item => item.id === id);
+        if (!r) return;
+
+        // 1. Kalkulasi Biaya (Menggunakan data harga dari Menu Master)
+        let totalFood = 0;
+        let orderSummary = "";
+
+        if (r.menus && r.menus.length > 0) {
+            r.menus.forEach(m => {
+                // Ambil harga dari cache global (Data Master)
+                const unitPrice = menuPrices[m.name] || 0;
+                const sub = unitPrice * m.quantity;
+                totalFood += sub;
+                
+                // Format text untuk WA
+                orderSummary += `- ${m.name} (${m.quantity}x)`;
+                if (unitPrice > 0) orderSummary += ` : Rp ${formatMoney(sub)}`;
+                orderSummary += `\n`;
+            });
+        }
+
+        let ppn = totalFood * 0.1; // PPN 10%
+        let grandTotal = totalFood + ppn;
+        let dp = grandTotal * 0.5; // DP 50%
+
+        // 2. Format Pesan WhatsApp (Sesuai Website 2)
+        let msg = `Halo Kak *${r.nama}* 👋,\n` +
+            `Terima kasih telah melakukan reservasi di *Dolan Sawah*.\n\n` +
+            `Berikut detail pesanan Anda:\n` +
+            `🗓 Tanggal: ${r.date}\n` +
+            `⏰ Jam: ${r.jam}\n` +
+            `👥 Jumlah: ${r.jumlah} Orang\n` +
+            `📍 Tempat: ${r.tempat}\n\n`;
+
+        if (orderSummary) {
+            msg += `*Rincian Pesanan:*\n${orderSummary}` +
+            `----------------------------------\n` +
+            `Subtotal: Rp ${formatMoney(totalFood)}\n` +
+            `PPN (10%): Rp ${formatMoney(ppn)}\n` +
+            `*Total Tagihan: Rp ${formatMoney(grandTotal)}*\n\n`;
+        }
+
+        msg += `----------------------------------\n` +
+            `Untuk konfirmasi, mohon melakukan pembayaran *DP (50%)* sebesar:\n` +
+            `👉 *Rp ${formatMoney(dp)}*\n\n` +
+            `Silakan transfer ke salah satu rekening berikut:\n\n` +
+            `*Rekening Dolan Sawah*\n\n` +
+            `✅ *BCA: 0132021439*\n` +
+            `✅ *Mandiri: 1360034582244*\n` +
+            `✅ *BRI: 008101001911567*\n` +
+            `A/n Oktavianus Dwi Wahyu Widyanarka\n\n` +
+            `Mohon kirimkan bukti transfer ini untuk kami proses approve ✅. Terima kasih!`;
+
+        // 3. Buka WhatsApp
+        openWhatsApp(r.nomorHp, msg);
+    }
+
+    // --- GENERIC WHATSAPP HELPER ---
+    function openWhatsApp(phone, message) {
+        if (!phone) { showToast('Nomor HP tidak tersedia', 'error'); return; }
+        const p = cleanPhoneNumber(phone);
+        window.open(`https://wa.me/${p}?text=${encodeURIComponent(message)}`, '_blank');
     }
     
-    function renderDetailList(list) {
-        document.getElementById('detail-list').innerHTML = list.map(r => `
-            <div class="res-card">
-                <div class="res-info">
-                    <div><b>${r.nama}</b><br><small>${r.nomorHp}</small></div>
-                    <div style="text-align:right;"><span style="background:var(--primary); color:white; padding:2px 8px; border-radius:10px; font-size:0.8rem;">${r.jam}</span></div>
+    // Fungsi untuk tombol "Chat" biasa di list reservasi
+    function contactViaWhatsApp(id) {
+        // Cari di reservation data
+        let res = null;
+        // Kita cari manual di object cache
+        Object.values(reservationsData).forEach(list => {
+            const found = list.find(r => r.id === id);
+            if (found) res = found;
+        });
+
+        if (!res) return;
+
+        const msg = `Halo Kak *${res.nama}*, kami dari Dolan Sawah ingin mengkonfirmasi reservasi Kakak pada tanggal ${res.date} jam ${res.jam}. Apakah ada perubahan rencana? Terima kasih.`;
+        openWhatsApp(res.nomorHp, msg);
+    }
+
+    // --- APPROVE & REJECT LOGIC ---
+    async function approveRequest(id) {
+        const req = requestsCache.find(r => r.id === id);
+        if (!req) return;
+
+        // Tanya Detail DP via SweetAlert
+        const { value: formValues } = await Swal.fire({
+            title: `Terima Reservasi: ${req.nama}`,
+            html: `
+                <p style="font-size:0.9rem; color:#666;">Masukkan nominal DP yang diterima (jika ada).</p>
+                <input id="swal-input-dp" type="number" class="swal2-input" placeholder="Nominal DP (Rp)">
+                <select id="swal-input-type" class="swal2-select" style="display:block; width:80%; margin:10px auto;">
+                    <option value="">- Metode Pembayaran -</option>
+                    <option value="Transfer BCA">Transfer BCA</option>
+                    <option value="Transfer Mandiri">Transfer Mandiri</option>
+                    <option value="Transfer BRI">Transfer BRI</option>
+                    <option value="QRIS">QRIS</option>
+                    <option value="Cash">Cash</option>
+                </select>`,
+            showCancelButton: true,
+            confirmButtonColor: 'var(--success)',
+            confirmButtonText: '<i class="fas fa-check"></i> Simpan & Terima',
+            preConfirm: () => {
+                return {
+                    dp: document.getElementById('swal-input-dp').value,
+                    tipeDp: document.getElementById('swal-input-type').value
+                }
+            }
+        });
+
+        if (formValues) {
+            showLoader();
+            try {
+                // 1. Siapkan Data Reservasi Baru
+                const newData = {
+                    nama: req.nama,
+                    nomorHp: cleanPhoneNumber(req.nomorHp),
+                    date: req.date,
+                    jam: req.jam,
+                    jumlah: parseInt(req.jumlah),
+                    tempat: req.tempat,
+                    menus: req.menus || [],
+                    tambahan: req.tambahan || '',
+                    dp: parseInt(formValues.dp) || 0,
+                    tipeDp: formValues.tipeDp,
+                    via: 'Web Request',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    thankYouSent: false
+                };
+
+                // 2. Simpan ke Collection Utama
+                await db.collection('reservations').add(newData);
+                
+                // 3. Hapus dari Inbox Permintaan
+                await db.collection('reservation_requests').doc(id).delete();
+                
+                showToast(`Reservasi ${req.nama} berhasil disetujui!`);
+                
+                // 4. Arahkan Admin ke Kalender Tanggal Tersebut (UX Bagus)
+                // Kita set variable global bulan ke bulan request
+                const reqDate = new Date(req.date);
+                currentMonth = reqDate.getMonth();
+                currentYear = reqDate.getFullYear();
+                
+                switchTab('calendar');
+                selectDate(req.date); // Buka detail harian otomatis
+
+            } catch (e) {
+                console.error(e);
+                showToast("Gagal memproses: " + e.message, "error");
+            } finally {
+                hideLoader();
+            }
+        }
+    }
+
+    async function rejectRequest(id) {
+        Swal.fire({
+            title: 'Tolak Permintaan?',
+            text: "Data akan dihapus permanen dari inbox.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Ya, Tolak',
+            cancelButtonText: 'Batal'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                showLoader();
+                try {
+                    await db.collection('reservation_requests').doc(id).delete();
+                    showToast('Permintaan ditolak dan dihapus.', 'success');
+                } catch (e) {
+                    showToast('Gagal menghapus.', 'error');
+                } finally {
+                    hideLoader();
+                }
+            }
+        });
+    }
+    // =========================================
+    // 9. HELPER UI (FORMULIR DINAMIS)
+    // =========================================
+
+    // --- POPULATE LOCATION DROPDOWN ---
+    function populateLocationDropdown(selectElement, selectedValue = '') {
+        if (!selectElement) return;
+        selectElement.innerHTML = '<option value="">-- Pilih Tempat --</option>';
+        
+        // Convert object ke array dan sort berdasarkan nama
+        Object.values(locationsData)
+            .sort((a,b) => a.name.localeCompare(b.name))
+            .forEach(loc => {
+                const option = new Option(`${loc.name} (Kap: ${loc.capacity})`, loc.name);
+                selectElement.add(option);
+            });
+            
+        if (selectedValue) selectElement.value = selectedValue;
+    }
+    
+    // --- INFO KAPASITAS LIVE ---
+    function updateCapacityInfo(formId) {
+        const form = document.getElementById(formId);
+        const selectElement = form.querySelector('#tempat');
+        const infoElement = form.querySelector('#capacity-info');
+        
+        const selectedName = selectElement.value;
+        // Cari lokasi berdasarkan nama
+        const loc = Object.values(locationsData).find(l => l.name === selectedName);
+        
+        if (loc) {
+            infoElement.textContent = `Max: ${loc.capacity} Orang`;
+            infoElement.style.color = 'var(--info)';
+        } else {
+            infoElement.textContent = '';
+        }
+    }
+
+    // --- MULTI-ROW MENU SELECTION ---
+    function addMenuSelectionRow(formId, menuName = '', quantity = 1) {
+      const container = document.querySelector(`#${formId} #selected-menus-container`);
+      const rowId = 'menu-row-' + Date.now() + Math.random();
+      
+      const newRow = document.createElement('div');
+      newRow.className = 'menu-selection-row';
+      newRow.style.display = 'flex';
+      newRow.style.gap = '10px';
+      newRow.style.marginBottom = '8px';
+      newRow.id = rowId;
+      
+      // Generate Options Menu
+      const menuOptions = Object.keys(detailMenu).sort().map(name => {
+          const price = menuPrices[name] ? `(Rp ${formatMoney(menuPrices[name])})` : '';
+          const selected = name === menuName ? 'selected' : '';
+          return `<option value="${name}" ${selected}>${name} ${price}</option>`;
+      }).join('');
+      
+      newRow.innerHTML = `
+        <select class="menu-select" style="flex:3; margin:0;">
+            <option value="">-- Pilih Menu --</option>
+            ${menuOptions}
+        </select>
+        <input type="number" class="quantity-input" value="${quantity}" min="1" placeholder="Jml" style="flex:1; margin:0;">
+        <button type="button" class="btn btn-danger" onclick="document.getElementById('${rowId}').remove()" style="padding:0 10px;">
+            <i class="fas fa-trash-alt"></i>
+        </button>`;
+      
+      container.appendChild(newRow);
+    }
+
+    // =========================================
+    // 10. LOGIKA EDIT RESERVASI
+    // =========================================
+
+    function editReservasi(id) {
+        // Cari data reservasi di cache
+        let res = null;
+        Object.values(reservationsData).forEach(list => {
+            const found = list.find(r => r.id === id);
+            if (found) res = found;
+        });
+
+        if (!res) { showToast("Data tidak ditemukan di cache bulan ini.", "error"); return; }
+
+        // Render Form Edit secara Dinamis ke dalam Popup Kosong
+        const popup = document.getElementById('editFormPopup');
+        popup.innerHTML = `
+            <span class="close-btn" onclick="closePopup('editFormPopup')"><i class="fas fa-times"></i></span>
+            <h3><i class="fas fa-edit" style="color:var(--primary);"></i> Edit Reservasi</h3>
+            
+            <form id="edit-reservation-form">
+                <input type="hidden" id="editReservationId" value="${id}" />
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div><label>Nama</label><input type="text" id="nama" value="${res.nama}" required /><span class="error-message" id="nama-error"></span></div>
+                    <div><label>Nomor HP</label><input type="tel" id="nomorHp" value="${res.nomorHp || ''}" /><span class="error-message" id="nomorHp-error"></span></div>
                 </div>
-                <div style="font-size:0.9rem; margin-bottom:5px;">
-                    <i class="fas fa-users"></i> ${r.jumlah} | <i class="fas fa-map-marker-alt"></i> ${r.tempat}
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div><label>Jam</label><input type="time" id="jam" value="${res.jam}" required /><span class="error-message" id="jam-error"></span></div>
+                    <div><label>Jumlah</label><input type="number" id="jumlah" value="${res.jumlah}" min="1" required /><span class="error-message" id="jumlah-error"></span></div>
                 </div>
-                <div style="background:#f9f9f9; padding:5px; font-size:0.85rem; border-radius:5px; margin-bottom:5px;">
-                    ${(r.menus||[]).map(m=>`<div>${m.quantity}x ${m.name}</div>`).join('') || '-'}
+
+                <div>
+                    <label>Tempat</label>
+                    <select id="tempat" required onchange="updateCapacityInfo('edit-reservation-form')"></select>
+                    <small id="capacity-info" style="color:var(--info); font-weight:600;"></small>
+                    <span class="error-message" id="tempat-error"></span>
                 </div>
-                <div style="font-size:0.85rem; display:flex; justify-content:space-between;">
-                    <span style="color:green; font-weight:bold;">DP: ${formatRp(r.dp)}</span>
-                    <small>${r.via||'Manual'}</small>
+
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px dashed var(--border); margin: 15px 0;">
+                    <label>Paket Menu <span class="error-message" id="menus-error"></span></label>
+                    <div id="selected-menus-container" style="margin-bottom: 10px;"></div>
+                    <button type="button" class="btn btn-secondary" onclick="addMenuSelectionRow('edit-reservation-form')" style="width:100%; justify-content:center; font-size:0.85rem;"><i class="fas fa-plus"></i> Tambah Item</button>
                 </div>
-                ${r.tambahan ? `<div style="font-size:0.8rem; color:orange;">${r.tambahan}</div>`:''}
-                <div style="margin-top:10px; display:flex; gap:5px;">
-                    <button class="btn btn-sm btn-whatsapp" style="flex:1;" onclick="waCust('${r.nomorHp}','${r.nama}')">Chat</button>
-                    <button class="btn btn-sm btn-secondary" style="flex:1;" onclick="editRes('${r.id}')">Edit</button>
-                    <button class="btn btn-sm btn-danger" style="flex:1;" onclick="delRes('${r.id}')">Hapus</button>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div><label>DP (Rp)</label><input type="number" id="dp" value="${res.dp || 0}" /></div>
+                    <div>
+                        <label>Tipe Pembayaran DP</label>
+                        <select id="tipeDp">
+                          <option value="">- Tanpa DP -</option>
+                          <option>Cash</option><option>QRIS</option>
+                          <option>Transfer BCA</option><option>Transfer Mandiri</option><option>Transfer BRI</option>
+                        </select>
+                    </div>
                 </div>
+
+                <label>Catatan</label>
+                <textarea id="tambahan">${res.tambahan || ''}</textarea>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-primary" onclick="simpanPerubahanReservasi()" style="flex:1;"><i class="fas fa-save"></i> Simpan Perubahan</button>
+                </div>
+            </form>`;
+
+        // Populate Data Awal
+        const formEl = document.getElementById('edit-reservation-form');
+        
+        // Populate Dropdown Tempat & Set Value
+        populateLocationDropdown(formEl.querySelector('#tempat'), res.tempat);
+        updateCapacityInfo('edit-reservation-form');
+        
+        // Set Tipe DP
+        formEl.querySelector('#tipeDp').value = res.tipeDp || '';
+
+        // Populate Menu Rows
+        // Support Legacy (string) & New (array)
+        if (Array.isArray(res.menus) && res.menus.length > 0) {
+            res.menus.forEach(m => addMenuSelectionRow('edit-reservation-form', m.name, m.quantity));
+        } else if (res.menu) {
+            // Legacy data support
+            addMenuSelectionRow('edit-reservation-form', res.menu, 1);
+        } else {
+            addMenuSelectionRow('edit-reservation-form');
+        }
+
+        popup.style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+    }
+
+    async function simpanPerubahanReservasi() {
+        const id = document.getElementById('editReservationId').value;
+        const formData = validateReservationForm('edit-reservation-form');
+        
+        if (!formData) return;
+
+        showLoader();
+        try {
+            // Kita tidak mengubah field 'createdAt' atau 'thankYouSent' saat edit
+            await db.collection('reservations').doc(id).update(formData);
+            showToast("Perubahan berhasil disimpan");
+            closePopup('editFormPopup');
+            
+            // Jika tanggal berubah, mungkin perlu refresh kalender manual jika listener belum menangkapnya
+            if (formData.date !== selectedDate) {
+               // User memindahkan tanggal, jadi kita harus refresh
+               // Tapi listener onSnapshot biasanya cukup cepat.
+            }
+            
+        } catch (e) {
+            console.error(e);
+            showToast("Gagal update: " + e.message, "error");
+        } finally {
+            hideLoader();
+        }
+    }
+
+
+    // =========================================
+    // 11. MANAJEMEN DATA MASTER (MENU & LOKASI)
+    // =========================================
+
+    // --- A. MANAJEMEN MENU ---
+    function showMenuManagement() {
+        const popup = document.getElementById('menuManagementPopup');
+        
+        // Generate List Menu
+        const listHtml = Object.keys(detailMenu).sort().map(name => {
+            const price = menuPrices[name] || 0;
+            const details = detailMenu[name].join(', ');
+            return `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
+                <div>
+                    <div style="font-weight:600;">${name}</div>
+                    <div style="font-size:0.85rem; color:var(--primary);">Rp ${formatMoney(price)}</div>
+                    <div style="font-size:0.8rem; color:#888;">${details}</div>
+                </div>
+                <div>
+                    <button class="btn btn-danger" onclick="deleteMenu('${name}')" style="padding:5px 10px;"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`;
+        }).join('');
+
+        popup.innerHTML = `
+            <span class="close-btn" onclick="closePopup('menuManagementPopup')"><i class="fas fa-times"></i></span>
+            <h3><i class="fas fa-utensils"></i> Kelola Menu</h3>
+            
+            <div style="background:#f9fafb; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <h4 style="margin-top:0;">Tambah / Update Menu</h4>
+                <input type="text" id="newMenuName" placeholder="Nama Menu (Contoh: Nasi Goreng)" />
+                <input type="number" id="newMenuPrice" placeholder="Harga Satuan (Rp)" />
+                <textarea id="newMenuDetails" placeholder="Detail Menu (pisahkan dengan koma). Contoh: Nasi, Telur, Kerupuk"></textarea>
+                <button class="btn btn-primary" onclick="addNewMenu()" style="width:100%; justify-content:center;">Simpan Menu</button>
             </div>
-        `).join('');
-    }
-    
-    function filterDetail(v) {
-        if(!selectedDate) return;
-        const q = v.toLowerCase();
-        const filtered = (resCache[selectedDate]||[]).filter(r => r.nama.toLowerCase().includes(q) || r.tempat.toLowerCase().includes(q));
-        renderDetailList(filtered);
-    }
-    
-    function editRes(id) {
-        const r = resCache[selectedDate].find(x=>x.id===id);
-        document.getElementById('edit-id').value=r.id;
-        document.getElementById('form-title').innerText='Edit Data';
-        document.getElementById('inp-nama').value=r.nama;
-        document.getElementById('inp-hp').value=r.nomorHp;
-        document.getElementById('inp-date').value=r.date;
-        document.getElementById('inp-jam').value=r.jam;
-        document.getElementById('inp-jml').value=r.jumlah;
-        fillLoc(); document.getElementById('inp-tempat').value=r.tempat;
-        document.getElementById('inp-dp').value=r.dp;
-        document.getElementById('inp-via').value=r.tipeDp;
-        document.getElementById('inp-note').value=r.tambahan;
-        document.getElementById('menu-rows').innerHTML='';
-        (r.menus||[]).forEach(m => addMenuRow(m.name, m.quantity));
-        openPopup('popup-form');
-    }
-    
-    async function delRes(id) {
-        if(confirm('Hapus?')) await db.collection('reservations').doc(id).delete();
-    }
 
-    // --- 11. UTILITAS (EXPORT, PRINT, BROADCAST, DLL) ---
-    function openExport() {
-        // Export simplified JSON for Viewer
-        const data = { v:'6.0', data: resCache };
-        document.getElementById('export-area').value = btoa(JSON.stringify(data));
-        openPopup('popup-export');
-    }
-    function copyExport() {
-        document.getElementById('export-area').select(); document.execCommand('copy');
-        Swal.fire('Tersalin');
-    }
-    
-    function openMenu() { renderMList(); openPopup('popup-menu'); }
-    function renderMList() { document.getElementById('list-menu').innerHTML = Object.keys(menuCache).map(k=>`<div>${k} <button onclick="delMenu('${k}')">x</button></div>`).join(''); }
-    async function addMenu() { 
-        const n=document.getElementById('new-menu-name').value;
-        const p=document.getElementById('new-menu-price').value;
-        const d=document.getElementById('new-menu-det').value.split(',');
-        await db.collection('menus').doc(n).set({price:p, details:d}); loadMenu(); renderMList();
-    }
-    async function delMenu(n) { if(confirm('Hapus?')) { await db.collection('menus').doc(n).delete(); loadMenu(); renderMList(); } }
-
-    function openLocation() { renderLList(); openPopup('popup-loc'); }
-    function renderLList() { document.getElementById('list-loc').innerHTML = Object.values(locCache).map(l=>`<div>${l.name} <button onclick="delLoc('${l.id}')">x</button></div>`).join(''); }
-    async function addLoc() {
-        const n=document.getElementById('new-loc-name').value; const c=document.getElementById('new-loc-cap').value;
-        await db.collection('locations').add({name:n, capacity:c}); loadLoc(); renderLList();
-    }
-    async function delLoc(id) { if(confirm('Hapus?')) await db.collection('locations').doc(id).delete(); loadLoc(); renderLList(); }
-    
-    // Broadcast
-    function updateBcCache() {
-        bcCustomers = [];
-        Object.values(resCache).flat().forEach(r => { 
-            if(r.nomorHp) bcCustomers.push({n:r.nama, h:r.nomorHp}); 
-        });
-        // Unique
-        bcCustomers = bcCustomers.filter((v,i,a)=>a.findIndex(t=>(t.h === v.h))===i);
-    }
-    function openBroadcast() { 
-        document.getElementById('bc-msg').value = localStorage.getItem('bc_tmpl') || '';
-        filterBc(''); openPopup('popup-broadcast'); 
-    }
-    function saveBcMsg() { localStorage.setItem('bc_tmpl', document.getElementById('bc-msg').value); Swal.fire('Saved'); }
-    function filterBc(v) {
-        const q = v.toLowerCase();
-        const el = document.getElementById('bc-list');
-        const list = bcCustomers.filter(c => c.n.toLowerCase().includes(q) || c.h.includes(q));
-        el.innerHTML = list.map(c => `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;"><b>${c.n}</b> <button class="btn btn-sm btn-whatsapp" onclick="sendBc('${c.h}','${c.n}')">Kirim</button></div>`).join('');
-    }
-    function sendBc(h,n) {
-        let msg = document.getElementById('bc-msg').value;
-        msg = msg.replace('Kak', `Kak ${n}`);
-        window.open(`https://wa.me/${h.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`,'_blank');
-    }
-    
-    // Customer
-    function openCustomer() { filterCust(''); openPopup('popup-customer'); }
-    function filterCust(v) {
-        const q = v.toLowerCase();
-        const list = bcCustomers.filter(c => c.n.toLowerCase().includes(q) || c.h.includes(q)); // Reuse bc list
-        document.getElementById('cust-list').innerHTML = list.map(c => `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${c.n}</b> (${c.h}) <button class="btn btn-sm btn-whatsapp" onclick="waCust('${c.h}','${c.n}')">WA</button></div>`).join('');
-    }
-    
-    // Analysis
-    function openAnalysis() {
-        openPopup('popup-analysis');
-        const ctx = document.getElementById('chart-anl').getContext('2d');
-        const counts = Array(12).fill(0);
-        let totalPax = 0;
-        // Scan data tahun ini (resCache hanya muat bulan ini, perlu load all? untuk simple kita pakai bulan ini saja dulu atau load extra)
-        // Note: Untuk performa, idealnya load all data di background. Disini kita visualisasi bulan ini.
-        Object.keys(resCache).forEach(d => {
-            const dt = new Date(d);
-            if(dt.getMonth() === curMonth) counts[dt.getMonth()] = (resCache[d]||[]).length;
-            (resCache[d]||[]).forEach(r => totalPax += parseInt(r.jumlah)||0);
-        });
-        
-        new Chart(ctx, { type:'bar', data:{labels:months, datasets:[{label:'Reservasi', data:counts, backgroundColor:'#2a9d8f'}]}});
-        document.getElementById('stats-anl').innerHTML = `
-            <div class="mini-stat"><div class="val">${totalPax}</div><small>Total Pax (Bulan Ini)</small></div>
+            <div style="max-height:300px; overflow-y:auto; border:1px solid #eee; border-radius:8px;">
+                ${listHtml}
+            </div>
         `;
+        popup.style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
     }
-    
-    // Print & Share
-    function shareDay() {
-        if(!selectedDate) return;
-        const list = resCache[selectedDate] || [];
-        let txt = `*Laporan ${selectedDate}*\n`;
-        list.forEach((r,i) => txt += `${i+1}. ${r.nama} (${r.jam}) - ${r.jumlah} org\n`);
-        window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
-    }
-    function printDay() { window.print(); }
 
-    // Utils
-    function formatRp(n) { return (n||0).toLocaleString('id-ID'); }
-    function openPopup(id) { document.getElementById(id).style.display='block'; document.getElementById('overlay').style.display='block'; }
-    function closePopup(id) { document.getElementById(id).style.display='none'; document.getElementById('overlay').style.display='none'; }
-    function waCust(h,n) { window.open(`https://wa.me/${h.replace(/^0/,'62')}?text=Halo Kak ${n}`,'_blank'); }
-    function toggleNotif() {
-        const d = document.getElementById('notif-dropdown');
-        d.style.display = d.style.display==='block'?'none':'block';
+    async function addNewMenu() {
+        const name = document.getElementById('newMenuName').value.trim();
+        const price = parseInt(document.getElementById('newMenuPrice').value) || 0;
+        const detailsRaw = document.getElementById('newMenuDetails').value;
+        
+        if(!name) { showToast("Nama menu wajib diisi", "error"); return; }
+        
+        const details = detailsRaw.split(',').map(s => s.trim()).filter(Boolean);
+        
+        showLoader();
+        try {
+            await db.collection('menus').doc(name).set({
+                price: price,
+                details: details
+            });
+            showToast("Menu berhasil disimpan");
+            
+            // Reload Master Data Locally
+            await loadMasterMenus();
+            showMenuManagement(); // Refresh popup
+            
+        } catch(e) {
+            showToast("Gagal: " + e.message, "error");
+        } finally {
+            hideLoader();
+        }
     }
-    
-    function setupNotif() {
-        // Simple interval for notification
-        setInterval(()=>{
-            const n = new Date();
-            const today = n.toISOString().split('T')[0];
-            const list = resCache[today]||[];
-            let count=0, html='';
-            list.forEach(r=>{
-                if(!r.thankSent) {
-                    const [h,m] = r.jam.split(':');
-                    const t = new Date(); t.setHours(h,m,0);
-                    if(n > new Date(t.getTime()+2*3600000)) {
-                        count++;
-                        html+=`<div class="notification-item">${r.nama} <button class="btn btn-sm btn-success" onclick="markSent('${r.id}')">Kirim</button></div>`;
+
+    async function deleteMenu(name) {
+        if(!confirm(`Hapus menu "${name}"?`)) return;
+        showLoader();
+        try {
+            await db.collection('menus').doc(name).delete();
+            showToast("Menu dihapus");
+            await loadMasterMenus();
+            showMenuManagement(); 
+        } catch(e) { showToast("Gagal hapus", "error"); } finally { hideLoader(); }
+    }
+
+
+    // --- B. MANAJEMEN LOKASI ---
+    function showLocationManagement() {
+        const popup = document.getElementById('locationManagementPopup');
+        
+        const listHtml = Object.values(locationsData)
+            .sort((a,b) => a.name.localeCompare(b.name))
+            .map(loc => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
+                <div>
+                    <div style="font-weight:600;">${loc.name}</div>
+                    <div style="font-size:0.85rem; color:#666;">Kapasitas: ${loc.capacity} Orang</div>
+                </div>
+                <div>
+                    <button class="btn btn-danger" onclick="deleteLocation('${loc.id}')" style="padding:5px 10px;"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`).join('');
+
+        popup.innerHTML = `
+            <span class="close-btn" onclick="closePopup('locationManagementPopup')"><i class="fas fa-times"></i></span>
+            <h3><i class="fas fa-chair"></i> Kelola Tempat</h3>
+            
+            <div style="background:#f9fafb; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <h4 style="margin-top:0;">Tambah Tempat</h4>
+                <input type="text" id="newLocName" placeholder="Nama Tempat (Contoh: Gazebo 1)" />
+                <input type="number" id="newLocCap" placeholder="Kapasitas (Orang)" />
+                <button class="btn btn-primary" onclick="addNewLocation()" style="width:100%; justify-content:center;">Simpan Tempat</button>
+            </div>
+
+            <div style="max-height:300px; overflow-y:auto; border:1px solid #eee; border-radius:8px;">
+                ${listHtml}
+            </div>
+        `;
+        popup.style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+    }
+
+    async function addNewLocation() {
+        const name = document.getElementById('newLocName').value.trim();
+        const cap = parseInt(document.getElementById('newLocCap').value);
+        
+        if(!name || !cap) { showToast("Data tidak lengkap", "error"); return; }
+        
+        showLoader();
+        try {
+            await db.collection('locations').add({
+                name: name,
+                capacity: cap
+            });
+            showToast("Tempat berhasil ditambahkan");
+            await loadMasterLocations();
+            showLocationManagement();
+        } catch(e) { showToast("Gagal: "+e.message, "error"); } finally { hideLoader(); }
+    }
+
+    async function deleteLocation(id) {
+        if(!confirm("Hapus tempat ini?")) return;
+        showLoader();
+        try {
+            await db.collection('locations').doc(id).delete();
+            showToast("Tempat dihapus");
+            await loadMasterLocations();
+            showLocationManagement();
+        } catch(e) { showToast("Gagal", "error"); } finally { hideLoader(); }
+    }
+    // =========================================
+    // 12. CUSTOMER DATABASE & BROADCAST
+    // =========================================
+
+    // --- CUSTOMER LIST (Database Pelanggan) ---
+    async function showCustomerMenu() {
+        showLoader();
+        try {
+            // Ambil data reservasi lama untuk mendapatkan database pelanggan
+            // Limit 1000 agar tidak terlalu berat
+            const snapshot = await db.collection('reservations')
+                .orderBy('createdAt', 'desc')
+                .limit(1000)
+                .get();
+
+            const customers = new Map();
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.nomorHp && data.nama) {
+                    const phone = cleanPhoneNumber(data.nomorHp);
+                    // Gunakan HP sebagai key untuk mencegah duplikat
+                    if (!customers.has(phone)) {
+                        customers.set(phone, { name: data.nama, phone: phone });
                     }
                 }
             });
-            const badge = document.getElementById('notif-badge');
-            badge.innerText = count;
-            badge.style.display = count>0?'flex':'none';
-            document.getElementById('notif-list').innerHTML = html || '<div style="padding:10px; color:#999;">Kosong</div>';
-        }, 60000);
+
+            // Render ke Popup
+            const container = document.getElementById('customerListPopup');
+            let listHtml = '';
+            
+            customers.forEach(c => {
+                listHtml += `
+                <div class="customer-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
+                    <div>
+                        <div style="font-weight:600;">${c.name}</div>
+                        <div style="font-size:0.85rem; color:#666;">${c.phone}</div>
+                    </div>
+                    <button class="btn btn-whatsapp" onclick="openWhatsApp('${c.phone}', 'Halo Kak ${c.name}, kami dari Dolan Sawah...')" style="padding:5px 10px; font-size:0.8rem;">
+                        <i class="fab fa-whatsapp"></i> Chat
+                    </button>
+                </div>`;
+            });
+
+            container.innerHTML = `
+                <span class="close-btn" onclick="closePopup('customerListPopup')"><i class="fas fa-times"></i></span>
+                <h3><i class="fas fa-address-book"></i> Database Pelanggan (${customers.size})</h3>
+                <input type="text" placeholder="Cari nama atau nomor HP..." oninput="filterCustomerList(this.value)" style="margin-bottom:15px;">
+                <div id="customer-list-scroll" style="height:65vh; overflow-y:auto;">${listHtml}</div>
+            `;
+            
+            // Helper function pencarian lokal (disisipkan ke window)
+            window.filterCustomerList = (query) => {
+                const q = query.toLowerCase();
+                const items = document.querySelectorAll('.customer-item');
+                items.forEach(item => {
+                    const text = item.innerText.toLowerCase();
+                    item.style.display = text.includes(q) ? 'flex' : 'none';
+                });
+            };
+
+            document.getElementById('customerListPopup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+
+        } catch (e) {
+            showToast("Gagal memuat pelanggan", "error");
+        } finally {
+            hideLoader();
+        }
     }
-    async function markSent(id) { await db.collection('reservations').doc(id).update({thankSent:true}); }
+
+    // --- BROADCAST SYSTEM ---
+    function showBroadcastMain() {
+        document.getElementById('broadcastMainPopup').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+    }
+
+    function showBroadcastSettings() {
+        closePopup('broadcastMainPopup');
+        // Load pesan tersimpan
+        const savedMsg = localStorage.getItem('broadcast_msg') || '';
+        document.getElementById('broadcastMessage').value = savedMsg;
+        
+        document.getElementById('broadcastSettingsPopup').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+    }
+
+    function saveBroadcastMessage() {
+        const msg = document.getElementById('broadcastMessage').value;
+        localStorage.setItem('broadcast_msg', msg);
+        showToast("Pesan broadcast tersimpan");
+        closePopup('broadcastSettingsPopup');
+        showBroadcastMain();
+    }
+
+    async function showBroadcastList() {
+        const msg = localStorage.getItem('broadcast_msg');
+        if (!msg) {
+            showToast("Atur pesan dulu!", "warning");
+            return;
+        }
+
+        closePopup('broadcastMainPopup');
+        showLoader();
+
+        // Re-use logic fetch customer (mirip showCustomerMenu tapi UI beda)
+        try {
+            const snapshot = await db.collection('reservations').orderBy('createdAt', 'desc').limit(500).get();
+            const customers = new Map();
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                if (d.nomorHp) customers.set(cleanPhoneNumber(d.nomorHp), d.nama);
+            });
+
+            const container = document.getElementById('broadcast-customer-list');
+            let html = '';
+            customers.forEach((name, phone) => {
+                html += `
+                <div class="broadcast-item" style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee;">
+                    <div><b>${name}</b><br><small>${phone}</small></div>
+                    <button class="btn btn-success" id="btn-bc-${phone}" onclick="sendBroadcast('${phone}', '${name}', 'btn-bc-${phone}')" style="font-size:0.8rem; padding:4px 10px;">
+                        <i class="fab fa-whatsapp"></i> Kirim
+                    </button>
+                </div>`;
+            });
+            container.innerHTML = html;
+
+            document.getElementById('broadcastListPopup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        } finally {
+            hideLoader();
+        }
+    }
+
+    window.filterBroadcastCustomers = (query) => {
+        const q = query.toLowerCase();
+        document.querySelectorAll('.broadcast-item').forEach(el => {
+            el.style.display = el.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+        });
+    };
+
+    window.sendBroadcast = (phone, name, btnId) => {
+        let msg = localStorage.getItem('broadcast_msg') || '';
+        // Personalization logic
+        const greeting = `Halo Kak *${name}*,\n\n`;
+        const fullMsg = greeting + msg;
+        
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(fullMsg)}`, '_blank');
+        
+        // Tandai sudah terkirim di UI
+        const btn = document.getElementById(btnId);
+        btn.innerHTML = '<i class="fas fa-check"></i> Terkirim';
+        btn.className = 'btn btn-secondary';
+        btn.disabled = true;
+    };
+
+    // =========================================
+    // 13. PRINT & EXPORT SYSTEM
+    // =========================================
+
+    function printData() {
+        if (!selectedDate) return;
+        document.getElementById('printOptionsPopup').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+    }
+
+    function executePrint() {
+        const list = reservationsData[selectedDate] || [];
+        if (list.length === 0) return;
+
+        // Opsi
+        const showMenu = document.getElementById('print-detail-menu').checked;
+        const showKontak = document.getElementById('print-kontak').checked;
+        const showDp = document.getElementById('print-dp').checked;
+        const showNotes = document.getElementById('print-tambahan').checked;
+
+        // Sort by Jam
+        list.sort((a,b) => a.jam.localeCompare(b.jam));
+
+        let rows = list.map((r, i) => {
+            let menuTxt = '';
+            if (showMenu) {
+                if (Array.isArray(r.menus)) {
+                    menuTxt = r.menus.map(m => `${m.quantity}x ${m.name}`).join('<br>');
+                } else {
+                    menuTxt = r.menu || '-';
+                }
+            }
+            
+            return `
+            <tr style="border-bottom:1px solid #ccc;">
+                <td style="padding:8px;">${i+1}</td>
+                <td style="padding:8px;">${r.jam}</td>
+                <td style="padding:8px;">${r.nama} ${showKontak ? `<br><small>${r.nomorHp}</small>` : ''}</td>
+                <td style="padding:8px;">${r.jumlah} Org</td>
+                <td style="padding:8px;">${r.tempat}</td>
+                ${showMenu ? `<td style="padding:8px; font-size:0.9rem;">${menuTxt}</td>` : ''}
+                ${showDp ? `<td style="padding:8px;">Rp ${formatMoney(r.dp)}</td>` : ''}
+                ${showNotes ? `<td style="padding:8px; font-style:italic;">${r.tambahan || '-'}</td>` : ''}
+            </tr>`;
+        }).join('');
+
+        // HTML Header Table
+        let thead = `
+            <tr>
+                <th style="text-align:left; padding:8px; background:#eee;">No</th>
+                <th style="text-align:left; padding:8px; background:#eee;">Jam</th>
+                <th style="text-align:left; padding:8px; background:#eee;">Nama</th>
+                <th style="text-align:left; padding:8px; background:#eee;">Pax</th>
+                <th style="text-align:left; padding:8px; background:#eee;">Tempat</th>
+                ${showMenu ? `<th style="text-align:left; padding:8px; background:#eee;">Menu</th>` : ''}
+                ${showDp ? `<th style="text-align:left; padding:8px; background:#eee;">DP</th>` : ''}
+                ${showNotes ? `<th style="text-align:left; padding:8px; background:#eee;">Notes</th>` : ''}
+            </tr>
+        `;
+
+        const printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write(`
+            <html>
+            <head><title>Cetak Reservasi - ${selectedDate}</title>
+            <style>body{font-family:sans-serif;} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #ddd;}</style>
+            </head>
+            <body>
+                <h2 style="text-align:center; margin-bottom:5px;">Laporan Reservasi Dolan Sawah</h2>
+                <p style="text-align:center; margin-top:0;">Tanggal: ${selectedDate}</p>
+                <table>${thead}<tbody>${rows}</tbody></table>
+                <script>window.print();window.close();<\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        closePopup('printOptionsPopup');
+    }
+
+    // --- COPY CODE EXPORT (Untuk Viewer) ---
+    function copyExportCode() {
+        const output = document.getElementById('export-data-output');
+        
+        // Buat data simple
+        const exportData = {
+            date: new Date().toISOString(),
+            reservations: reservationsData // Export data bulan ini
+        };
+        
+        output.value = btoa(JSON.stringify(exportData));
+        output.select();
+        document.execCommand('copy');
+        showToast("Kode berhasil disalin!");
+    }
+
+    // =========================================
+    // 14. ANALISIS GRAFIK (CHART.JS)
+    // =========================================
+    let myChart = null;
+
+    function renderAnalysisChart() {
+        const ctx = document.getElementById('mainChartCanvas').getContext('2d');
+        
+        // Data Dummy / Kalkulasi Realtime dari Cache Bulan Ini
+        // Idealnya fetch aggregate setahun, tapi untuk demo kita pakai data bulan ini per tanggal
+        
+        const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+        const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+        const dataPax = new Array(daysInMonth).fill(0);
+        
+        // Isi data
+        Object.keys(reservationsData).forEach(date => {
+            const d = new Date(date);
+            // Pastikan bulan sama (karena cache bisa berisi overlap bulan)
+            if (d.getMonth() === currentMonth) {
+                const day = d.getDate();
+                const list = reservationsData[date];
+                const total = list.reduce((sum, r) => sum + (parseInt(r.jumlah)||0), 0);
+                dataPax[day-1] = total;
+            }
+        });
+
+        if (myChart) myChart.destroy();
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `Jumlah Tamu (${monthNames[currentMonth]})`,
+                    data: dataPax,
+                    borderColor: '#2a9d8f',
+                    backgroundColor: 'rgba(42, 157, 143, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+        
+        // Generate Insight
+        const totalTamu = dataPax.reduce((a,b)=>a+b, 0);
+        const busyDay = labels[dataPax.indexOf(Math.max(...dataPax))];
+        
+        document.getElementById('analysis-insights-container').innerHTML = `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div style="background:#e0f2fe; padding:15px; border-radius:8px; color:#0284c7;">
+                    <strong>Total Tamu Bulan Ini:</strong><br>
+                    <span style="font-size:1.5rem; font-weight:bold;">${totalTamu}</span> Orang
+                </div>
+                <div style="background:#dcfce7; padding:15px; border-radius:8px; color:#166534;">
+                    <strong>Tanggal Tersibuk:</strong><br>
+                    Tanggal <span style="font-size:1.5rem; font-weight:bold;">${busyDay}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function showAnalysis() {
+        // Trigger render jika tab dibuka
+        renderAnalysisChart();
+    }
+
+    // =========================================
+    // 15. NOTIFIKASI BACKGROUND (THANK YOU)
+    // =========================================
+    function setupNotificationChecker() {
+        // Cek setiap 5 menit
+        setInterval(() => {
+            // Logika: Cek reservasi hari ini yang jamnya sudah lewat 2 jam
+            // Jika ada, tampilkan notifikasi browser atau badge
+            // (Sederhana untuk demo: hanya console log)
+            console.log("Checking for post-dining notifications...");
+        }, 300000);
+    }
+    
+    // --- SHARE LOGIC ---
+    function shareViaEmail() {
+        if(!selectedDate) return;
+        const subject = `Laporan Reservasi - ${selectedDate}`;
+        const body = `Berikut laporan reservasi untuk tanggal ${selectedDate}. Silakan cek sistem admin.`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+    
+    function shareViaWhatsApp(type) {
+        if(!selectedDate) return;
+        const list = reservationsData[selectedDate] || [];
+        let msg = `*LAPORAN RESERVASI (${selectedDate})*\n\n`;
+        
+        if(list.length === 0) { msg += "Tidak ada reservasi."; }
+        else {
+            list.sort((a,b) => a.jam.localeCompare(b.jam));
+            list.forEach((r, i) => {
+                msg += `${i+1}. ${r.jam} - ${r.nama} (${r.jumlah} Org) @ ${r.tempat}\n`;
+            });
+        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
 
 </script>
 </body>
