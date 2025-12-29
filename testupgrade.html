@@ -484,12 +484,24 @@
   <div id="reservation-view-container" style="display: none; background-color: #f5f5f5; padding: 20px;">
     <div class="reservation-view-header">
         <h2 id="reservation-view-title"></h2>
-        <div class="header-actions">
-            <button onclick="showAddForm()"><i class="fas fa-plus"></i> Tambah</button>
-            <button class="whatsapp" onclick="shareViaWhatsApp('day')"><i class="fab fa-whatsapp"></i> WA</button>
-            <div class="sort-options-container" style="width: auto;"><button class="secondary" onclick="toggleDetailSort(event)"><i class="fas fa-sort"></i> Urutkan</button><div class="sort-options" id="sortOptionsDetail"><button onclick="sortReservations('jam')">Jam</button><button onclick="sortReservations('tempat')">Tempat</button></div></div>
-            <button class="danger" onclick="kembaliKeKalender()">Kembali</button>
+            <div class="header-actions">
+        <button onclick="showAddForm()"><i class="fas fa-plus"></i> Tambah</button>
+        
+        <button class="whatsapp" onclick="shareViaWhatsApp('day')"><i class="fab fa-whatsapp"></i> WA</button>
+        
+        <button class="secondary" onclick="shareViaEmail()"><i class="fas fa-envelope"></i> Email</button>
+        
+        <div class="sort-options-container" style="width: auto;">
+            <button class="secondary" onclick="toggleDetailSort(event)"><i class="fas fa-sort"></i> Urutkan</button>
+            <div class="sort-options" id="sortOptionsDetail">
+                <button onclick="sortReservations('jam')">Jam</button>
+                <button onclick="sortReservations('tempat')">Tempat</button>
+            </div>
         </div>
+        
+        <button class="danger" onclick="kembaliKeKalender()">Kembali</button>
+    </div>
+
     </div>
     <div class="search-container"><i class="fas fa-search"></i><input type="text" id="detailSearchInput" oninput="filterReservations(this.value)" placeholder="Cari..."></div>
     <div id="reservation-detail-list"></div>
@@ -2025,6 +2037,152 @@ window.handleLogin = handleLogin;
 window.handleLogout = handleLogout;
 window.simpanReservasi = simpanReservasi;
 // ... (semua fungsi global sudah tersedia)
+// =========================================
+// TAMBAHAN 1: FITUR SORTING (URUTKAN DATA)
+// =========================================
+
+// 1. Fungsi untuk membuka/tutup dropdown menu "Urutkan"
+function toggleDetailSort(event) {
+    event.stopPropagation();
+    const sortOptions = document.getElementById('sortOptionsDetail');
+    if (sortOptions) {
+        sortOptions.style.display = (sortOptions.style.display === 'block') ? 'none' : 'block';
+    }
+}
+
+// 2. Menutup dropdown jika klik di luar area
+window.addEventListener('click', function(e) {
+    document.querySelectorAll('.sort-options-container').forEach(container => {
+        if (!container.contains(e.target)) {
+            const dropdown = container.querySelector('.sort-options');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+    });
+});
+
+// 3. Logika Utama Pengurutan Data (Jam & Tempat)
+function sortReservations(sortBy) {
+    if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
+
+    // Buat salinan data agar data asli tidak rusak
+    const reservationsToSort = [...dataReservasi[tanggalDipilih]]; 
+    
+    const sorted = reservationsToSort.sort((a, b) => {
+        const valA = a[sortBy] || '';
+        const valB = b[sortBy] || '';
+        // Bandingkan teks/angka dengan akurat
+        return valA.localeCompare(valB, undefined, {numeric: true, sensitivity: 'base'});
+    });
+    
+    updateReservationList(sorted);
+    
+    // Sembunyikan dropdown setelah memilih
+    const sortOptions = document.getElementById('sortOptionsDetail');
+    if (sortOptions) sortOptions.style.display = 'none';
+    
+    showToast(`Data diurutkan berdasarkan ${sortBy === 'jam' ? 'Jam' : 'Tempat'}`);
+}
+// =========================================
+// TAMBAHAN 2: FITUR DAFTAR CUSTOMER
+// =========================================
+async function showCustomerMenu() {
+    showLoader();
+    try {
+        // Ambil 500 data terakhir untuk menyusun daftar kontak
+        const snapshot = await db.collection('reservations').orderBy('createdAt', 'desc').limit(500).get();
+        const customers = new Map();
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.nomorHp && !customers.has(data.nomorHp)) {
+                customers.set(data.nomorHp, data.nama);
+            }
+        });
+
+        const popup = document.getElementById('customerListPopup');
+        const sortedCustomers = [...customers.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+
+        let contentHTML = `<h3><i class="fas fa-address-book"></i> Daftar Customer (${sortedCustomers.length})</h3>`;
+        if (sortedCustomers.length > 0) {
+            contentHTML += `<div class="search-container" style="margin-bottom: 15px;"><i class="fas fa-search"></i><input type="text" id="customerSearchInput" placeholder="Cari nama atau nomor HP..." oninput="filterCustomers(this.value)"></div><div id="customer-list" style="max-height: 300px; overflow-y: auto;"></div>`;
+        } else {
+            contentHTML += `<p style="text-align:center; padding: 20px 0;">Belum ada data customer.</p>`;
+        }
+        contentHTML += `<div class="data-actions" style="margin-top:20px;"><button class="danger" onclick="closePopup('customerListPopup')">Tutup</button></div>`;
+        
+        popup.innerHTML = contentHTML;
+        
+        // Fungsi filter pencarian customer
+        window.filterCustomers = (query) => {
+            const q = query.toLowerCase();
+            const filtered = sortedCustomers.filter(([phone, name]) => name.toLowerCase().includes(q) || phone.includes(q));
+            renderCustomerList(filtered);
+        };
+        
+        renderCustomerList(sortedCustomers);
+        popup.style.display = 'block'; 
+        document.getElementById('overlay').style.display = 'block';
+    } catch (e) { 
+        showToast("Gagal memuat data customer", "error"); 
+    } finally { 
+        hideLoader(); 
+    }
+}
+
+function renderCustomerList(customerData) {
+    const container = document.getElementById('customer-list'); if (!container) return;
+    
+    container.innerHTML = customerData.length === 0 
+        ? `<p style="text-align:center;">Tidak ada customer yang cocok.</p>`
+        : customerData.map(([phone, name]) => `
+            <div class="menu-item">
+                <span><i class="fas fa-user"></i> ${name} <br/><small style="color:#777;">${phone}</small></span>
+                <div class="menu-item-actions">
+                    <button class="whatsapp" onclick="openWhatsApp('${phone}', '${name}')"><i class="fab fa-whatsapp"></i> Hubungi</button>
+                </div>
+            </div>`).join('');
+}
+// =========================================
+// TAMBAHAN 3: FITUR SHARE VIA EMAIL
+// =========================================
+function shareViaEmail() {
+    if (!tanggalDipilih || !(dataReservasi[tanggalDipilih] || []).length) { 
+        showToast("Pilih tanggal yang memiliki reservasi.", "error"); return; 
+    }
+    
+    const reservations = (dataReservasi[tanggalDipilih] || []).sort((a, b) => (a.jam || '').localeCompare(b.jam || ''));
+    
+    // Ambil tanggal (indeks 2 dari YYYY-MM-DD adalah DD)
+    let day = "00";
+    if(tanggalDipilih.includes("-")) {
+         day = tanggalDipilih.split('-')[1]; // format key MM-DD
+    }
+
+    const subject = `Laporan Reservasi Dolan Sawah - ${day} ${monthNames[currentMonth]} ${currentYear}`;
+    let body = `<h2 style="color: #264653;">📋 Laporan Reservasi Dolan Sawah</h2><p><strong>Tanggal:</strong> ${day} ${monthNames[currentMonth]} ${currentYear}</p><hr><ol>`;
+
+    reservations.forEach((r) => {
+        // Format Menu
+        let menuListHtml = '<ul><li>_(Tidak ada detail menu)_</li></ul>';
+        if (Array.isArray(r.menus) && r.menus.length > 0) {
+            menuListHtml = `<ul style="margin:0; padding-left: 20px;">${r.menus.map(item => {
+                const details = detailMenu[item.name] || [];
+                const detailListHtml = `<ul style="margin: 4px 0 8px 20px; padding: 0; list-style-type: circle; color: #555;">${details.map(d => `<li>${d}</li>`).join('')}</ul>`;
+                return `<li><strong>${item.quantity}x ${item.name}</strong>${detailListHtml}</li>`;
+            }).join('')}</ul>`;
+        } else if (r.menu) {
+            menuListHtml = `<p><strong>Menu: ${r.menu}</strong></p>`;
+        }
+
+        let dpHtml = r.dp > 0 ? `<p><strong>💰 DP:</strong> Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
+        let tambahanHtml = r.tambahan ? `<p><strong>📝 Catatan:</strong> ${r.tambahan}</p>` : '';
+        
+        body += `<li style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;"><h3 style="color: #2a9d8f; margin-bottom: 10px;">${r.nama || 'Nama tidak ada'}</h3><p><strong>⏰ Jam:</strong> ${r.jam || '?'}</p><p><strong>📍 Tempat:</strong> ${r.tempat || '?'}</p><p><strong>👥 Jumlah:</strong> ${r.jumlah || '?'} orang</p><p><strong>🍽️ Pesanan Menu:</strong></p>${menuListHtml}${dpHtml}${tambahanHtml}</li>`;
+    });
+    body += `</ol>`;
+    
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 </script>
 </body>
