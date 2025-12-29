@@ -1945,8 +1945,9 @@ function showDPReport() {
     `;
 
     dpList.forEach(item => {
-        // Ambil tanggalnya saja (misal "05")
-        const dayDate = item.date.split('-')[1]; 
+        // Ambil tanggal dari fullDate (YYYY-MM-DD) -> ambil indeks 2 (DD)
+const dayDate = item.fullDate.split('-')[2];
+ 
         
         tableHTML += `
             <tr>
