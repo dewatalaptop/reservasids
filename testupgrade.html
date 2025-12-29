@@ -296,6 +296,18 @@
     }
     .mini-stat .val { font-size: 1.4rem; font-weight: 700; color: var(--dark); }
     .mini-stat .lbl { font-size: 0.8rem; color: #666; }
+      /* BAGIAN 1.10: Tambahan Style untuk Laporan DP (BARU) */
+    .report-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+    .report-table th, .report-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    .report-table th { background-color: var(--primary); color: white; font-weight: 500; text-align: center; }
+    .report-table tr:nth-child(even) { background-color: #f9f9f9; }
+    .report-table tr:hover { background-color: #f1f1f1; }
+    .report-table .text-right { text-align: right; }
+    .report-table .text-center { text-align: center; }
+    .total-row { background-color: var(--primary-dark) !important; color: white; font-weight: bold; }
+    .total-row td { border-color: var(--primary-dark); }
+    .empty-state { text-align: center; padding: 20px; color: #777; font-style: italic; background: #fff; border: 1px solid #eee; margin-top: 10px; }
+
   </style>
 </head>
 <body>
@@ -327,7 +339,7 @@
   
   <button id="logout-button" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
   
-  <div class="container" id="main-container">
+       <div class="container" id="main-container">
     <div class="calendar-header">
       <div class="month-year" id="monthYear"></div>
       <div class="calendar-nav">
@@ -345,6 +357,9 @@
       <button onclick="showMenuManagement()"><i class="fas fa-book-open"></i> Kelola Menu</button>
       <button onclick="showLocationManagement()"><i class="fas fa-map-marker-alt"></i> Kelola Tempat</button>
       <button class="info" onclick="showAnalysis()"><i class="fas fa-chart-pie"></i> Analisis Data</button>
+      
+      <button style="background-color: var(--success);" onclick="showDPReport()"><i class="fas fa-file-invoice-dollar"></i> Laporan DP</button>
+      
       <div class="whatsapp-options-container">
         <button class="whatsapp" onclick="toggleWhatsAppOptions(event)"><i class="fab fa-whatsapp"></i> Bagikan WhatsApp</button>
         <div class="whatsapp-options" id="whatsappOptions">
@@ -395,7 +410,21 @@
   <div id="locationManagementPopup" class="popup-form"></div>
   <div id="customerListPopup" class="popup-form"></div>
   <div id="analysisPopup" class="popup-form"></div>
-  
+    <div id="dpReportPopup" class="popup-form" style="max-width: 800px;">
+    <h3><i class="fas fa-file-invoice-dollar"></i> Laporan Detail DP Masuk</h3>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h4 id="dp-report-title" style="margin:0; color:var(--primary-dark);"></h4>
+        <button class="secondary" onclick="printDPReport()" style="padding:5px 10px; font-size:0.8rem; margin:0;"><i class="fas fa-print"></i> Cetak Laporan</button>
+    </div>
+    
+    <div id="dp-report-content" style="max-height: 60vh; overflow-y: auto;">
+      </div>
+
+    <div class="data-actions">
+        <button type="button" class="danger" onclick="closePopup('dpReportPopup')"><i class="fas fa-times"></i> Tutup</button>
+    </div>
+  </div>
+
   <div id="exportDataPopup" class="popup-form">
     <h3><i class="fas fa-file-export"></i> Export Data ASCII untuk Viewer</h3>
     <p>Salin kode di bawah ini dan tempelkan ke dalam kolom import di website kalender viewer.</p>
@@ -1853,6 +1882,129 @@ function executePrint() {
     printWindow.document.close();
     printWindow.print();
     closePopup('printOptionsPopup');
+}
+// =================================================================================
+// BAGIAN TAMBAHAN: FITUR LAPORAN DP BULANAN
+// =================================================================================
+
+function showDPReport() {
+    const titleEl = document.getElementById('dp-report-title');
+    const contentEl = document.getElementById('dp-report-content');
+    
+    // Set Judul berdasarkan Bulan Aktif
+    titleEl.textContent = `Bulan: ${monthNames[currentMonth]} ${currentYear}`;
+    
+    // 1. Kumpulkan semua data dari bulan ini yang memiliki DP > 0
+    let dpList = [];
+    Object.keys(dataReservasi).sort().forEach(dateKey => {
+        dataReservasi[dateKey].forEach(res => {
+            if (res.dp && parseInt(res.dp) > 0) {
+                dpList.push({
+                    date: dateKey, // Format MM-DD
+                    fullDate: res.date, // Format YYYY-MM-DD
+                    ...res
+                });
+            }
+        });
+    });
+
+    // 2. Jika tidak ada data
+    if (dpList.length === 0) {
+        contentEl.innerHTML = `<div class="empty-state"><i class="fas fa-info-circle"></i> Tidak ada data DP masuk pada bulan ini.</div>`;
+        document.getElementById('dpReportPopup').style.display = 'block';
+        overlay.style.display = 'block';
+        return;
+    }
+
+    // 3. Urutkan berdasarkan tanggal (Tanggal 1 sd 31)
+    dpList.sort((a, b) => a.date.localeCompare(b.date));
+
+    // 4. Hitung Total
+    const totalOmzetDP = dpList.reduce((acc, curr) => acc + parseInt(curr.dp), 0);
+
+    // 5. Render Tabel HTML
+    let tableHTML = `
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th style="width:50px;">Tgl</th>
+                    <th>Nama Pengirim</th>
+                    <th>No. HP</th>
+                    <th>Metode</th>
+                    <th class="text-right">Jumlah DP</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    dpList.forEach(item => {
+        // Ambil tanggalnya saja (misal "05")
+        const dayDate = item.date.split('-')[1]; 
+        
+        tableHTML += `
+            <tr>
+                <td class="text-center"><b>${dayDate}</b></td>
+                <td>
+                    <b>${item.nama}</b><br/>
+                    <small style="color:#666;">Jam: ${item.jam} • ${item.jumlah} org</small>
+                </td>
+                <td>${item.nomorHp || '-'}</td>
+                <td><span style="background:#eef; padding:2px 6px; border-radius:4px; font-size:0.8rem;">${item.tipeDp || 'Cash'}</span></td>
+                <td class="text-right" style="font-weight:600; color:var(--primary);">Rp ${formatRupiah(item.dp)}</td>
+            </tr>
+        `;
+    });
+
+    // Baris Total
+    tableHTML += `
+            <tr class="total-row">
+                <td colspan="4" class="text-right">TOTAL PEMASUKAN DP BULAN INI</td>
+                <td class="text-right">Rp ${formatRupiah(totalOmzetDP)}</td>
+            </tr>
+            </tbody>
+        </table>
+        <div style="margin-top:10px; font-size:0.85rem; color:#555;">
+            * Data diurutkan berdasarkan tanggal reservasi. Total item: <b>${dpList.length} transaksi</b>.
+        </div>
+    `;
+
+    contentEl.innerHTML = tableHTML;
+    document.getElementById('dpReportPopup').style.display = 'block';
+    overlay.style.display = 'block';
+}
+
+function printDPReport() {
+    const title = document.getElementById('dp-report-title').textContent;
+    const content = document.getElementById('dp-report-content').innerHTML;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Cetak Laporan DP</title>
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; padding: 20px; }
+                h2 { text-align: center; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+                .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                .report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+                .report-table th { background-color: #eee; text-align: center; }
+                .text-right { text-align: right; }
+                .text-center { text-align: center; }
+                .total-row { background-color: #ddd; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <h2>LAPORAN DP MASUK - DOLAN SAWAH</h2>
+            <h3 style="text-align:center;">${title}</h3>
+            ${content}
+            <div style="margin-top:30px; text-align:right;">
+                <p>Dicetak pada: ${new Date().toLocaleString('id-ID')}</p>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
 }
 
 // BAGIAN 10.5: Penutup Script
