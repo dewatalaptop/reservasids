@@ -2532,7 +2532,7 @@ let activeDPReportData = []; // Menyimpan data laporan yang sedang ditampilkan
         contentEl.style.display = 'block';
     }
 
-    // --- FUNGSI DOWNLOAD EXCEL (CSV) ---
+        // --- FUNGSI DOWNLOAD EXCEL (VERSI RAPI & BERWARNA) ---
     function downloadDPExcel() {
         if (!activeDPReportData || activeDPReportData.length === 0) {
             showToast("Tidak ada data untuk diunduh.", "error");
@@ -2542,43 +2542,102 @@ let activeDPReportData = []; // Menyimpan data laporan yang sedang ditampilkan
         const year = document.getElementById('dp-filter-year').value;
         const monthVal = document.getElementById('dp-filter-month').value;
         const monthLabel = monthVal === 'all' ? 'FULL_YEAR' : monthNames[parseInt(monthVal)-1];
+        
+        // Hitung Total untuk Footer
+        const total = activeDPReportData.reduce((acc, curr) => acc + parseInt(curr.dp), 0);
 
-        // 1. Buat Header CSV
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "No,Tanggal,Bulan,Tahun,Nama Customer,Nomor HP,Jumlah Tamu,Tempat,Metode Bayar DP,Nominal DP (Rp)\n";
+        // --- 1. MEMBANGUN STRUKTUR TABEL EXCEL ---
+        // Kita menggunakan HTML Table karena Excel bisa membacanya dan mempertahankan format warna/border
+        let tableHTML = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; }
+                    table { border-collapse: collapse; width: 100%; }
+                    th { background-color: #2a9d8f; color: white; border: 1px solid #000000; padding: 10px; text-align: center; font-weight: bold; }
+                    td { border: 1px solid #000000; padding: 5px; vertical-align: middle; }
+                    .text-center { text-align: center; }
+                    .text-right { text-align: right; }
+                    .text-bold { font-weight: bold; }
+                    .bg-total { background-color: #e9c46a; font-weight: bold; }
+                    .date-col { mso-number-format:"\@"; } /* Format Text agar tanggal tidak berubah */
+                    .num-col { mso-number-format:"\#\,\#\#0"; } /* Format Angka */
+                </style>
+            </head>
+            <body>
+            <h3>LAPORAN DP MASUK - DOLAN SAWAH (${monthLabel} ${year})</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:50px">No</th>
+                        <th style="width:100px">Tanggal</th>
+                        <th style="width:100px">Bulan</th>
+                        <th style="width:80px">Tahun</th>
+                        <th style="width:200px">Nama Customer</th>
+                        <th style="width:120px">Nomor HP</th>
+                        <th style="width:80px">Jml Tamu</th>
+                        <th style="width:150px">Tempat</th>
+                        <th style="width:120px">Metode Bayar</th>
+                        <th style="width:150px">Nominal DP</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
 
-        // 2. Isi Data Baris per Baris
+        // --- 2. LOOPING DATA ---
         activeDPReportData.forEach((row, index) => {
-            const rowData = [
-                index + 1,
-                row.dateShort,
-                row.month,
-                year,
-                `"${(row.nama || '').replace(/"/g, '""')}"`, // Handle tanda kutip di nama
-                `'${row.nomorHp || '-'}`, // Kasih tanda petik satu biar excel baca sbg teks (bukan angka ilmiah)
-                row.jumlah,
-                `"${(row.tempat || '').replace(/"/g, '""')}"`,
-                row.tipeDp || 'Cash',
-                row.dp
-            ];
-            csvContent += rowData.join(",") + "\n";
+            // Konversi Angka Bulan (01) menjadi Nama Bulan (Januari)
+            // monthNames adalah variabel global yang sudah ada di atas (0-indexed)
+            const namaBulan = monthNames[parseInt(row.month) - 1]; 
+
+            tableHTML += `
+                <tr>
+                    <td class="text-center">${index + 1}</td>
+                    <td class="text-center date-col">${row.dateShort}</td>
+                    <td class="text-center">${namaBulan}</td> 
+                    <td class="text-center">${year}</td>
+                    <td>${row.nama || ''}</td>
+                    <td class="date-col">${row.nomorHp || '-'}</td>
+                    <td class="text-center">${row.jumlah}</td>
+                    <td>${row.tempat || ''}</td>
+                    <td class="text-center">${row.tipeDp || 'Cash'}</td>
+                    <td class="text-right num-col">${row.dp}</td>
+                </tr>
+            `;
         });
 
-        // 3. Tambahkan Baris Total di Bawah
-        const total = activeDPReportData.reduce((acc, curr) => acc + parseInt(curr.dp), 0);
-        csvContent += `,,,,,,,,"TOTAL PENDAPATAN",${total}\n`;
+        // --- 3. MENAMBAHKAN BARIS TOTAL ---
+        tableHTML += `
+                <tr>
+                    <td colspan="9" class="text-right bg-total">TOTAL PENDAPATAN DP</td>
+                    <td class="text-right bg-total num-col">${total}</td>
+                </tr>
+                </tbody>
+            </table>
+            <br>
+            <small>Dicetak pada: ${new Date().toLocaleString('id-ID')}</small>
+            </body>
+            </html>
+        `;
 
-        // 4. Proses Download File
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Laporan_DP_DolanSawah_${monthLabel}_${year}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // --- 4. PROSES DOWNLOAD FILE (.XLS) ---
+        // Menggunakan tipe MIME ms-excel agar dikenali sebagai spreadsheet
+        const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
         
-        showToast("File Excel (CSV) berhasil diunduh!");
+        a.href = url;
+        // Kita gunakan ekstensi .xls agar format HTML Table terbaca sempurna dengan styling
+        a.download = `Laporan_DP_DolanSawah_${monthLabel}_${year}.xls`; 
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showToast("Laporan Excel berhasil diunduh!");
     }
+
 
     // --- FUNGSI DOWNLOAD PDF ---
     function downloadDPReportPDF() {
