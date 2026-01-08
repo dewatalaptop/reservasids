@@ -404,24 +404,39 @@
   <div id="locationManagementPopup" class="popup-form"></div>
   <div id="customerListPopup" class="popup-form"></div>
   <div id="analysisPopup" class="popup-form"></div>
-    <div id="dpReportPopup" class="popup-form" style="max-width: 800px;">
-    <h3><i class="fas fa-file-invoice-dollar"></i> Laporan Detail DP Masuk</h3>
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h4 id="dp-report-title" style="margin:0; color:var(--primary-dark);"></h4>
+    <div id="dpReportPopup" class="popup-form" style="max-width: 900px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px;">
+        <h3 style="margin:0;"><i class="fas fa-file-invoice-dollar"></i> Laporan Detail DP</h3>
         <div style="display:flex; gap:5px;">
-    <button class="secondary" onclick="printDPReport()" style="padding:5px 10px; font-size:0.8rem; margin:0;"><i class="fas fa-print"></i> Print</button>
-    <button class="whatsapp" onclick="downloadDPReportPDF()" style="padding:5px 10px; font-size:0.8rem; margin:0; background-color: #d32f2f;"><i class="fas fa-file-pdf"></i> PDF</button>
-</div>
+            <button class="secondary" onclick="printDPReport()" style="padding:6px 12px; font-size:0.85rem; margin:0;"><i class="fas fa-print"></i> Print</button>
+            <button class="whatsapp" onclick="downloadDPReportPDF()" style="padding:6px 12px; font-size:0.85rem; margin:0; background-color: #d32f2f;"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="success" onclick="downloadDPExcel()" style="padding:6px 12px; font-size:0.85rem; margin:0; background-color: #217346;"><i class="fas fa-file-excel"></i> Excel</button>
+        </div>
+    </div>
 
+    <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 100px;">
+            <label style="font-size: 0.8rem; margin-bottom: 2px;">Tahun</label>
+            <select id="dp-filter-year" style="margin:0; padding: 5px;"></select>
+        </div>
+        <div style="flex: 1; min-width: 150px;">
+            <label style="font-size: 0.8rem; margin-bottom: 2px;">Bulan</label>
+            <select id="dp-filter-month" style="margin:0; padding: 5px;">
+                <option value="all">-- Semua Bulan (Rekap Tahunan) --</option>
+                </select>
+        </div>
+        <button onclick="loadDPReportData()" style="margin:0; padding: 6px 15px; height: 38px;"><i class="fas fa-search"></i> Tampilkan</button>
     </div>
     
-    <div id="dp-report-content" style="max-height: 60vh; overflow-y: auto;">
-      </div>
+    <div id="dp-loading" style="display:none; text-align:center; padding:20px;"><div class="spinner"></div><p style="margin-top:10px; font-size:0.9rem;">Memuat data laporan...</p></div>
+
+    <div id="dp-report-content" style="max-height: 55vh; overflow-y: auto;"></div>
 
     <div class="data-actions">
         <button type="button" class="danger" onclick="closePopup('dpReportPopup')"><i class="fas fa-times"></i> Tutup</button>
     </div>
   </div>
+
 
   <div id="exportDataPopup" class="popup-form">
     <h3><i class="fas fa-file-export"></i> Export Data ASCII untuk Viewer</h3>
@@ -549,6 +564,9 @@
     
     // Variabel Data Utama
     let dataReservasi = {};
+    // Tambahkan Variabel Global Baru
+let activeDPReportData = []; // Menyimpan data laporan yang sedang ditampilkan
+
     let detailMenu = {};
     let menuPrices = {}; // <--- Variabel Baru untuk Harga
     let locationsData = {};
@@ -2342,60 +2360,131 @@
         const item = document.getElementById(`notification-item-${id}`);
         if(item) item.style.display = 'none'; 
     }
-        // =================================================================
-    // FITUR BARU: LAPORAN DP
-    // =================================================================
-
-        // =================================================================
-    // FITUR BARU: LAPORAN DP & PDF
-    // =================================================================
-
-        // =================================================================
-    // FITUR BARU: LAPORAN DP & PDF (SUDAH DIPERBAIKI)
+        
+            // =================================================================
+    // FITUR LAPORAN DP (LOGIKA BARU: FILTER DATABASE & EXCEL)
     // =================================================================
 
     function showDPReport() {
-        const titleEl = document.getElementById('dp-report-title');
+        const popup = document.getElementById('dpReportPopup');
+        const yearSelect = document.getElementById('dp-filter-year');
+        const monthSelect = document.getElementById('dp-filter-month');
+        
+        // 1. Setup Dropdown Tahun (Tahun ini mundur 3 tahun)
+        const currentYear = new Date().getFullYear();
+        yearSelect.innerHTML = '';
+        for (let y = currentYear; y >= currentYear - 3; y--) {
+            yearSelect.add(new Option(y, y));
+        }
+        
+        // 2. Setup Dropdown Bulan
+        monthSelect.innerHTML = '<option value="all">-- Semua Bulan (Rekap Tahunan) --</option>';
+        monthNames.forEach((m, index) => {
+            // Format value jadi "01", "02", dst.
+            const formattedIndex = String(index + 1).padStart(2, '0');
+            monthSelect.add(new Option(m, formattedIndex));
+        });
+
+        // 3. Set Default Filter ke Bulan & Tahun saat ini
+        yearSelect.value = currentYear;
+        const currentMonthFormatted = String(new Date().getMonth() + 1).padStart(2, '0');
+        monthSelect.value = currentMonthFormatted;
+
+        // 4. Tampilkan Popup & Load Data Awal
+        popup.style.display = 'block';
+        overlay.style.display = 'block';
+        
+        // Jalankan fungsi load data otomatis saat dibuka
+        loadDPReportData();
+    }
+
+    async function loadDPReportData() {
+        const year = document.getElementById('dp-filter-year').value;
+        const month = document.getElementById('dp-filter-month').value;
+        const loading = document.getElementById('dp-loading');
         const contentEl = document.getElementById('dp-report-content');
         
-        // Set Judul berdasarkan Bulan Aktif
-        titleEl.textContent = `Bulan: ${monthNames[currentMonth]} ${currentYear}`;
+        // Tampilkan loading, sembunyikan konten lama
+        contentEl.style.display = 'none';
+        loading.style.display = 'block';
         
-        // 1. Kumpulkan semua data dari bulan ini yang memiliki DP > 0
-        let dpList = [];
-        Object.keys(dataReservasi).sort().forEach(dateKey => {
-            dataReservasi[dateKey].forEach(res => {
-                if (res.dp && parseInt(res.dp) > 0) {
+        try {
+            let startDate, endDate;
+            
+            // Tentukan Range Tanggal Query ke Database
+            if (month === 'all') {
+                startDate = `${year}-01-01`;
+                endDate = `${year}-12-31`;
+            } else {
+                // Cari tanggal terakhir di bulan tersebut
+                const lastDay = new Date(year, parseInt(month), 0).getDate();
+                startDate = `${year}-${month}-01`;
+                endDate = `${year}-${month}-${lastDay}`;
+            }
+
+            console.log(`Mengambil data DP dari ${startDate} s/d ${endDate}`);
+
+            // Query ke Firebase (Ambil data sesuai range tanggal)
+            const snapshot = await db.collection('reservations')
+                .where('date', '>=', startDate)
+                .where('date', '<=', endDate)
+                .get();
+
+            let dpList = [];
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // Hanya ambil yang punya DP > 0
+                if (data.dp && parseInt(data.dp) > 0) {
                     dpList.push({
-                        date: dateKey, // Format MM-DD
-                        fullDate: res.date, // Format YYYY-MM-DD
-                        ...res
+                        id: doc.id,
+                        fullDate: data.date, // Format YYYY-MM-DD
+                        dateShort: data.date.split('-')[2], // Tanggal saja (DD)
+                        month: data.date.split('-')[1], // Bulan (MM)
+                        ...data
                     });
                 }
             });
-        });
 
-        // 2. Jika tidak ada data
-        if (dpList.length === 0) {
-            contentEl.innerHTML = `<div class="empty-state"><i class="fas fa-info-circle"></i> Tidak ada data DP masuk pada bulan ini.</div>`;
-            document.getElementById('dpReportPopup').style.display = 'block';
-            overlay.style.display = 'block';
+            // Urutkan berdasarkan tanggal (Ascending)
+            dpList.sort((a, b) => a.fullDate.localeCompare(b.fullDate));
+            
+            // SIMPAN ke variabel global agar bisa dibaca fungsi Excel/PDF
+            activeDPReportData = dpList;
+            
+            // Render Tabel HTML
+            renderDPReportTable(dpList, year, month);
+
+        } catch (e) {
+            console.error("Error loading DP Report:", e);
+            contentEl.innerHTML = `<p style="color:red; text-align:center;">Gagal memuat data: ${e.message}</p>`;
+            contentEl.style.display = 'block';
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+
+    function renderDPReportTable(data, year, monthVal) {
+        const contentEl = document.getElementById('dp-report-content');
+        const monthLabel = monthVal === 'all' ? 'Sepanjang Tahun' : monthNames[parseInt(monthVal)-1];
+        
+        if (data.length === 0) {
+            contentEl.innerHTML = `<div class="empty-state"><i class="fas fa-info-circle"></i> Tidak ada data DP masuk pada periode <b>${monthLabel} ${year}</b>.</div>`;
+            contentEl.style.display = 'block';
             return;
         }
 
-        // 3. Urutkan berdasarkan tanggal
-        dpList.sort((a, b) => a.date.localeCompare(b.date));
-
-        // 4. Hitung Total
-        const totalOmzetDP = dpList.reduce((acc, curr) => acc + parseInt(curr.dp), 0);
-
-        // 5. Render Tabel HTML
+        const totalOmzetDP = data.reduce((acc, curr) => acc + parseInt(curr.dp), 0);
+        
         let tableHTML = `
+            <h4 id="dp-report-title" style="text-align:center; color:var(--primary-dark); margin-bottom:10px;">
+                Laporan DP: ${monthLabel} ${year}
+            </h4>
             <table class="report-table">
                 <thead>
                     <tr>
-                        <th style="width:50px;">Tgl</th>
-                        <th>Nama Pengirim</th>
+                        <th>Tgl</th>
+                        <th>Nama Customer</th>
                         <th>No. HP</th>
                         <th>Metode</th>
                         <th class="text-right">Jumlah DP</th>
@@ -2404,16 +2493,21 @@
                 <tbody>
         `;
 
-        dpList.forEach(item => {
-            // Ambil tanggal (DD) dari fullDate
-            const dayDate = item.fullDate.split('-')[2];
-            
+        data.forEach(item => {
+            // Tampilan Tanggal
+            let dateDisplay = item.dateShort;
+            if (monthVal === 'all') {
+                // Jika setahun penuh, tampilkan nama bulan juga (misal: 12 Jan)
+                const mIndex = parseInt(item.month) - 1;
+                dateDisplay = `${item.dateShort} ${monthNames[mIndex].substring(0, 3)}`;
+            }
+
             tableHTML += `
                 <tr>
-                    <td class="text-center"><b>${dayDate}</b></td>
+                    <td class="text-center"><b>${dateDisplay}</b></td>
                     <td>
                         <b>${item.nama}</b><br/>
-                        <small style="color:#666;">Jam: ${item.jam} • ${item.jumlah} org</small>
+                        <small style="color:#666;">${item.tempat || '?'} • ${item.jumlah} org</small>
                     </td>
                     <td>${item.nomorHp || '-'}</td>
                     <td><span style="background:#eef; padding:2px 6px; border-radius:4px; font-size:0.8rem;">${item.tipeDp || 'Cash'}</span></td>
@@ -2422,115 +2516,200 @@
             `;
         });
 
-        // Baris Total
         tableHTML += `
                 <tr class="total-row">
-                    <td colspan="4" class="text-right">TOTAL PEMASUKAN DP BULAN INI</td>
+                    <td colspan="4" class="text-right">TOTAL PEMASUKAN DP</td>
                     <td class="text-right">Rp ${formatRupiah(totalOmzetDP)}</td>
                 </tr>
                 </tbody>
             </table>
-            <div style="margin-top:10px; font-size:0.85rem; color:#555;">
-                * Data diurutkan berdasarkan tanggal reservasi. Total item: <b>${dpList.length} transaksi</b>.
+            <div style="margin-top:10px; font-size:0.8rem; color:#555;">
+                * Total Transaksi: <b>${data.length}</b> reservasi.
             </div>
         `;
 
         contentEl.innerHTML = tableHTML;
-        document.getElementById('dpReportPopup').style.display = 'block';
-        overlay.style.display = 'block';
+        contentEl.style.display = 'block';
     }
 
-    // --- FUNGSI 1: DOWNLOAD PDF (TERPISAH) ---
-    function downloadDPReportPDF() {
-        // Pastikan library sudah termuat
-        if (!window.jspdf) {
-            showToast("Library PDF belum siap, coba refresh halaman.", "error");
+        // --- FUNGSI DOWNLOAD EXCEL (VERSI RAPI & BERWARNA) ---
+    function downloadDPExcel() {
+        if (!activeDPReportData || activeDPReportData.length === 0) {
+            showToast("Tidak ada data untuk diunduh.", "error");
             return;
         }
 
+        const year = document.getElementById('dp-filter-year').value;
+        const monthVal = document.getElementById('dp-filter-month').value;
+        const monthLabel = monthVal === 'all' ? 'FULL_YEAR' : monthNames[parseInt(monthVal)-1];
+        
+        // Hitung Total untuk Footer
+        const total = activeDPReportData.reduce((acc, curr) => acc + parseInt(curr.dp), 0);
+
+        // --- 1. MEMBANGUN STRUKTUR TABEL EXCEL ---
+        // Kita menggunakan HTML Table karena Excel bisa membacanya dan mempertahankan format warna/border
+        let tableHTML = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; }
+                    table { border-collapse: collapse; width: 100%; }
+                    th { background-color: #2a9d8f; color: white; border: 1px solid #000000; padding: 10px; text-align: center; font-weight: bold; }
+                    td { border: 1px solid #000000; padding: 5px; vertical-align: middle; }
+                    .text-center { text-align: center; }
+                    .text-right { text-align: right; }
+                    .text-bold { font-weight: bold; }
+                    .bg-total { background-color: #e9c46a; font-weight: bold; }
+                    .date-col { mso-number-format:"\@"; } /* Format Text agar tanggal tidak berubah */
+                    .num-col { mso-number-format:"\#\,\#\#0"; } /* Format Angka */
+                </style>
+            </head>
+            <body>
+            <h3>LAPORAN DP MASUK - DOLAN SAWAH (${monthLabel} ${year})</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:50px">No</th>
+                        <th style="width:100px">Tanggal</th>
+                        <th style="width:100px">Bulan</th>
+                        <th style="width:80px">Tahun</th>
+                        <th style="width:200px">Nama Customer</th>
+                        <th style="width:120px">Nomor HP</th>
+                        <th style="width:80px">Jml Tamu</th>
+                        <th style="width:150px">Tempat</th>
+                        <th style="width:120px">Metode Bayar</th>
+                        <th style="width:150px">Nominal DP</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        // --- 2. LOOPING DATA ---
+        activeDPReportData.forEach((row, index) => {
+            // Konversi Angka Bulan (01) menjadi Nama Bulan (Januari)
+            // monthNames adalah variabel global yang sudah ada di atas (0-indexed)
+            const namaBulan = monthNames[parseInt(row.month) - 1]; 
+
+            tableHTML += `
+                <tr>
+                    <td class="text-center">${index + 1}</td>
+                    <td class="text-center date-col">${row.dateShort}</td>
+                    <td class="text-center">${namaBulan}</td> 
+                    <td class="text-center">${year}</td>
+                    <td>${row.nama || ''}</td>
+                    <td class="date-col">${row.nomorHp || '-'}</td>
+                    <td class="text-center">${row.jumlah}</td>
+                    <td>${row.tempat || ''}</td>
+                    <td class="text-center">${row.tipeDp || 'Cash'}</td>
+                    <td class="text-right num-col">${row.dp}</td>
+                </tr>
+            `;
+        });
+
+        // --- 3. MENAMBAHKAN BARIS TOTAL ---
+        tableHTML += `
+                <tr>
+                    <td colspan="9" class="text-right bg-total">TOTAL PENDAPATAN DP</td>
+                    <td class="text-right bg-total num-col">${total}</td>
+                </tr>
+                </tbody>
+            </table>
+            <br>
+            <small>Dicetak pada: ${new Date().toLocaleString('id-ID')}</small>
+            </body>
+            </html>
+        `;
+
+        // --- 4. PROSES DOWNLOAD FILE (.XLS) ---
+        // Menggunakan tipe MIME ms-excel agar dikenali sebagai spreadsheet
+        const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        
+        a.href = url;
+        // Kita gunakan ekstensi .xls agar format HTML Table terbaca sempurna dengan styling
+        a.download = `Laporan_DP_DolanSawah_${monthLabel}_${year}.xls`; 
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showToast("Laporan Excel berhasil diunduh!");
+    }
+
+
+    // --- FUNGSI DOWNLOAD PDF ---
+    function downloadDPReportPDF() {
+        if (!window.jspdf) {
+            showToast("Library PDF belum siap.", "error");
+            return;
+        }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+        
+        // Ambil info filter dari dropdown
+        const year = document.getElementById('dp-filter-year').value;
+        const monthVal = document.getElementById('dp-filter-month').value;
+        const monthLabel = monthVal === 'all' ? 'Sepanjang Tahun' : monthNames[parseInt(monthVal)-1];
 
-        // 1. Header Laporan
+        // Header PDF
         doc.setFontSize(16);
-        doc.setTextColor(42, 157, 143); // Warna Primary
+        doc.setTextColor(42, 157, 143);
         doc.text("LAPORAN DP MASUK - DOLAN SAWAH", 14, 20);
         
         doc.setFontSize(11);
         doc.setTextColor(100);
-        doc.text(`Periode: ${monthNames[currentMonth]} ${currentYear}`, 14, 28);
+        doc.text(`Periode: ${monthLabel} ${year}`, 14, 28);
         doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 34);
 
-        // 2. Persiapkan Data (Sama seperti logika showDPReport)
-        let dpList = [];
-        Object.keys(dataReservasi).sort().forEach(dateKey => {
-            dataReservasi[dateKey].forEach(res => {
-                if (res.dp && parseInt(res.dp) > 0) {
-                    dpList.push({
-                        date: dateKey,
-                        fullDate: res.date,
-                        nama: res.nama,
-                        nomorHp: res.nomorHp || '-',
-                        tipeDp: res.tipeDp || 'Cash',
-                        dp: parseInt(res.dp)
-                    });
-                }
-            });
-        });
+        // Gunakan data dari variabel global
+        const dpList = activeDPReportData || []; 
 
-        // Urutkan data berdasarkan tanggal
-        dpList.sort((a, b) => a.date.localeCompare(b.date));
+        if (dpList.length === 0) {
+            showToast("Data kosong, tidak bisa membuat PDF.", "error");
+            return;
+        }
 
-        // 3. Konversi Data ke format Tabel PDF
+        // Siapkan Body Tabel
         const tableBody = dpList.map((item, index) => [
             index + 1,
-            item.fullDate.split('-')[2], // Ambil Tanggalnya saja (DD)
+            `${item.dateShort}/${item.month}`,
             item.nama,
             item.nomorHp,
-            item.tipeDp,
+            item.tipeDp || 'Cash',
             `Rp ${formatRupiah(item.dp)}`
         ]);
 
-        // Hitung Total
-        const totalOmzetDP = dpList.reduce((acc, curr) => acc + curr.dp, 0);
+        const totalOmzetDP = dpList.reduce((acc, curr) => acc + parseInt(curr.dp), 0);
 
-        // 4. Generate Tabel menggunakan AutoTable
+        // Generate Tabel PDF
         doc.autoTable({
             startY: 40,
             head: [['No', 'Tgl', 'Nama Pengirim', 'No. HP', 'Metode', 'Jumlah DP']],
             body: tableBody,
             foot: [['', '', '', '', 'TOTAL', `Rp ${formatRupiah(totalOmzetDP)}`]],
             theme: 'grid',
-            headStyles: { 
-                fillColor: [42, 157, 143], // Warna Hijau Primary
-                textColor: 255,
-                halign: 'center'
-            },
+            headStyles: { fillColor: [42, 157, 143], textColor: 255, halign: 'center' },
             bodyStyles: { textColor: 50 },
-            footStyles: { 
-                fillColor: [38, 70, 83], // Warna Gelap
-                textColor: 255,
-                fontStyle: 'bold',
-                halign: 'right'
-            },
-            columnStyles: {
-                0: { halign: 'center', cellWidth: 15 }, // No
-                1: { halign: 'center', cellWidth: 15 }, // Tgl
-                5: { halign: 'right', fontStyle: 'bold' } // Jumlah DP (Rata Kanan)
-            },
+            footStyles: { fillColor: [38, 70, 83], textColor: 255, fontStyle: 'bold', halign: 'right' },
+            columnStyles: { 5: { halign: 'right', fontStyle: 'bold' } },
         });
 
-        // 5. Simpan File
-        const fileName = `Laporan_DP_DolanSawah_${monthNames[currentMonth]}_${currentYear}.pdf`;
-        doc.save(fileName);
+        doc.save(`Laporan_DP_${monthLabel}_${year}.pdf`);
         showToast("Laporan PDF berhasil diunduh!");
     }
 
-    // --- FUNGSI 2: PRINT BIASA (TERPISAH) ---
+    // --- FUNGSI PRINT BIASA ---
     function printDPReport() {
-        const title = document.getElementById('dp-report-title').textContent;
+        // Ambil HTML dari tabel yang sudah dirender
         const content = document.getElementById('dp-report-content').innerHTML;
         
+        if (!content || content.includes("Tidak ada data")) {
+             showToast("Tidak ada data untuk dicetak.", "error");
+             return;
+        }
+
         const printWindow = window.open('', '_blank');
         printWindow.document.write(`
             <html>
@@ -2539,6 +2718,7 @@
                 <style>
                     body { font-family: 'Segoe UI', sans-serif; padding: 20px; }
                     h2 { text-align: center; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+                    h4 { text-align: center; margin: 5px 0 20px 0; }
                     .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
                     .report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: left; }
                     .report-table th { background-color: #eee; text-align: center; }
@@ -2549,7 +2729,6 @@
             </head>
             <body>
                 <h2>LAPORAN DP MASUK - DOLAN SAWAH</h2>
-                <h3 style="text-align:center;">${title}</h3>
                 ${content}
                 <div style="margin-top:30px; text-align:right;">
                     <p>Dicetak pada: ${new Date().toLocaleString('id-ID')}</p>
