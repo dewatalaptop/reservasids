@@ -14,7 +14,75 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+
+  <script>
+    // =========================================
+    // ERROR DEBUG SYSTEM
+    // =========================================
+    function showErrorPopup(message, context, stack) {
+      const ts = new Date().toLocaleString('id-ID');
+      document.getElementById('err-message-text').textContent = message || 'Unknown error';
+      document.getElementById('err-context-box').innerHTML =
+        `<b>Konteks:</b> ${context || 'Tidak diketahui'}<br>` +
+        `<b>Waktu:</b> ${ts}<br>` +
+        `<b>URL:</b> ${window.location.href}`;
+      document.getElementById('err-stack-box').textContent = stack || '(tidak ada stack trace)';
+      const ua = navigator.userAgent;
+      document.getElementById('err-sysinfo-box').innerHTML =
+        `<b>Browser:</b> ${ua.split(') ')[0].split('(')[1] || ua.substring(0,80)}<br>` +
+        `<b>Platform:</b> ${navigator.platform}<br>` +
+        `<b>Online:</b> ${navigator.onLine ? 'Ya' : 'Tidak'}`;
+      document.getElementById('error-debug-overlay').style.display = 'block';
+      document.getElementById('error-debug-popup').style.display = 'block';
+      const copyBtn = document.getElementById('err-copy-btn');
+      copyBtn.classList.remove('copied');
+      copyBtn.innerHTML = '<i class="fas fa-copy"></i> Salin Semua Detail Error';
+    }
+
+    function closeErrorPopup() {
+      document.getElementById('error-debug-overlay').style.display = 'none';
+      document.getElementById('error-debug-popup').style.display = 'none';
+    }
+
+    function copyErrorReport() {
+      const msg     = document.getElementById('err-message-text').textContent;
+      const ctx     = document.getElementById('err-context-box').innerText;
+      const stack   = document.getElementById('err-stack-box').textContent;
+      const sysinfo = document.getElementById('err-sysinfo-box').innerText;
+      const report  = `=== DOLAN SAWAH ERROR REPORT ===\n\n[PESAN ERROR]\n${msg}\n\n[KONTEKS]\n${ctx}\n\n[STACK TRACE]\n${stack}\n\n[INFO SISTEM]\n${sysinfo}\n\n================================`;
+      navigator.clipboard.writeText(report)
+        .then(() => {
+          const btn = document.getElementById('err-copy-btn');
+          btn.classList.add('copied');
+          btn.innerHTML = '<i class="fas fa-check"></i> Tersalin!';
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = '<i class="fas fa-copy"></i> Salin Semua Detail Error';
+          }, 2500);
+        })
+        .catch(() => { alert('Gagal menyalin otomatis. Silakan pilih teks secara manual.'); });
+    }
+
+    // Tangkap error JS yang tidak tertangkap
+    window.onerror = function(msg, src, line, col, err) {
+      showErrorPopup(
+        msg,
+        `File: ${src}\nBaris: ${line}, Kolom: ${col}`,
+        err ? err.stack : 'Tidak ada stack'
+      );
+      return false;
+    };
+
+    window.addEventListener('unhandledrejection', function(e) {
+      const err = e.reason;
+      showErrorPopup(
+        err ? (err.message || String(err)) : 'Unhandled Promise Rejection',
+        'Promise tidak tertangkap (async function)',
+        err ? (err.stack || String(err)) : String(e.reason)
+      );
+    });
+  </script>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 
@@ -623,6 +691,58 @@
       .day-number { font-size: 0.72rem; width: 22px; height: 22px; }
       .reservation-count { display: none; }
     }
+
+    /* ===== ERROR DEBUG POPUP ===== */
+    #error-debug-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); z-index: 9998;
+    }
+    #error-debug-popup {
+      display: none; position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999; width: 94%; max-width: 680px;
+      background: white; border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3); border: 2px solid var(--danger);
+      font-family: var(--font-body); overflow: hidden;
+    }
+    .err-header {
+      background: var(--danger); color: white;
+      padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .err-header h3 { font-size: 1rem; display: flex; align-items: center; gap: 8px; margin: 0; }
+    .err-close-btn {
+      background: rgba(255,255,255,0.2); border: none; color: white;
+      width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+      font-size: 1rem; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; padding: 0; flex-shrink: 0;
+    }
+    .err-close-btn:hover { background: rgba(255,255,255,0.35); transform: none; box-shadow: none; }
+    .err-body { padding: 20px; max-height: 72vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .err-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--light-text); margin-bottom: 6px; margin-top: 14px;
+    }
+    .err-label:first-child { margin-top: 0; }
+    .err-code-box {
+      background: #1e1e2e; color: #cdd6f4; border-radius: var(--radius-sm);
+      padding: 14px; font-family: 'Courier New', monospace; font-size: 0.8rem;
+      line-height: 1.6; white-space: pre-wrap; word-break: break-all;
+      max-height: 160px; overflow-y: auto;
+    }
+    .err-highlight { color: #f38ba8; font-weight: bold; }
+    .err-meta {
+      font-size: 0.81rem; color: var(--mid); background: var(--cream);
+      padding: 10px 14px; border-radius: var(--radius-sm); line-height: 1.7;
+    }
+    .err-copy-btn {
+      width: 100%; margin: 10px 0 0; background: #1e1e2e; color: #cdd6f4;
+      border: 1px solid #45475a; border-radius: var(--radius-sm);
+      padding: 10px; font-size: 0.82rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s;
+    }
+    .err-copy-btn:hover { background: #313244; transform: none; box-shadow: none; }
+    .err-copy-btn.copied { background: var(--success); color: white; border-color: var(--success); }
+    .err-hint { font-size: 0.78rem; color: var(--light-text); margin-top: 12px; text-align: center; }
   </style>
 
 </head>
@@ -939,9 +1059,9 @@
     let hasAutoOpened = false;
     let notificationInterval = null;
     let lastNotificationCheck = 0;
+    const BROADCAST_MESSAGE_KEY = 'dolanSawahBroadcastMessage';
     let promoMessageCache = localStorage.getItem(BROADCAST_MESSAGE_KEY) || '';
     let allCustomersCache = [];
-    const BROADCAST_MESSAGE_KEY = 'dolanSawahBroadcastMessage';
 
     // =========================================
     // 3. DOM REFS
@@ -979,7 +1099,7 @@
       if (!email || !password) { errorEl.textContent = 'Email dan password wajib diisi'; errorEl.style.display = 'block'; return; }
       showLoader();
       try { await auth.signInWithEmailAndPassword(email, password); }
-      catch (err) { errorEl.textContent = 'Email atau password salah'; errorEl.style.display = 'block'; }
+      catch (err) { const code = err.code || ''; const msg = `Firebase Auth Error\nKode: ${code}\nPesan: ${err.message}`; errorEl.textContent = code === 'auth/user-not-found' ? 'User tidak ditemukan di Firebase.' : code === 'auth/wrong-password' ? 'Password salah.' : code === 'auth/invalid-email' ? 'Format email tidak valid.' : code === 'auth/too-many-requests' ? 'Terlalu banyak percobaan. Coba lagi nanti.' : code === 'auth/network-request-failed' ? 'Gagal konek ke server. Periksa internet.' : 'Login gagal: ' + (err.message || code); errorEl.style.display = 'block'; showErrorPopup(msg, 'handleLogin() — Firebase Auth', err.stack); }
       finally { hideLoader(); }
     }
     function handleLogout() {
@@ -1002,7 +1122,7 @@
         await Promise.all([loadMenus(), loadLocations()]);
         loadReservationsForCurrentMonth();
         setupReliableNotificationChecker();
-      } catch (e) { console.error(e); showToast("Gagal memulai aplikasi", "error"); hideLoader(); }
+      } catch (e) { showToast("Gagal memulai aplikasi", "error"); showErrorPopup(e.message || String(e), 'initializeApp()', e.stack); hideLoader(); }
     }
 
     async function loadMenus() {
@@ -1010,14 +1130,14 @@
         const snap = await db.collection('menus').get();
         detailMenu = {}; menuPrices = {};
         snap.forEach(doc => { const d = doc.data(); detailMenu[doc.id] = d.details || []; menuPrices[doc.id] = d.price || 0; });
-      } catch (e) { showToast("Gagal memuat menu: " + e.message, "error"); }
+      } catch (e) { showToast("Gagal memuat menu", "error"); showErrorPopup(e.message || String(e), "loadMenus() — Firestore collection: menus", e.stack); }
     }
     async function loadLocations() {
       try {
         const snap = await db.collection('locations').get();
         locationsData = {};
         snap.forEach(doc => { locationsData[doc.id] = doc.data(); });
-      } catch (e) { showToast("Gagal memuat lokasi: " + e.message, "error"); }
+      } catch (e) { showToast("Gagal memuat lokasi", "error"); showErrorPopup(e.message || String(e), "loadLocations() — Firestore collection: locations", e.stack); }
     }
 
     function loadReservationsForCurrentMonth() {
@@ -1039,7 +1159,7 @@
           handleAutoOpen();
           if (tanggalDipilih && !hasAutoOpened) updateReservationList(dataReservasi[tanggalDipilih] || []);
           hideLoader();
-        }, err => { console.error(err); showToast("Gagal memuat reservasi", "error"); hideLoader(); });
+        }, err => { showToast("Gagal memuat reservasi", "error"); showErrorPopup(err.message || String(err), "loadReservationsForCurrentMonth() — Firestore onSnapshot", err.stack); hideLoader(); });
     }
 
     function handleAutoOpen() {
@@ -1076,6 +1196,12 @@
     function formatRupiah(n) { return (n || 0).toLocaleString('id-ID'); }
     function cleanPhone(p) { return (p || '').toString().replace(/[^0-9]/g, ''); }
     function isValidPhone(p) { return /^[0-9]{10,13}$/.test(cleanPhone(p)); }
+    function formatWA(phone) {
+      phone = cleanPhone(phone);
+      if (phone.startsWith('62')) return phone;
+      if (phone.startsWith('0'))  return '62' + phone.slice(1);
+      return '62' + phone;
+    }
     function closePopup(id) { document.getElementById(id).style.display = 'none'; overlay.style.display = 'none'; }
 
     // =========================================
@@ -1304,7 +1430,7 @@ async function simpanReservasi() {
   const data = { ...fd, date: `${currentYear}-${tanggalDipilih}`, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
   showLoader();
   try { await db.collection('reservations').add(data); showToast("Reservasi berhasil disimpan!"); closePopup('addFormPopup'); }
-  catch (e) { console.error(e); showToast("Gagal menyimpan", "error"); } finally { hideLoader(); }
+  catch (e) { showToast("Gagal menyimpan reservasi", "error"); showErrorPopup(e.message || String(e), "simpanReservasi() — Firestore add", e.stack); } finally { hideLoader(); }
 }
 
 async function simpanPerubahanReservasi() {
@@ -1313,14 +1439,14 @@ async function simpanPerubahanReservasi() {
   if (!fd) return;
   showLoader();
   try { await db.collection('reservations').doc(id).update(fd); showToast("Perubahan tersimpan"); closePopup('editFormPopup'); }
-  catch (e) { showToast("Gagal menyimpan", "error"); } finally { hideLoader(); }
+  catch (e) { showToast("Gagal menyimpan perubahan", "error"); showErrorPopup(e.message || String(e), "simpanPerubahanReservasi() — Firestore update: reservations", e.stack); } finally { hideLoader(); }
 }
 
 async function hapusReservasi(id) {
   if (!confirm("Yakin hapus reservasi ini?")) return;
   showLoader();
   try { await db.collection('reservations').doc(id).delete(); showToast("Reservasi dihapus"); }
-  catch (e) { showToast("Gagal menghapus", "error"); } finally { hideLoader(); }
+  catch (e) { showToast("Gagal menghapus reservasi", "error"); showErrorPopup(e.message || String(e), "hapusReservasi() — Firestore delete: reservations", e.stack); } finally { hideLoader(); }
 }
 
 async function validateAndGetFormData(formId) {
@@ -1435,7 +1561,7 @@ async function addNewMenu() {
   if (detailMenu[name]) { showToast("Menu sudah ada", "error"); return; }
   showLoader();
   try { await db.collection('menus').doc(name).set({ details, price }); showToast(`Menu "${name}" ditambahkan`); await loadMenus(); renderMenuList(); document.getElementById('newMenuName').value = ''; document.getElementById('newMenuPrice').value = ''; document.getElementById('newMenuDetails').value = ''; }
-  catch (e) { showToast(`Gagal: ${e.message}`, "error"); } finally { hideLoader(); }
+  catch (e) { showToast('Gagal menambah menu', 'error'); showErrorPopup(e.message || String(e), 'addNewMenu() — Firestore set: menus', e.stack); } finally { hideLoader(); }
 }
 
 function openEditMenuPopup(name) {
@@ -1462,18 +1588,14 @@ async function saveEditedMenu(orig) {
     if (orig !== newName) { if (detailMenu[newName]) { showToast("Nama sudah digunakan", "error"); hideLoader(); return; } await db.collection('menus').doc(orig).delete(); }
     await db.collection('menus').doc(newName).set({ details: newDetails, price: newPrice });
     showToast(`Menu diperbarui`); await loadMenus(); showMenuManagement();
-  } catch (e) { showToast("Gagal", "error"); } finally { hideLoader(); }
+  } catch (e) { showToast("Gagal menyimpan perubahan menu", "error"); showErrorPopup(e.message || String(e), "saveEditedMenu() — Firestore set/delete: menus", e.stack); } finally { hideLoader(); }
 }
 
 async function deleteMenu(name) {
   if (!confirm(`Hapus menu "${name}"?`)) return;
   showLoader();
   try { await db.collection('menus').doc(name).delete(); showToast(`Menu dihapus`); await loadMenus(); renderMenuList(); }
-  catch (e) { showToast("Gagal", "error"); } finally { hideLoader(); }
-}
-
-// =========================================
-// 12. LOKASI MANAGEMENT
+  catch (e) { showToast("Gagal menghapus menu", "error"); showErrorPopup(e.message || String(e), "deleteMenu() — Firestore delete: menus", e.stack); } finally { hideLoader(); }
 // =========================================
 function showLocationManagement() {
   const p = document.getElementById('locationManagementPopup');
@@ -1513,17 +1635,17 @@ async function addNewLocation() {
   const docId = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/--+/g,'-');
   showLoader();
   try { await db.collection('locations').doc(docId).set({name, capacity: cap}); showToast(`Tempat "${name}" ditambahkan`); await loadLocations(); renderLocationList(); document.getElementById('newLocationName').value = ''; document.getElementById('newLocationCapacity').value = ''; }
-  catch (e) { showToast(`Gagal: ${e.message}`, "error"); } finally { hideLoader(); }
+  catch (e) { showToast('Gagal menambah tempat', 'error'); showErrorPopup(e.message || String(e), 'addNewLocation() — Firestore set: locations', e.stack); } finally { hideLoader(); }
 }
 
 async function deleteLocation(id) {
   if (!confirm(`Hapus tempat "${locationsData[id].name}"?`)) return;
   showLoader();
   try { await db.collection('locations').doc(id).delete(); showToast("Tempat dihapus"); await loadLocations(); renderLocationList(); }
-  catch (e) { showToast("Gagal", "error"); } finally { hideLoader(); }
+  catch (e) { showToast("Gagal menghapus tempat", "error"); showErrorPopup(e.message || String(e), "deleteLocation() — Firestore delete: locations", e.stack); } finally { hideLoader(); }
 }
 
-function openEditLocationPopup(id) {
+function openEditLocationPopup
   const loc = locationsData[id];
   document.getElementById('locationManagementPopup').innerHTML = `
     <div class="popup-header"><h3><i class="fas fa-edit"></i> Edit Tempat</h3></div>
@@ -1551,7 +1673,7 @@ async function saveEditedLocation(origId) {
       await db.collection('locations').doc(origId).delete();
     } else { await db.collection('locations').doc(origId).update({name: newName, capacity: newCap}); }
     showToast("Tempat diperbarui"); await loadLocations(); showLocationManagement();
-  } catch (e) { showToast("Gagal", "error"); } finally { hideLoader(); }
+  } catch (e) { showToast("Gagal memperbarui tempat", "error"); showErrorPopup(e.message || String(e), "saveEditedLocation() — Firestore set/update: locations", e.stack); } finally { hideLoader(); }
 }
 
 // =========================================
@@ -1574,7 +1696,7 @@ async function showCustomerMenu() {
       <div class="popup-footer"><button class="secondary" onclick="closePopup('customerListPopup')"><i class="fas fa-times"></i> Tutup</button></div>`;
     window.filterCustList = q => { const ql = q.toLowerCase(); renderCustList(sorted.filter(([ph,nm]) => nm.toLowerCase().includes(ql)||ph.includes(ql))); };
     renderCustList(sorted); p.style.display = 'block'; overlay.style.display = 'block';
-  } catch (e) { showToast("Gagal memuat customer", "error"); } finally { hideLoader(); }
+  } catch (e) { showToast("Gagal memuat customer", "error"); showErrorPopup(e.message || String(e), "showCustomerMenu() — Firestore query: reservations", e.stack); } finally { hideLoader(); }
 }
 
 function renderCustList(data) {
@@ -1588,11 +1710,16 @@ function renderCustList(data) {
 }
 
 function findReservationById(id) {
-  for (const key in dataReservasi) { const f = dataReservasi[key].find(r => r.id === id); if (f) return f; } return null;
+  for (const key in dataReservasi) {
+    if (!Array.isArray(dataReservasi[key])) continue;
+    const f = dataReservasi[key].find(r => r.id === id);
+    if (f) return f;
+  }
+  return null;
 }
 
 function openWhatsApp(phone, name, msg) {
-  const fp = phone.replace(/^0/,'62');
+  const fp = formatWA(phone);
   const m = msg || `Halo Kak *${name}*, kami dari Dolan Sawah. Terima kasih telah menjadi pelanggan setia kami! 😊🌾`;
   window.open(`https://wa.me/${fp}?text=${encodeURIComponent(m)}`, '_blank');
 }
@@ -1620,7 +1747,7 @@ function sendThankYouMessage(id, name, phone) {
 }
 
 async function markAsThankYouSent(id) {
-  try { await db.collection('reservations').doc(id).update({thankYouSent: true}); } catch (e) { console.error(e); }
+  try { await db.collection('reservations').doc(id).update({thankYouSent: true}); } catch (e) { showErrorPopup(e.message || String(e), "markAsThankYouSent() — Firestore update: reservations", e.stack); }
 }
 
 function shareViaWhatsApp(scope) {
@@ -1669,7 +1796,7 @@ function showExportDataPopup() {
     const binStr = Array.from(bytes, b => String.fromCharCode(b)).join('');
     document.getElementById('export-data-output').value = btoa(binStr);
     document.getElementById('exportDataPopup').style.display = 'block'; overlay.style.display = 'block';
-  } catch (e) { showToast("Error saat membuat kode ekspor", "error"); }
+  } catch (e) { showToast("Error saat membuat kode ekspor", "error"); showErrorPopup(e.message || String(e), "showExportDataPopup() — JSON/base64 encoding", e.stack); }
 }
 
 function copyExportCode() {
@@ -1701,11 +1828,46 @@ function executePrint() {
     return `<div class="pi"><h3>${i+1}. ${r.nama||'?'}</h3><p>⏰ ${r.jam||'?'} &nbsp;|&nbsp; 📍 ${r.tempat||'?'} &nbsp;|&nbsp; 👥 ${r.jumlah||'?'} orang</p>${opts.showKontak&&r.nomorHp?`<p>📞 ${r.nomorHp}</p>`:''}${opts.showMenu?`<div class="md">${ml}</div>`:''}${opts.showDp&&r.dp>0?`<p>💰 DP: Rp ${formatRupiah(r.dp)} ${r.tipeDp?`(${r.tipeDp})`:''}</p>`:''}${opts.showTambahan&&r.tambahan?`<p>📝 ${r.tambahan}</p>`:''}</div>`;
   }).join('');
   const pw = window.open('','_blank');
-  pw.document.write(`<!DOCTYPE html><html lang="id"><head><title>Cetak — ${title}</title><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Plus Jakarta Sans',sans-serif;padding:24px;background:#fff}h2{font-size:1.4rem;color:#2d5a3d;border-bottom:3px solid #c9a84c;padding-bottom:10px;margin-bottom:20px}#list{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.pi{padding:14px;border:1px solid #ddd;border-radius:8px;border-left:4px solid #4a7c59;break-inside:avoid}.pi h3{font-size:1rem;color:#4a7c59;margin-bottom:8px}.pi p{font-size:0.85rem;margin:4px 0;color:#444}.md{margin-top:8px;font-size:0.82rem;color:#555;border-left:2px solid #e8c97a;padding-left:10px}@media print{body{padding:10px}}</style></head><body><h2>${title}</h2>${res.length?`<div id="list">${items}</div>`:'<p style="text-align:center;padding:40px;color:#888;">Tidak ada reservasi.</p>'}</body></html>`);
-  pw.document.close(); setTimeout(() => pw.print(), 500);
-  closePopup('printOptionsPopup');
-}
+  pw.document.write(`<!DOCTYPE html><html lang="id"><head><title>Cetak — ${title}</title><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Plus Jakarta Sans',sans-serif;padding:24px;background:#fff}h2{font-size:1.4rem;color:#2d5a3d;border-bottom:3px solid #c9a84c;padding-bottom:10px;margin-bottom:20px}#list{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.pi{padding:14px;border:1px solid #ddd;border-radius:8px;border-left:4px solid #4a7c59;break-inside:avoid}.pi h3{font-size:1rem;color:#4a7c59;margin-bottom:8px}.pi p{font-size:0.85rem;margin:4px 0;color:#444}.md{margin-top:8px;font-size:0.82rem;color:#555;border-left:2px solid #e8c97a;padding-left:10px}@media print{body{padding:10px}}</style></head><body><h2>${title}</h2>${res.length?`<div id="list">${items}</div>`:'<p style="text-align:center;padding:40px;color:#888;">Tidak ada reservasi.</p>'}
+```
 
+  <!-- ERROR DEBUG OVERLAY & POPUP -->
+
+  <div id="error-debug-overlay" onclick="closeErrorPopup()"></div>
+  <div id="error-debug-popup">
+    <div class="err-header">
+      <h3><i class="fas fa-bug"></i> Error Detail — Copy & Kirim ke Developer</h3>
+      <button class="err-close-btn" onclick="closeErrorPopup()" title="Tutup"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="err-body">
+      <div class="err-label"><i class="fas fa-exclamation-circle"></i> Pesan Error</div>
+      <div class="err-code-box" id="err-message-box"><span class="err-highlight" id="err-message-text">—</span></div>
+
+```
+  <div class="err-label"><i class="fas fa-map-marker-alt"></i> Lokasi / Konteks</div>
+  <div class="err-meta" id="err-context-box">—</div>
+
+  <div class="err-label"><i class="fas fa-layer-group"></i> Stack Trace</div>
+  <div class="err-code-box" id="err-stack-box">—</div>
+
+  <div class="err-label"><i class="fas fa-info-circle"></i> Info Sistem</div>
+  <div class="err-meta" id="err-sysinfo-box">—</div>
+
+  <button class="err-copy-btn" id="err-copy-btn" onclick="copyErrorReport()">
+    <i class="fas fa-copy"></i> Salin Semua Detail Error
+  </button>
+  <p class="err-hint">Salin lalu kirim ke developer agar error ini bisa diperbaiki.</p>
+</div>
+```
+
+  </div>
+
+</body></html>`);
+      pw.document.close(); setTimeout(() => pw.print(), 500);
+      closePopup('printOptionsPopup');
+    }
+
+```
 // =========================================
 // 15. ANALYSIS
 // =========================================
@@ -1737,7 +1899,7 @@ async function showAnalysis() {
   p.style.display = 'block'; overlay.style.display = 'block';
   if (!allReservationsCache) {
     try { const snap = await db.collection('reservations').get(); allReservationsCache = snap.docs.map(d => d.data()); }
-    catch (e) { showToast("Gagal memuat data analisis", "error"); return; }
+    catch (e) { showToast("Gagal memuat data analisis", "error"); showErrorPopup(e.message || String(e), "showAnalysis() — Firestore get: reservations (all)", e.stack); return; }
   }
   runAdvancedAnalysis();
 }
@@ -1883,7 +2045,7 @@ async function showBroadcastList() {
     renderBroadcastList(allCustomersCache);
     document.getElementById('broadcastCustomerSearch').value = '';
     document.getElementById('broadcastListPopup').style.display = 'block'; overlay.style.display = 'block';
-  } catch (e) { showToast("Gagal memuat list", "error"); } finally { hideLoader(); }
+  } catch (e) { showToast("Gagal memuat broadcast list", "error"); showErrorPopup(e.message || String(e), "showBroadcastList() — Firestore query: reservations", e.stack); } finally { hideLoader(); }
 }
 
 function renderBroadcastList(customers) {
@@ -1907,7 +2069,7 @@ function sendPromoBroadcast(phone, name, btnId) {
   if (!promoMessageCache) return;
   const safeName = (name || '').trim() || 'Pelanggan';
   const msg = promoMessageCache.replace(/kak/gi, `Kak *${safeName}*`);
-  window.open(`https://wa.me/${phone.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`, '_blank');
+  window.open(`https://wa.me/${formatWA(phone)}?text=${encodeURIComponent(msg)}`, '_blank');
   const btn = document.getElementById(btnId);
   if (btn) { btn.classList.add('sent'); btn.innerHTML = '<i class="fas fa-check"></i> Terkirim'; btn.onclick = null; }
 }
@@ -1958,7 +2120,7 @@ async function checkThankYouNotifications() {
           </button>
         </li>`).join('');
     }
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error(e); showErrorPopup(e.message || String(e), "checkThankYouNotifications() — Firestore query: reservations", e.stack); }
 }
 
 function toggleNotificationDropdown(e) {
