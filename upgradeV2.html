@@ -267,6 +267,8 @@
     }
     .day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: 0.7; }
 
+    .calendar-day { user-select: none; }
+
     /* ===== ACTION BUTTONS BAR ===== */
     .actions-bar {
       display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px;
@@ -310,7 +312,7 @@
     textarea { min-height: 80px; resize: vertical; }
     .invalid { border-color: var(--danger) !important; }
     .error-message { color: var(--danger); font-size: 0.77rem; margin-top: 3px; display: block; min-height: 1em; }
-    #capacity-info { font-size: 0.77rem; color: var(--light-text); margin-top: 4px; display: block; }
+    .capacity-info { font-size: 0.77rem; color: var(--light-text); margin-top: 4px; display: block; }
 
     /* ===== POPUP / MODAL ===== */
     .popup-form {
@@ -318,6 +320,7 @@
       transform: translate(-50%, -50%);
       z-index: 1000; width: 92%; max-width: 620px;
       max-height: 90vh; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       background: white; border-radius: var(--radius-xl);
       box-shadow: var(--shadow-lg);
       border: 1px solid rgba(74,124,89,0.12);
@@ -749,7 +752,7 @@
     </div>
     <label>Tempat
       <select id="tempat" required onchange="updateCapacityInfo('reservation-form')"></select>
-      <span id="capacity-info"></span>
+      <span class="capacity-info"></span>
       <span class="error-message" id="tempat-error"></span>
     </label>
     <label>Paket Menu Dipesan <span class="error-message" id="menus-error"></span></label>
@@ -936,7 +939,7 @@
     let hasAutoOpened = false;
     let notificationInterval = null;
     let lastNotificationCheck = 0;
-    let promoMessageCache = null;
+    let promoMessageCache = localStorage.getItem(BROADCAST_MESSAGE_KEY) || '';
     let allCustomersCache = [];
     const BROADCAST_MESSAGE_KEY = 'dolanSawahBroadcastMessage';
 
@@ -979,7 +982,13 @@
       catch (err) { errorEl.textContent = 'Email atau password salah'; errorEl.style.display = 'block'; }
       finally { hideLoader(); }
     }
-    function handleLogout() { if (confirm("Yakin ingin logout?")) auth.signOut(); }
+    function handleLogout() {
+      if (confirm("Yakin ingin logout?")) {
+        if (unsubscribeReservations) unsubscribeReservations();
+        if (notificationInterval) clearInterval(notificationInterval);
+        auth.signOut();
+      }
+    }
 
     // =========================================
     // 5. INIT
@@ -1035,7 +1044,8 @@
 
     function handleAutoOpen() {
       const p = new URLSearchParams(window.location.search);
-      const autoOpen = p.get('autoOpen'), paramDate = p.get('date'), paramSearch = p.get('search');
+      const autoOpen = p.get('autoOpen'), paramDate = p.get('date');
+      const paramSearch = decodeURIComponent(p.get('search') || '');
       if (autoOpen && paramDate && paramSearch && !hasAutoOpened) {
         const d = new Date(paramDate);
         if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
@@ -1064,7 +1074,7 @@
       toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3200);
     }
     function formatRupiah(n) { return (n || 0).toLocaleString('id-ID'); }
-    function cleanPhone(p) { return p.replace(/[^0-9]/g, ''); }
+    function cleanPhone(p) { return (p || '').toString().replace(/[^0-9]/g, ''); }
     function isValidPhone(p) { return /^[0-9]{10,13}$/.test(cleanPhone(p)); }
     function closePopup(id) { document.getElementById(id).style.display = 'none'; overlay.style.display = 'none'; }
 
@@ -1212,7 +1222,14 @@
 
     function sortReservations(by) {
       if (!tanggalDipilih || !dataReservasi[tanggalDipilih]) return;
-      const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => (a[by]||'').localeCompare(b[by]||''));
+      const sorted = [...dataReservasi[tanggalDipilih]].sort((a, b) => {
+        if (by === 'jam') {
+          const ta = new Date(`1970-01-01T${a.jam||'00:00'}`);
+          const tb = new Date(`1970-01-01T${b.jam||'00:00'}`);
+          return ta - tb;
+        }
+        return (a[by]||'').localeCompare(b[by]||'');
+      });
       updateReservationList(sorted);
       showToast(`Diurutkan berdasarkan ${by}`);
     }
@@ -1254,7 +1271,7 @@
               <label>Tipe DP <select id="tipeDp"></select></label>
             </div>
             <label>Tempat <select id="tempat" required onchange="updateCapacityInfo('edit-reservation-form')"></select>
-              <span id="capacity-info"></span><span class="error-message" id="tempat-error"></span>
+              <span class="capacity-info"></span><span class="error-message" id="tempat-error"></span>
             </label>
             <label>Paket Menu <span class="error-message" id="menus-error"></span></label>
             <div id="selected-menus-container"></div>
@@ -1329,6 +1346,7 @@ async function validateAndGetFormData(formId) {
   if (rows.length === 0) { errEl('menus').textContent = 'Minimal 1 menu dipilih'; ok = false; }
   rows.forEach(row => {
     const ms = row.querySelector('select'), qi = row.querySelector('input');
+    if (!ms || !qi) return;
     const mn = ms.value, qty = parseInt(qi.value);
     if (!mn) { errEl('menus').textContent = 'Semua menu harus dipilih'; ms.classList.add('invalid'); ok = false; }
     if (isNaN(qty)||qty<1) { errEl('menus').textContent = 'Jumlah menu minimal 1'; qi.classList.add('invalid'); ok = false; }
@@ -1369,7 +1387,8 @@ function populateLocationDropdown(sel, selected = '') {
 
 function updateCapacityInfo(formId) {
   const form = document.getElementById(formId);
-  const sel = form.querySelector('#tempat'), info = form.querySelector('#capacity-info');
+  const sel = form.querySelector('#tempat'), info = form.querySelector('.capacity-info');
+  if (!sel || !info) return;
   const lk = Object.keys(locationsData).find(k => locationsData[k].name === sel.value);
   info.textContent = lk && locationsData[lk] ? `Kapasitas maksimal: ${locationsData[lk].capacity} orang` : '';
 }
@@ -1607,7 +1626,7 @@ async function markAsThankYouSent(id) {
 function shareViaWhatsApp(scope) {
   let msg = '';
   if (scope === 'day' && tanggalDipilih) {
-    const res = (dataReservasi[tanggalDipilih] || []).sort((a,b) => (a.jam||'').localeCompare(b.jam||''));
+    const res = (dataReservasi[tanggalDipilih] || []).sort((a,b) => new Date(`1970-01-01T${a.jam||'00:00'}`) - new Date(`1970-01-01T${b.jam||'00:00'}`));
     msg = `*📋 LAPORAN RESERVASI DOLAN SAWAH 📋*\n*Tanggal:* ${parseInt(tanggalDipilih.split('-')[1])} ${monthNames[currentMonth]} ${currentYear}\n${'='.repeat(26)}\n\n`;
     if (!res.length) { msg += '_Belum ada reservasi._'; }
     else { res.forEach((r, i) => { let ml = '  _(Tidak ada detail menu)_'; if (Array.isArray(r.menus)&&r.menus.length) { ml = r.menus.map(item => { const det = (detailMenu[item.name]||[]).map(d=>`      • ${d}`).join('\n'); return `  - *${item.quantity}x ${item.name}*\n${det}`; }).join('\n'); } else if (r.menu) { const det = (detailMenu[r.menu]||[]).map(d=>`      • ${d}`).join('\n'); ml=`  - *${r.menu}*\n${det}`; } msg += `*${i+1}. ${r.nama||'?'}*\n⏰ ${r.jam||'?'} | 📍 ${r.tempat||'?'} | 👥 ${r.jumlah||'?'} org\n🍽️ Menu:\n${ml}\n${r.dp>0?`💰 DP: Rp ${formatRupiah(r.dp)}\n`:''}\n`; }); }
@@ -1623,7 +1642,7 @@ function shareViaWhatsApp(scope) {
 
 function shareViaEmail() {
   if (!tanggalDipilih || !(dataReservasi[tanggalDipilih]||[]).length) { showToast("Pilih tanggal dengan reservasi", "error"); return; }
-  const res = (dataReservasi[tanggalDipilih]||[]).sort((a,b) => (a.jam||'').localeCompare(b.jam||''));
+  const res = (dataReservasi[tanggalDipilih]||[]).sort((a,b) => new Date(`1970-01-01T${a.jam||'00:00'}`) - new Date(`1970-01-01T${b.jam||'00:00'}`));
   const day = parseInt(tanggalDipilih.split('-')[1]);
   const subj = `Laporan Reservasi Dolan Sawah - ${day} ${monthNames[currentMonth]} ${currentYear}`;
   let body = `<h2 style="color:#2d5a3d;">Laporan Reservasi Dolan Sawah</h2><p><strong>Tanggal:</strong> ${day} ${monthNames[currentMonth]} ${currentYear}</p><hr><ol>`;
@@ -1645,7 +1664,10 @@ function showExportDataPopup() {
     const simp = {};
     for (const k in dataReservasi) { if (dataReservasi.hasOwnProperty(k)) simp[k] = dataReservasi[k].map(r => ({nama:r.nama||'',jumlah:r.jumlah||0,jam:r.jam||'',tempat:r.tempat||'',menus:r.menus||[]})); }
     const payload = { version: '6.0-export', data: simp, locations: locationsData };
-    document.getElementById('export-data-output').value = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const jsonStr = JSON.stringify(payload);
+    const bytes = new TextEncoder().encode(jsonStr);
+    const binStr = Array.from(bytes, b => String.fromCharCode(b)).join('');
+    document.getElementById('export-data-output').value = btoa(binStr);
     document.getElementById('exportDataPopup').style.display = 'block'; overlay.style.display = 'block';
   } catch (e) { showToast("Error saat membuat kode ekspor", "error"); }
 }
@@ -1663,7 +1685,7 @@ function printData() {
 }
 
 function executePrint() {
-  const res = (dataReservasi[tanggalDipilih]||[]).sort((a,b) => (a.jam||'').localeCompare(b.jam||''));
+  const res = (dataReservasi[tanggalDipilih]||[]).sort((a,b) => new Date(`1970-01-01T${a.jam||'00:00'}`) - new Date(`1970-01-01T${b.jam||'00:00'}`));
   const title = document.getElementById('reservation-view-title').textContent;
   const opts = {
     showMenu: document.getElementById('print-detail-menu').checked,
@@ -1883,7 +1905,8 @@ function filterBroadcastCustomers(q) {
 
 function sendPromoBroadcast(phone, name, btnId) {
   if (!promoMessageCache) return;
-  const msg = promoMessageCache.replace(/kak/gi, `Kak *${name}*`);
+  const safeName = (name || '').trim() || 'Pelanggan';
+  const msg = promoMessageCache.replace(/kak/gi, `Kak *${safeName}*`);
   window.open(`https://wa.me/${phone.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`, '_blank');
   const btn = document.getElementById(btnId);
   if (btn) { btn.classList.add('sent'); btn.innerHTML = '<i class="fas fa-check"></i> Terkirim'; btn.onclick = null; }
@@ -1910,9 +1933,19 @@ async function checkThankYouNotifications() {
   const todayStr = today.toISOString().split('T')[0];
   const d7agoStr = d7ago.toISOString().split('T')[0];
   try {
-    const snap = await db.collection('reservations').where('date','>=',d7agoStr).where('date','<=',todayStr).where('thankYouSent','!=',true).get();
+    const snap = await db.collection('reservations')
+      .where('date', '>=', d7agoStr)
+      .where('date', '<=', todayStr)
+      .get();
     const pending = [];
-    snap.forEach(doc => { const r={id:doc.id,...doc.data()}; if(!r.jam||!r.date) return; const rt=new Date(r.date+'T'+r.jam); if(!isNaN(rt.getTime())&&now>new Date(rt.getTime()+3*3600000)) pending.push(r); });
+    snap.forEach(doc => {
+      const r = {id: doc.id, ...doc.data()};
+      // Fix #7: filter in JS so docs with missing thankYouSent field are included
+      if (r.thankYouSent) return;
+      if (!r.jam || !r.date) return;
+      const rt = new Date(r.date + 'T' + r.jam);
+      if (!isNaN(rt.getTime()) && now > new Date(rt.getTime() + 3*3600000)) pending.push(r);
+    });
     const badge = document.getElementById('notification-badge');
     if (!pending.length) { document.getElementById('notification-list-ul').innerHTML = `<li style="padding:16px;text-align:center;color:var(--light-text);">Tidak ada pengingat.</li>`; badge.style.display = 'none'; }
     else {
@@ -1956,6 +1989,12 @@ function toggleWhatsAppOptions(e) {
 document.addEventListener('click', () => {
   const wa = document.getElementById('whatsappOptions');
   if (wa) wa.style.display = 'none';
+});
+
+// Fix #10: overlay click closes all open popups
+overlay.addEventListener('click', () => {
+  document.querySelectorAll('.popup-form').forEach(p => p.style.display = 'none');
+  overlay.style.display = 'none';
 });
 
 // Enter key for login
