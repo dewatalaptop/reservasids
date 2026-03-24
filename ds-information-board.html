@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -9,16 +10,16 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
     :root {
-      /* TEMA ADMIN */
-      --primary: #2a9d8f;       
-      --primary-dark: #264653;  
-      --secondary: #e9c46a;     
-      --accent: #f4a261;        
-      --danger: #e76f51;        
+      --primary: #2a9d8f;
+      --primary-dark: #264653;
+      --secondary: #e9c46a;
+      --accent: #f4a261;
+      --danger: #e76f51;
       --light: #f8f9fa;
       --dark: #343a40;
       --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -26,23 +27,21 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    
+
     body {
       font-family: 'Poppins', sans-serif;
       background-color: #f0f2f5;
       color: var(--dark);
-      padding-bottom: 90px; /* Sedikit lebih tinggi untuk mobile */
+      padding-bottom: 90px;
       overflow-y: auto;
       font-size: 14px;
     }
 
-    /* STICKY HEADER */
     .sticky-wrapper {
       position: sticky; top: 0; z-index: 1000;
       background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
 
-    /* 1. HEADER */
     .top-bar {
       background: linear-gradient(135deg, var(--primary-dark), var(--primary));
       padding: 12px 15px; color: white;
@@ -51,7 +50,6 @@
     .brand h1 { font-size: 1.15rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px; }
     #clock { font-family: 'Oswald', sans-serif; font-size: 1.25rem; font-weight: 500; letter-spacing: 0.5px; }
 
-    /* 2. DATE NAV */
     .date-nav-wrapper {
       background: white; padding: 10px 15px; border-bottom: 1px solid #eee;
       display: flex; gap: 10px; align-items: center;
@@ -72,14 +70,14 @@
     }
 
     .date-scroller {
-      flex-grow: 1; display: flex; gap: 8px; overflow-x: auto; 
+      flex-grow: 1; display: flex; gap: 8px; overflow-x: auto;
       padding-bottom: 4px; scrollbar-width: none;
     }
     .date-scroller::-webkit-scrollbar { display: none; }
-    
+
     .date-pill {
-      min-width: 50px; height: 50px; border-radius: 10px; background: #f8f9fa; border: 1px solid #e0e0e0; 
-      display: flex; flex-direction: column; justify-content: center; align-items: center; 
+      min-width: 50px; height: 50px; border-radius: 10px; background: #f8f9fa; border: 1px solid #e0e0e0;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
       cursor: pointer; flex-shrink: 0; transition: all 0.2s;
     }
     .date-pill.active {
@@ -89,15 +87,14 @@
     .date-pill .day { font-size: 0.65rem; text-transform: uppercase; font-weight: 600; }
     .date-pill .num { font-size: 1.2rem; font-weight: 700; line-height: 1; }
 
-    /* 3. TABS & FILTER */
     .nav-tabs {
       background: white; padding: 10px 15px; display: flex; align-items: center; gap: 8px;
       overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #eee;
     }
     .nav-tabs::-webkit-scrollbar { display: none; }
     .nav-btn {
-      padding: 8px 16px; border-radius: 20px; border: 1px solid #eee; background: white; 
-      color: #666; font-weight: 500; font-size: 0.85rem; cursor: pointer; 
+      padding: 8px 16px; border-radius: 20px; border: 1px solid #eee; background: white;
+      color: #666; font-weight: 500; font-size: 0.85rem; cursor: pointer;
       display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
       transition: background 0.2s;
     }
@@ -106,47 +103,44 @@
     .filter-btn.active { background: var(--secondary); color: var(--primary-dark); font-weight: 700; border: none; box-shadow: none; }
     .nav-sep { width: 1px; height: 24px; background: #ddd; margin: 0 5px; flex-shrink: 0; }
 
-    /* CONTENT */
     .content-area { padding: 15px; display: none; animation: fadeIn 0.3s ease; }
     .content-area.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* STATS */
     .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-    .stat-card { 
-      background: white; padding: 12px 5px; border-radius: var(--radius); 
-      text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+    .stat-card {
+      background: white; padding: 12px 5px; border-radius: var(--radius);
+      text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       border-top: 3px solid var(--primary);
     }
     .stat-val { font-size: 1.4rem; font-weight: 700; color: var(--primary-dark); line-height: 1.2; }
     .stat-label { font-size: 0.65rem; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    /* FLOOR CARDS */
-    .grid-cards { display: grid; grid-template-columns: 1fr; gap: 15px; } 
+    .grid-cards { display: grid; grid-template-columns: 1fr; gap: 15px; }
     @media (min-width: 600px) { .grid-cards { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); } }
-    
+
     .res-card {
-      background: white; border-radius: var(--radius); padding: 16px; 
+      background: white; border-radius: var(--radius); padding: 16px;
       box-shadow: var(--shadow); position: relative; border-left: 5px solid #ccc;
     }
 
     .card-top-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
     .time-group { display: flex; flex-direction: column; }
     .res-time { font-family: 'Oswald', sans-serif; font-size: 1.8rem; color: var(--primary-dark); font-weight: 600; line-height: 1; }
-    
+
     .countdown-badge {
       display: inline-flex; align-items: center; gap: 5px;
-      font-size: 0.75rem; font-weight: 600; padding: 4px 8px; 
+      font-size: 0.75rem; font-weight: 600; padding: 4px 8px;
       border-radius: 6px; margin-top: 4px; width: fit-content;
     }
-    .timer-safe { background: #d1fae5; color: #047857; } 
-    .timer-warn { background: #fef3c7; color: #b45309; } 
+    .timer-safe { background: #d1fae5; color: #047857; }
+    .timer-warn { background: #fef3c7; color: #b45309; }
     .timer-late { background: #fee2e2; color: #b91c1c; animation: pulse 2s infinite; }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
     .res-name { font-size: 1.15rem; font-weight: 700; color: var(--dark); display: block; margin-bottom: 4px;}
     .res-meta { font-size: 0.9rem; color: #555; display: flex; gap: 10px; align-items: center; margin-bottom: 12px;}
-    
+
     .menu-box { background: #f8f9fa; border-radius: 8px; padding: 12px; border: 1px solid #eee; }
     .menu-row { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: flex-start; }
     .menu-row:last-child { margin-bottom: 0; }
@@ -155,43 +149,111 @@
     .menu-detail-text { display: block; font-size: 0.8rem; color: #777; font-style: italic; margin-left: 0; margin-top: 2px; line-height: 1.2;}
     .extra-detected { color: var(--primary); font-weight: 600; font-size: 0.75rem; display: inline-block; background: #e0f2f1; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
 
-    /* KITCHEN LIST - OPTIMIZED FOR MOBILE */
     .kitchen-section { margin-bottom: 30px; }
-    .section-header { 
-        background: linear-gradient(to right, #f1f5f9, white); padding: 10px 5px; 
+    .section-header {
+        background: linear-gradient(to right, #f1f5f9, white); padding: 10px 5px;
         margin-bottom: 12px; border-radius: 4px; font-weight: 700; color: var(--primary-dark);
         display: flex; align-items: center; gap: 10px; font-size: 1.05rem;
     }
     .prep-list { background: white; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
-    
-    .prep-item { 
-        padding: 14px 16px; border-bottom: 1px solid #f0f0f0; 
-        display: flex; justify-content: space-between; align-items: center; 
+
+    .prep-item {
+        padding: 14px 16px; border-bottom: 1px solid #f0f0f0;
+        display: flex; justify-content: space-between; align-items: center;
         transition: background 0.1s;
     }
+    .prep-item:last-child { border-bottom: none; }
     .prep-item:active { background: #f9f9f9; }
-    
+
     .prep-info { flex: 1; padding-right: 10px; }
     .prep-name { font-weight: 600; font-size: 0.95rem; display: block; color: var(--dark); }
-    .prep-sources { 
+    .prep-sources {
         display: block; font-size: 0.75rem; color: #888; margin-top: 4px; line-height: 1.3;
-        /* Batasi text agar tidak terlalu panjang */
         display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
 
-    .prep-count { 
-        background: var(--secondary); color: var(--primary-dark); 
-        font-family: 'Oswald', sans-serif; font-size: 1.3rem; font-weight: 700; 
+    .prep-count {
+        background: var(--secondary); color: var(--primary-dark);
+        font-family: 'Oswald', sans-serif; font-size: 1.3rem; font-weight: 700;
         padding: 4px 12px; border-radius: 8px; min-width: 45px; text-align: center;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .comp-count { background: var(--accent); color: white; }
 
-    /* MODAL */
+    /* ============================================
+       NOTES SECTION STYLES (NEW)
+       ============================================ */
+    .notes-section-header {
+      background: linear-gradient(to right, #fff8e1, white);
+      padding: 10px 5px;
+      margin-bottom: 12px;
+      border-radius: 4px;
+      font-weight: 700;
+      color: #b45309;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.05rem;
+    }
+
+    .note-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: background 0.1s;
+    }
+    .note-item:last-child { border-bottom: none; }
+
+    .note-time-badge {
+      flex-shrink: 0;
+      background: var(--primary-dark);
+      color: white;
+      font-family: 'Oswald', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 8px;
+      min-width: 58px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .note-body { flex: 1; min-width: 0; }
+
+    .note-guest-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--primary-dark);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .note-text {
+      font-size: 0.88rem;
+      color: #444;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    /* Keyword highlights */
+    .note-text .kw-danger { color: #b91c1c; font-weight: 700; }
+    .note-text .kw-action { color: var(--primary); font-weight: 700; }
+
+    .note-empty {
+      padding: 20px;
+      text-align: center;
+      color: #aaa;
+      font-size: 0.9rem;
+    }
+
+    /* ============================================ */
+
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.6); z-index: 2000; display: none;
-        justify-content: center; align-items: flex-end; 
+        justify-content: center; align-items: flex-end;
     }
     .modal-overlay.active { display: flex; }
     .modal-content {
@@ -210,6 +272,7 @@
     .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 10px;}
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
+
 </head>
 <body>
 
@@ -221,24 +284,26 @@
         <div id="clock">--:--</div>
       </header>
 
-      <div class="date-nav-wrapper">
-        <label class="calendar-btn-group">
-            <i class="fas fa-calendar-alt"></i> Ganti
-            <input type="date" onchange="handleDateSelect(this.value)">
-        </label>
-        
-        <div class="date-scroller" id="dateScroller"></div>
-        <button onclick="goToToday()" style="background:var(--secondary); border:none; color:var(--primary-dark); border-radius:10px; width:50px; height:50px; font-weight:700; flex-shrink:0; box-shadow:0 2px 5px rgba(0,0,0,0.1);">Hari<br>Ini</button>
-      </div>
+```
+  <div class="date-nav-wrapper">
+    <label class="calendar-btn-group">
+        <i class="fas fa-calendar-alt"></i> Ganti
+        <input type="date" onchange="handleDateSelect(this.value)">
+    </label>
+    <div class="date-scroller" id="dateScroller"></div>
+    <button onclick="goToToday()" style="background:var(--secondary); border:none; color:var(--primary-dark); border-radius:10px; width:50px; height:50px; font-weight:700; flex-shrink:0; box-shadow:0 2px 5px rgba(0,0,0,0.1);">Hari<br>Ini</button>
+  </div>
 
-      <nav class="nav-tabs">
-        <button class="nav-btn active" onclick="switchTab('floor')"><i class="fas fa-layer-group"></i> Floor</button>
-        <button class="nav-btn" onclick="switchTab('kitchen')"><i class="fas fa-utensils"></i> Dapur</button>
-        <div class="nav-sep"></div>
-        <button class="nav-btn filter-btn active" id="btnAll" onclick="toggleFilter('all')">Semua</button>
-        <button class="nav-btn filter-btn" id="btnPagi" onclick="toggleFilter('pagi')">Pagi</button>
-        <button class="nav-btn filter-btn" id="btnSiang" onclick="toggleFilter('siang')">Siang</button>
-      </nav>
+  <nav class="nav-tabs">
+    <button class="nav-btn active" onclick="switchTab('floor')"><i class="fas fa-layer-group"></i> Floor</button>
+    <button class="nav-btn" onclick="switchTab('kitchen')"><i class="fas fa-utensils"></i> Dapur</button>
+    <div class="nav-sep"></div>
+    <button class="nav-btn filter-btn active" id="btnAll" onclick="toggleFilter('all')">Semua</button>
+    <button class="nav-btn filter-btn" id="btnPagi" onclick="toggleFilter('pagi')">Pagi</button>
+    <button class="nav-btn filter-btn" id="btnSiang" onclick="toggleFilter('siang')">Siang</button>
+  </nav>
+```
+
   </div>
 
   <div id="view-floor" class="content-area active">
@@ -251,17 +316,33 @@
   </div>
 
   <div id="view-kitchen" class="content-area">
-    <div class="kitchen-section">
-        <div class="section-header"><i class="fas fa-concierge-bell"></i> Menu Utama (Plating)</div>
-        <div class="prep-list" id="kitchenMenuContainer"></div>
-    </div>
-    <div class="kitchen-section">
-        <div class="section-header"><i class="fas fa-carrot"></i> Total Komponen (Prep)</div>
-        <small style="display:block; margin-bottom:12px; color:#666; font-size:0.85rem; padding-left:5px;">
-            <i class="fas fa-info-circle"></i> Item dari catatan tambahan ("Request") otomatis terdeteksi.
-        </small>
-        <div class="prep-list" id="kitchenCompContainer"></div>
-    </div>
+
+```
+<!-- ✅ SECTION 1: CATATAN & REQUEST TAMBAHAN (NEW - PALING ATAS) -->
+<div class="kitchen-section">
+  <div class="notes-section-header">
+    <i class="fas fa-sticky-note"></i> Catatan & Request Tambahan
+    <span id="notesCount" style="margin-left:auto; font-size:0.8rem; background:#fef3c7; color:#b45309; padding:2px 10px; border-radius:12px; font-weight:600;"></span>
+  </div>
+  <div class="prep-list" id="kitchenNotesContainer"></div>
+</div>
+
+<!-- SECTION 2: MENU UTAMA (PLATING) -->
+<div class="kitchen-section">
+    <div class="section-header"><i class="fas fa-concierge-bell"></i> Menu Utama (Plating)</div>
+    <div class="prep-list" id="kitchenMenuContainer"></div>
+</div>
+
+<!-- SECTION 3: TOTAL KOMPONEN (PREP) -->
+<div class="kitchen-section">
+    <div class="section-header"><i class="fas fa-carrot"></i> Total Komponen (Prep)</div>
+    <small style="display:block; margin-bottom:12px; color:#666; font-size:0.85rem; padding-left:5px;">
+        <i class="fas fa-info-circle"></i> Item dari catatan tambahan ("Request") otomatis terdeteksi.
+    </small>
+    <div class="prep-list" id="kitchenCompContainer"></div>
+</div>
+```
+
   </div>
 
   <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
@@ -289,18 +370,16 @@
     let allReservations = [];
     let menuDetailsCache = {};
     let selectedDate = new Date();
-    let currentFilter = 'all'; 
+    let currentFilter = 'all';
     let unsubscribe = null;
     let globalCompDetails = {};
 
     document.addEventListener('DOMContentLoaded', async () => {
-        // Clock Update
         setInterval(() => {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
         }, 1000);
-        
-        // Timer Update (Live Countdown)
+
         setInterval(updateAllTimers, 60000);
 
         await loadMenuDetails();
@@ -308,7 +387,6 @@
         loadData(selectedDate);
     });
 
-    // 1. Load Menu Master Data
     async function loadMenuDetails() {
         try {
             const snap = await db.collection('menus').get();
@@ -319,7 +397,6 @@
         }
     }
 
-    // 2. Data Loading & Realtime Listener
     function loadData(dateObj) {
         document.getElementById('loader').style.display = 'flex';
         if (unsubscribe) unsubscribe();
@@ -347,81 +424,111 @@
 
         document.getElementById('totalRes').innerText = filtered.length;
         document.getElementById('totalPax').innerText = filtered.reduce((a,b) => a + parseInt(b.jumlah||0), 0);
-        
-        // Render Function Calls
+
         renderFloor(filtered);
         renderKitchen(filtered);
     }
 
-    // --- SMART PARSER FUNCTION (FEATURE UPDATE) ---
-    // Fungsi ini mendeteksi menu di dalam teks catatan (Misal: "Tambah 2 Nasi Putih")
     function parseExtraOrdersFromNotes(noteText) {
         if (!noteText) return [];
         const detectedItems = [];
         const lowerNote = noteText.toLowerCase();
-        
-        // Daftar nama menu dari cache
         const menuNames = Object.keys(menuDetailsCache);
 
-        // Strategi: Cari nama menu yang dikenal dalam teks
         menuNames.forEach(menuName => {
             const lowerMenu = menuName.toLowerCase();
             if (lowerNote.includes(lowerMenu)) {
-                // Jika menu ditemukan dalam kalimat
-                // Cari angka di sekitarnya. 
-                // Regex: Mencari angka sebelum nama menu atau kata 'tambah'/'extra' + angka
-                // Sederhana: Kita asumsikan default 1 jika tidak ada angka spesifik yang jelas terikat
-                
                 let quantity = 1;
-                
-                // Coba regex sederhana: "2 nasi putih" atau "nasi putih 2"
-                // \b = word boundary
                 const patternBefore = new RegExp(`(\\d+)\\s+(?:porsi|buah|pcs)?\\s*${lowerMenu}`, 'i');
                 const patternAfter = new RegExp(`${lowerMenu}\\s+(?:sebagai|jadi)?\\s*(\\d+)`, 'i');
-                
                 const matchBefore = lowerNote.match(patternBefore);
                 const matchAfter = lowerNote.match(patternAfter);
+                if (matchBefore) quantity = parseInt(matchBefore[1]);
+                else if (matchAfter) quantity = parseInt(matchAfter[1]);
 
-                if (matchBefore) {
-                    quantity = parseInt(matchBefore[1]);
-                } else if (matchAfter) {
-                    quantity = parseInt(matchAfter[1]);
-                } 
-                
-                // Logic tambahan: Jangan hitung jika kata sebelumnya adalah "tanpa" atau "no"
                 const negativeCheck = new RegExp(`(?:tanpa|no|jangan)\\s+${lowerMenu}`, 'i');
                 if (!negativeCheck.test(lowerNote)) {
                     detectedItems.push({ name: menuName, quantity: quantity, isExtra: true });
                 }
             }
         });
-        
         return detectedItems;
     }
 
-    // --- TIMER LOGIC ---
+    // ============================================
+    // HIGHLIGHT KEYWORDS (NEW)
+    // ============================================
+    function highlightKeywords(text) {
+        // PRIORITAS: kata panjang dulu → cegah double-highlight
+        // Misal "tidak pedas" harus match sebelum "pedas" dan "tidak" diproses sendiri
+        const dangerWords = [
+            'tidak pedas', 'no pedas', 'tidak pakai',
+            'alergi', 'allergi',
+            'tanpa', 'jangan', 'buta',
+            'pedas'
+        ];
+        const actionWords = [
+            'extra tambah', 'tambah extra',
+            'tambah', 'extra', 'ekstra', 'request', 'minta'
+        ];
+
+        let result = escapeHtml(text);
+
+        // Placeholder trick: ganti match dengan token unik dulu, baru wrap span
+        // Ini mencegah regex berikutnya menghit inside span yang sudah ditulis
+        const replacements = [];
+
+        const collectMatches = (words, cls) => {
+            words.forEach(word => {
+                const regex = new RegExp(`(${escapeRegex(word)})`, 'gi');
+                result = result.replace(regex, (match) => {
+                    const token = `%%KWTOKEN${replacements.length}%%`;
+                    replacements.push(`<span class="kw-${cls}">${match}</span>`);
+                    return token;
+                });
+            });
+        };
+
+        collectMatches(dangerWords, 'danger');
+        collectMatches(actionWords, 'action');
+
+        // Restore semua token
+        replacements.forEach((span, i) => {
+            result = result.replace(`%%KWTOKEN${i}%%`, span);
+        });
+
+        return result;
+    }
+
+    function escapeHtml(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function escapeRegex(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // ============================================
+
     function getTimerData(jamReservasi) {
         const now = new Date();
         const isToday = selectedDate.toDateString() === now.toDateString();
-        
-        if (!isToday) {
-            return { text: "Reservasi", class: "timer-safe" };
-        }
+        if (!isToday) return { text: "Reservasi", class: "timer-safe" };
 
         const [h, m] = jamReservasi.split(':').map(Number);
-        const resTime = new Date(); 
+        const resTime = new Date();
         resTime.setHours(h, m, 0);
-        
         const diffMs = resTime - now;
         const diffMins = Math.floor(diffMs / 60000);
 
-        if (diffMins < 0) {
-            return { text: `Lewat ${Math.abs(diffMins)} mnt`, class: "timer-late" };
-        } else if (diffMins <= 30) {
-            return { text: `Segera! ${diffMins} mnt`, class: "timer-late" };
-        } else if (diffMins <= 60) {
-            return { text: `Siap ${diffMins} mnt`, class: "timer-warn" };
-        } else {
+        if (diffMins < 0) return { text: `Lewat ${Math.abs(diffMins)} mnt`, class: "timer-late" };
+        else if (diffMins <= 30) return { text: `Segera! ${diffMins} mnt`, class: "timer-late" };
+        else if (diffMins <= 60) return { text: `Siap ${diffMins} mnt`, class: "timer-warn" };
+        else {
             const hours = Math.floor(diffMins / 60);
             const mins = diffMins % 60;
             return { text: `${hours}j ${mins}m lagi`, class: "timer-safe" };
@@ -431,7 +538,6 @@
     function updateAllTimers() {
         const now = new Date();
         if (selectedDate.toDateString() !== now.toDateString()) return;
-
         const timerBadges = document.querySelectorAll('.countdown-badge');
         timerBadges.forEach(badge => {
             const jam = badge.getAttribute('data-jam');
@@ -459,22 +565,15 @@
             const borderColor = hour >= 15 ? 'var(--accent)' : 'var(--secondary)';
             const timer = getTimerData(r.jam);
 
-            // Gabungkan menu resmi dan menu hasil deteksi catatan
             let combinedMenus = [];
-            
-            // 1. Menu Resmi
             if (r.menus && r.menus.length) {
                 combinedMenus = r.menus.map(m => ({...m, isExtra:false}));
             } else if (r.menu) {
                 combinedMenus.push({ name: r.menu, quantity: 1, isExtra:false });
             }
-
-            // 2. Deteksi Menu dari Catatan (Smart Parser)
             if (r.tambahan) {
                 const detectedExtras = parseExtraOrdersFromNotes(r.tambahan);
-                if (detectedExtras.length > 0) {
-                    combinedMenus = [...combinedMenus, ...detectedExtras];
-                }
+                if (detectedExtras.length > 0) combinedMenus = [...combinedMenus, ...detectedExtras];
             }
 
             let menuHtml = combinedMenus.map(item => {
@@ -482,7 +581,6 @@
                 const details = menuDetailsCache[item.name] || [];
                 const detailString = details.length > 0 ? `<span class="menu-detail-text">• ${details.join(', ')}</span>` : '';
                 const extraBadge = item.isExtra ? '<span class="extra-detected">Extra (Catatan)</span>' : '';
-                
                 return `
                 <div class="menu-row">
                     <span class="menu-qty">${item.quantity}</span>
@@ -510,67 +608,107 @@
                         </div>
                     </div>
                     <div class="menu-box">${menuHtml || '<small>Belum ada menu</small>'}</div>
-                    ${r.tambahan ? `<div style="margin-top:10px;font-size:0.8rem;background:#fff5f5;padding:10px;border-radius:6px;color:var(--danger); border:1px dashed #feb2b2; line-height:1.4;"><i class="fas fa-comment-dots"></i> <b>Catatan:</b> ${r.tambahan}</div>` : ''}
+                    ${r.tambahan ? `<div style="margin-top:10px;font-size:0.8rem;background:#fff5f5;padding:10px;border-radius:6px;color:var(--danger); border:1px dashed #feb2b2; line-height:1.4;"><i class="fas fa-comment-dots"></i> <b>Catatan:</b> ${escapeHtml(String(r.tambahan))}</div>` : ''}
                 </div>`;
         });
         document.getElementById('totalItems').innerText = totalItems;
     }
 
+    // ============================================
+    // NOTE CATEGORY CLASSIFIER
+    // ============================================
+    function getNoteClass(text) {
+        const t = String(text).toLowerCase();
+        if (t.includes('alergi') || t.includes('allergi') || t.includes('tanpa') ||
+            t.includes('jangan') || t.includes('tidak') || t.includes('buta')) {
+            return 'danger';
+        }
+        if (t.includes('tambah') || t.includes('extra') || t.includes('ekstra') ||
+            t.includes('request') || t.includes('minta')) {
+            return 'action';
+        }
+        return 'normal';
+    }
+    // ============================================
+
     function renderKitchen(data) {
-        const menuAgg = {}; 
-        globalCompDetails = {}; // Reset global components
+        // ============================================
+        // ✅ RENDER CATATAN TAMBAHAN (NEW - PALING ATAS)
+        // ============================================
+        const notesCont = document.getElementById('kitchenNotesContainer');
+        notesCont.innerHTML = '';
+
+        const notesList = data
+            .filter(r => r.tambahan && String(r.tambahan).trim() !== '')
+            .sort((a, b) => a.jam.localeCompare(b.jam));
+
+        // Update badge count
+        const notesCountEl = document.getElementById('notesCount');
+        if (notesList.length > 0) {
+            notesCountEl.textContent = `${notesList.length} catatan`;
+            notesCountEl.style.display = 'inline-block';
+        } else {
+            notesCountEl.style.display = 'none';
+        }
+
+        notesList.forEach(r => {
+            const noteClass = getNoteClass(r.tambahan);
+            notesCont.innerHTML += `
+            <div class="note-item note-${noteClass}">
+                <div class="note-time-badge">${r.jam}</div>
+                <div class="note-body">
+                    <span class="note-guest-name">
+                        <i class="fas fa-user" style="font-size:0.7rem; opacity:0.6;"></i>
+                        ${escapeHtml(r.nama)} &nbsp;·&nbsp; ${r.jumlah} org
+                    </span>
+                    <div class="note-text">${highlightKeywords(String(r.tambahan))}</div>
+                </div>
+            </div>`;
+        });
+
+        if (!notesCont.innerHTML) {
+            notesCont.innerHTML = `
+            <div class="note-empty">
+                <i class="fas fa-check-circle" style="color:#a7f3d0; font-size:1.5rem; display:block; margin-bottom:6px;"></i>
+                Tidak ada catatan tambahan.
+            </div>`;
+        }
+        // ============================================
+
+        const menuAgg = {};
+        globalCompDetails = {};
 
         data.forEach(r => {
-            // Helper function untuk memproses satu item menu
             const processItem = (name, qty, sourceLabel) => {
-                // Aggregasi Menu (Plating)
                 menuAgg[name] = (menuAgg[name] || 0) + qty;
-
-                // Aggregasi Komponen (Prep)
                 const details = menuDetailsCache[name];
                 if (details && details.length > 0) {
                     details.forEach(comp => {
                         const clean = comp.trim();
                         if (!globalCompDetails[clean]) {
-                            globalCompDetails[clean] = { 
-                                total: 0, 
-                                items: [],
-                                sources: new Set() // FEATURE: Set untuk menyimpan sumber menu unik
-                            };
+                            globalCompDetails[clean] = { total: 0, items: [], sources: new Set() };
                         }
-                        
                         globalCompDetails[clean].total += qty;
-                        globalCompDetails[clean].sources.add(name); // Catat dari menu apa komponen ini berasal
-                        
-                        // Detail untuk modal popup
-                        globalCompDetails[clean].items.push({ 
-                            nama: r.nama, 
-                            jam: r.jam, 
-                            qty: qty,
-                            sourceMenu: name // Info tambahan: dari menu apa
-                        });
+                        globalCompDetails[clean].sources.add(name);
+                        globalCompDetails[clean].items.push({ nama: r.nama, jam: r.jam, qty: qty, sourceMenu: name });
                     });
                 }
             };
 
-            // 1. Proses Menu Utama
             if (r.menus && r.menus.length) {
                 r.menus.forEach(item => processItem(item.name, parseInt(item.quantity), "Menu Utama"));
             } else if (r.menu) {
                 processItem(r.menu, 1, "Menu Utama");
             }
 
-            // 2. Proses Menu Tambahan dari Catatan (Smart Parser)
             if (r.tambahan) {
                 const detectedExtras = parseExtraOrdersFromNotes(r.tambahan);
-                detectedExtras.forEach(extra => {
-                    processItem(extra.name, extra.quantity, "Request Tambahan");
-                });
+                detectedExtras.forEach(extra => processItem(extra.name, extra.quantity, "Request Tambahan"));
             }
         });
 
-        // RENDER 1: MENU UTAMA (PLATING)
-        const menuCont = document.getElementById('kitchenMenuContainer'); 
+        // RENDER: MENU UTAMA (PLATING)
+        const menuCont = document.getElementById('kitchenMenuContainer');
         menuCont.innerHTML = '';
         Object.entries(menuAgg).sort((a,b)=>b[1]-a[1]).forEach(([name, count]) => {
             menuCont.innerHTML += `
@@ -579,14 +717,12 @@
                 <span class="prep-count">${count}</span>
             </div>`;
         });
-        if(!menuCont.innerHTML) menuCont.innerHTML='<div style="padding:20px; text-align:center; color:#888;">Belum ada pesanan.</div>';
+        if (!menuCont.innerHTML) menuCont.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">Belum ada pesanan.</div>';
 
-        // RENDER 2: TOTAL KOMPONEN (PREP)
-        const compCont = document.getElementById('kitchenCompContainer'); 
+        // RENDER: TOTAL KOMPONEN (PREP)
+        const compCont = document.getElementById('kitchenCompContainer');
         compCont.innerHTML = '';
-        
         Object.entries(globalCompDetails).sort((a,b)=>b[1].total - a[1].total).forEach(([name, data]) => {
-            // Convert Set sources ke string (limit 3 sumber agar tidak kepanjangan)
             const sourceArray = Array.from(data.sources);
             let sourceText = "Utk: " + sourceArray.slice(0, 4).join(', ');
             if (sourceArray.length > 4) sourceText += ", dll";
@@ -602,16 +738,15 @@
                 <span class="prep-count comp-count">${data.total}</span>
             </div>`;
         });
-        if(!compCont.innerHTML) compCont.innerHTML='<div style="padding:20px; text-align:center; color:#888;">Tidak ada data komponen.</div>';
+        if (!compCont.innerHTML) compCont.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">Tidak ada data komponen.</div>';
     }
 
     function showComponentDetail(compName) {
         const data = globalCompDetails[compName];
         if (!data) return;
         document.getElementById('modalTitle').innerText = compName;
-        const list = document.getElementById('detailList'); list.innerHTML = '';
-        
-        // Urutkan berdasarkan jam
+        const list = document.getElementById('detailList');
+        list.innerHTML = '';
         data.items.sort((a,b) => a.jam.localeCompare(b.jam)).forEach(item => {
             list.innerHTML += `
             <li class="detail-row">
@@ -631,41 +766,44 @@
 
     function closeModal(e) { if(e.target.classList.contains('modal-overlay')) document.getElementById('detailModal').classList.remove('active'); }
     function closeModalBtn() { document.getElementById('detailModal').classList.remove('active'); }
-    
-    function toggleFilter(type) { 
-        currentFilter = type; 
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); 
-        if (type === 'all') document.getElementById('btnAll').classList.add('active'); 
-        if (type === 'pagi') document.getElementById('btnPagi').classList.add('active'); 
-        if (type === 'siang') document.getElementById('btnSiang').classList.add('active'); 
-        renderUI(); 
+
+    function toggleFilter(type) {
+        currentFilter = type;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        if (type === 'all') document.getElementById('btnAll').classList.add('active');
+        if (type === 'pagi') document.getElementById('btnPagi').classList.add('active');
+        if (type === 'siang') document.getElementById('btnSiang').classList.add('active');
+        renderUI();
     }
-    
-    function switchTab(tab) { 
-        document.querySelectorAll('.nav-tabs .nav-btn').forEach(b => { if(!b.classList.contains('filter-btn')) b.classList.remove('active'); }); 
-        if (tab === 'floor') document.querySelectorAll('.nav-tabs .nav-btn')[0].classList.add('active'); 
-        if (tab === 'kitchen') document.querySelectorAll('.nav-tabs .nav-btn')[1].classList.add('active'); 
-        
-        document.querySelectorAll('.content-area').forEach(c => c.classList.remove('active')); 
-        document.getElementById(`view-${tab}`).classList.add('active'); 
+
+    function switchTab(tab) {
+        document.querySelectorAll('.nav-tabs .nav-btn').forEach(b => { if(!b.classList.contains('filter-btn')) b.classList.remove('active'); });
+        if (tab === 'floor') document.querySelectorAll('.nav-tabs .nav-btn')[0].classList.add('active');
+        if (tab === 'kitchen') document.querySelectorAll('.nav-tabs .nav-btn')[1].classList.add('active');
+        document.querySelectorAll('.content-area').forEach(c => c.classList.remove('active'));
+        document.getElementById(`view-${tab}`).classList.add('active');
     }
-    
-    function renderDateScroller() { 
-        const scroller = document.getElementById('dateScroller'); scroller.innerHTML = ''; 
-        const start = new Date(selectedDate); start.setDate(selectedDate.getDate() - 2); 
-        for (let i = 0; i < 14; i++) { 
-            const d = new Date(start); d.setDate(start.getDate() + i); 
-            const isSel = d.toDateString() === selectedDate.toDateString(); 
-            const pill = document.createElement('div'); 
-            pill.className = `date-pill ${isSel ? 'active' : ''}`; 
-            pill.onclick = () => { selectedDate = d; renderDateScroller(); loadData(d); }; 
-            pill.innerHTML = `<span class="day">${d.toLocaleDateString('id-ID',{weekday:'short'})}</span><span class="num">${d.getDate()}</span>`; 
-            scroller.appendChild(pill); 
-        } 
+
+    function renderDateScroller() {
+        const scroller = document.getElementById('dateScroller');
+        scroller.innerHTML = '';
+        const start = new Date(selectedDate);
+        start.setDate(selectedDate.getDate() - 2);
+        for (let i = 0; i < 14; i++) {
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+            const isSel = d.toDateString() === selectedDate.toDateString();
+            const pill = document.createElement('div');
+            pill.className = `date-pill ${isSel ? 'active' : ''}`;
+            pill.onclick = () => { selectedDate = d; renderDateScroller(); loadData(d); };
+            pill.innerHTML = `<span class="day">${d.toLocaleDateString('id-ID',{weekday:'short'})}</span><span class="num">${d.getDate()}</span>`;
+            scroller.appendChild(pill);
+        }
     }
-    
+
     function goToToday() { selectedDate = new Date(); renderDateScroller(); loadData(selectedDate); }
     function handleDateSelect(val) { if(val){ selectedDate = new Date(val); renderDateScroller(); loadData(selectedDate); } }
 </script>
+
 </body>
 </html>
