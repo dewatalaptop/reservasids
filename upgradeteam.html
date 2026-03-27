@@ -107,7 +107,10 @@
     .content-area.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    /* ============ STATS ROW ============ */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;
+    }
     .stat-card {
       background: white; padding: 12px 5px; border-radius: var(--radius);
       text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
@@ -116,6 +119,15 @@
     .stat-val { font-size: 1.4rem; font-weight: 700; color: var(--primary-dark); line-height: 1.2; }
     .stat-label { font-size: 0.65rem; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
+    /* Kasir stats: 2 kolom baris pertama + 2 kolom baris kedua (4 kartu total) */
+    .cashier-stats-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .cashier-stats-row .stat-val {
+      font-size: 1.05rem;
+    }
+
+    /* ============ FLOOR GRID ============ */
     .grid-cards { display: grid; grid-template-columns: 1fr; gap: 15px; }
     @media (min-width: 600px) { .grid-cards { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); } }
 
@@ -149,6 +161,7 @@
     .menu-detail-text { display: block; font-size: 0.8rem; color: #777; font-style: italic; margin-left: 0; margin-top: 2px; line-height: 1.2;}
     .extra-detected { color: var(--primary); font-weight: 600; font-size: 0.75rem; display: inline-block; background: #e0f2f1; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
 
+    /* ============ KITCHEN ============ */
     .kitchen-section { margin-bottom: 30px; }
     .section-header {
         background: linear-gradient(to right, #f1f5f9, white); padding: 10px 5px;
@@ -180,76 +193,149 @@
     }
     .comp-count { background: var(--accent); color: white; }
 
-    /* ============================================
-       NOTES SECTION STYLES (NEW)
-       ============================================ */
+    /* ============ NOTES SECTION ============ */
     .notes-section-header {
       background: linear-gradient(to right, #fff8e1, white);
-      padding: 10px 5px;
-      margin-bottom: 12px;
-      border-radius: 4px;
-      font-weight: 700;
-      color: #b45309;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 1.05rem;
+      padding: 10px 5px; margin-bottom: 12px; border-radius: 4px;
+      font-weight: 700; color: #b45309;
+      display: flex; align-items: center; gap: 10px; font-size: 1.05rem;
     }
-
     .note-item {
-      padding: 14px 16px;
-      border-bottom: 1px solid #f0f0f0;
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      transition: background 0.1s;
+      padding: 14px 16px; border-bottom: 1px solid #f0f0f0;
+      display: flex; align-items: flex-start; gap: 12px; transition: background 0.1s;
     }
     .note-item:last-child { border-bottom: none; }
-
     .note-time-badge {
-      flex-shrink: 0;
-      background: var(--primary-dark);
-      color: white;
-      font-family: 'Oswald', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 8px;
-      min-width: 58px;
-      text-align: center;
-      letter-spacing: 0.5px;
+      flex-shrink: 0; background: var(--primary-dark); color: white;
+      font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 600;
+      padding: 4px 10px; border-radius: 8px; min-width: 58px; text-align: center; letter-spacing: 0.5px;
     }
-
     .note-body { flex: 1; min-width: 0; }
-
     .note-guest-name {
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: var(--primary-dark);
-      display: block;
-      margin-bottom: 4px;
+      font-weight: 700; font-size: 0.9rem; color: var(--primary-dark); display: block; margin-bottom: 4px;
     }
-
-    .note-text {
-      font-size: 0.88rem;
-      color: #444;
-      line-height: 1.5;
-      word-break: break-word;
-    }
-
-    /* Keyword highlights */
+    .note-text { font-size: 0.88rem; color: #444; line-height: 1.5; word-break: break-word; }
     .note-text .kw-danger { color: #b91c1c; font-weight: 700; }
     .note-text .kw-action { color: var(--primary); font-weight: 700; }
+    .note-empty { padding: 20px; text-align: center; color: #aaa; font-size: 0.9rem; }
 
-    .note-empty {
-      padding: 20px;
-      text-align: center;
-      color: #aaa;
-      font-size: 0.9rem;
+    /* ============ KASIR SECTION ============ */
+
+    /* Status pembayaran border */
+    .cashier-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border-left: 5px solid #ccc;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .cashier-card.status-lunas  { border-left-color: #10b981; }
+    .cashier-card.status-dp     { border-left-color: var(--secondary); }
+    .cashier-card.status-belum  { border-left-color: var(--danger); }
+
+    .cashier-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .cashier-guest { flex: 1; min-width: 0; }
+    .cashier-guest-name {
+      font-size: 1.05rem; font-weight: 700; color: var(--primary-dark);
+      display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .cashier-guest-meta {
+      font-size: 0.8rem; color: #888; margin-top: 2px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .cashier-time-badge {
+      flex-shrink: 0;
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--primary-dark);
+      margin-left: 10px;
     }
 
-    /* ============================================ */
+    /* Status badge */
+    .payment-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.72rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px; margin-top: 5px;
+    }
+    .badge-lunas  { background: #d1fae5; color: #047857; }
+    .badge-dp     { background: #fef3c7; color: #b45309; }
+    .badge-belum  { background: #fee2e2; color: #b91c1c; }
 
+    /* Billing section */
+    .cashier-billing {
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .billing-item { display: flex; flex-direction: column; }
+    .billing-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: #999; font-weight: 600; }
+    .billing-val   { font-size: 0.95rem; font-weight: 700; color: var(--dark); margin-top: 1px; }
+    .billing-val.total-val   { color: var(--primary-dark); font-size: 1.05rem; }
+    .billing-val.sisa-val    { color: var(--danger); font-size: 1.05rem; }
+    .billing-val.sisa-lunas  { color: #10b981; font-size: 1.05rem; }
+    .billing-val.dp-val      { color: #b45309; }
+
+    /* Menu list in kasir */
+    .cashier-menu-section {
+      padding: 10px 16px 0;
+    }
+    .cashier-menu-label {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;
+      color: #999; font-weight: 700; margin-bottom: 6px; display: block;
+    }
+    .cashier-menu-list {
+      display: flex; flex-direction: column; gap: 4px; padding-bottom: 12px;
+    }
+    .cashier-menu-item {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85rem; color: #444; padding: 3px 0;
+      border-bottom: 1px dashed #f0f0f0;
+    }
+    .cashier-menu-item:last-child { border-bottom: none; }
+    .cashier-menu-item .cmenu-name { flex: 1; }
+    .cashier-menu-item .cmenu-qty  { color: #888; font-size: 0.8rem; margin: 0 8px; }
+    .cashier-menu-item .cmenu-price { font-weight: 600; color: var(--primary-dark); white-space: nowrap; }
+
+    /* Warning catatan kasir */
+    .cashier-note-box {
+      margin: 10px 16px 14px;
+      background: #fff5f5;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .cashier-note-title {
+      font-size: 0.78rem; font-weight: 700; color: #b91c1c;
+      display: flex; align-items: center; gap: 6px; margin-bottom: 5px;
+    }
+    .cashier-note-text {
+      font-size: 0.82rem; color: #7f1d1d; line-height: 1.45; word-break: break-word;
+    }
+    .cashier-note-warning {
+      font-size: 0.72rem; color: #b91c1c; font-style: italic;
+      margin-top: 6px; display: block;
+    }
+
+    /* No price indicator */
+    .no-price-info {
+      font-size: 0.75rem; color: #aaa; font-style: italic;
+    }
+
+    .cashier-empty {
+      text-align: center; padding: 40px 20px; color: #999;
+    }
+    .cashier-empty i { font-size: 2rem; display: block; margin-bottom: 10px; color: #ddd; }
+
+    /* ============ MODAL ============ */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.6); z-index: 2000; display: none;
@@ -268,6 +354,7 @@
     .close-btn { background: #f0f0f0; border: none; width: 36px; height: 36px; border-radius: 50%; font-weight: bold; cursor: pointer; color: #555; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
     .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed #eee; align-items: center; }
 
+    /* ============ LOADER ============ */
     #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:3000; display:flex; justify-content:center; align-items:center; flex-direction:column; }
     .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 10px;}
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -279,32 +366,35 @@
   <div id="loader"><div class="spinner"></div><small style="color:#888;">Sinkronisasi Data...</small></div>
 
   <div class="sticky-wrapper">
-      <header class="top-bar">
-        <div class="brand"><h1><i class="fas fa-leaf"></i> Dolan Sawah</h1><small>Live Ops V6 (Smart)</small></div>
-        <div id="clock">--:--</div>
-      </header>
+    <header class="top-bar">
+      <div class="brand"><h1><i class="fas fa-leaf"></i> Dolan Sawah</h1><small>Live Ops V6 (Smart)</small></div>
+      <div id="clock">--:--</div>
+    </header>
 
 ```
-  <div class="date-nav-wrapper">
-    <label class="calendar-btn-group">
-        <i class="fas fa-calendar-alt"></i> Ganti
-        <input type="date" onchange="handleDateSelect(this.value)">
-    </label>
-    <div class="date-scroller" id="dateScroller"></div>
-    <button onclick="goToToday()" style="background:var(--secondary); border:none; color:var(--primary-dark); border-radius:10px; width:50px; height:50px; font-weight:700; flex-shrink:0; box-shadow:0 2px 5px rgba(0,0,0,0.1);">Hari<br>Ini</button>
-  </div>
+<div class="date-nav-wrapper">
+  <label class="calendar-btn-group">
+    <i class="fas fa-calendar-alt"></i> Ganti
+    <input type="date" onchange="handleDateSelect(this.value)">
+  </label>
+  <div class="date-scroller" id="dateScroller"></div>
+  <button onclick="goToToday()" style="background:var(--secondary); border:none; color:var(--primary-dark); border-radius:10px; width:50px; height:50px; font-weight:700; flex-shrink:0; box-shadow:0 2px 5px rgba(0,0,0,0.1);">Hari<br>Ini</button>
+</div>
 
-  <nav class="nav-tabs">
-    <button class="nav-btn active" onclick="switchTab('floor')"><i class="fas fa-layer-group"></i> Floor</button>
-    <button class="nav-btn" onclick="switchTab('kitchen')"><i class="fas fa-utensils"></i> Dapur</button>
-    <div class="nav-sep"></div>
-    <button class="nav-btn filter-btn active" id="btnAll" onclick="toggleFilter('all')">Semua</button>
-    <button class="nav-btn filter-btn" id="btnPagi" onclick="toggleFilter('pagi')">Pagi</button>
-    <button class="nav-btn filter-btn" id="btnSiang" onclick="toggleFilter('siang')">Siang</button>
-  </nav>
+<nav class="nav-tabs">
+  <button class="nav-btn active" onclick="switchTab('floor')"><i class="fas fa-layer-group"></i> Floor</button>
+  <button class="nav-btn" onclick="switchTab('kitchen')"><i class="fas fa-utensils"></i> Dapur</button>
+  <button class="nav-btn" onclick="switchTab('cashier')"><i class="fas fa-cash-register"></i> Kasir</button>
+  <div class="nav-sep"></div>
+  <button class="nav-btn filter-btn active" id="btnAll" onclick="toggleFilter('all')">Semua</button>
+  <button class="nav-btn filter-btn" id="btnPagi" onclick="toggleFilter('pagi')">Pagi</button>
+  <button class="nav-btn filter-btn" id="btnSiang" onclick="toggleFilter('siang')">Siang</button>
+</nav>
 ```
 
   </div>
+
+  <!-- ======= FLOOR VIEW ======= -->
 
   <div id="view-floor" class="content-area active">
     <div class="stats-row">
@@ -315,10 +405,12 @@
     <div class="grid-cards" id="floorContainer"></div>
   </div>
 
+  <!-- ======= KITCHEN VIEW ======= -->
+
   <div id="view-kitchen" class="content-area">
 
 ```
-<!-- ✅ SECTION 1: CATATAN & REQUEST TAMBAHAN (NEW - PALING ATAS) -->
+<!-- SECTION 1: CATATAN & REQUEST TAMBAHAN -->
 <div class="kitchen-section">
   <div class="notes-section-header">
     <i class="fas fa-sticky-note"></i> Catatan & Request Tambahan
@@ -329,480 +421,721 @@
 
 <!-- SECTION 2: MENU UTAMA (PLATING) -->
 <div class="kitchen-section">
-    <div class="section-header"><i class="fas fa-concierge-bell"></i> Menu Utama (Plating)</div>
-    <div class="prep-list" id="kitchenMenuContainer"></div>
+  <div class="section-header"><i class="fas fa-concierge-bell"></i> Menu Utama (Plating)</div>
+  <div class="prep-list" id="kitchenMenuContainer"></div>
 </div>
 
 <!-- SECTION 3: TOTAL KOMPONEN (PREP) -->
 <div class="kitchen-section">
-    <div class="section-header"><i class="fas fa-carrot"></i> Total Komponen (Prep)</div>
-    <small style="display:block; margin-bottom:12px; color:#666; font-size:0.85rem; padding-left:5px;">
-        <i class="fas fa-info-circle"></i> Item dari catatan tambahan ("Request") otomatis terdeteksi.
-    </small>
-    <div class="prep-list" id="kitchenCompContainer"></div>
+  <div class="section-header"><i class="fas fa-carrot"></i> Total Komponen (Prep)</div>
+  <small style="display:block; margin-bottom:12px; color:#666; font-size:0.85rem; padding-left:5px;">
+    <i class="fas fa-info-circle"></i> Item dari catatan tambahan ("Request") otomatis terdeteksi.
+  </small>
+  <div class="prep-list" id="kitchenCompContainer"></div>
 </div>
 ```
 
   </div>
 
+  <!-- ======= KASIR VIEW ======= -->
+
+  <div id="view-cashier" class="content-area">
+
+```
+<!-- SUMMARY -->
+<div class="stats-row cashier-stats-row" style="margin-bottom:20px;">
+  <div class="stat-card" style="border-top-color: var(--primary);">
+    <div class="stat-val" id="cashierTotalRes">0</div>
+    <div class="stat-label">Reservasi</div>
+  </div>
+  <div class="stat-card" style="border-top-color: var(--secondary);">
+    <div class="stat-val" id="cashierTotalDp">Rp 0</div>
+    <div class="stat-label">Total DP Masuk</div>
+  </div>
+  <div class="stat-card" style="border-top-color: var(--primary-dark);">
+    <div class="stat-val" id="cashierTotalOmzet">Rp 0</div>
+    <div class="stat-label">Est. Omzet (incl. PPN)</div>
+  </div>
+  <div class="stat-card" style="border-top-color: var(--danger);">
+    <div class="stat-val" id="cashierTotalSisa">Rp 0</div>
+    <div class="stat-label">Sisa Pelunasan</div>
+  </div>
+</div>
+
+<!-- CARDS -->
+<div id="cashierContainer"></div>
+```
+
+  </div>
+
+  <!-- ======= MODAL ======= -->
+
   <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
-      <div class="modal-content">
-          <div class="modal-header">
-              <div class="modal-title" id="modalTitle">Detail</div>
-              <button class="close-btn" onclick="closeModalBtn()">✕</button>
-          </div>
-          <ul class="detail-list" id="detailList" style="list-style:none; padding:0;"></ul>
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Detail</div>
+        <button class="close-btn" onclick="closeModalBtn()">&#10005;</button>
       </div>
+      <ul class="detail-list" id="detailList" style="list-style:none; padding:0;"></ul>
+    </div>
   </div>
 
 <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyA_c1tU70FM84Qi_f_aSaQ-YVLo_18lCkI",
-      authDomain: "reservasi-dolan-sawah.firebaseapp.com",
-      projectId: "reservasi-dolan-sawah",
-      storageBucket: "reservasi-dolan-sawah.appspot.com",
-      messagingSenderId: "213151400721",
-      appId: "1:213151400721:web:e51b0d8cdd24206cf682b0"
+  const firebaseConfig = {
+    apiKey: "AIzaSyA_c1tU70FM84Qi_f_aSaQ-YVLo_18lCkI",
+    authDomain: "reservasi-dolan-sawah.firebaseapp.com",
+    projectId: "reservasi-dolan-sawah",
+    storageBucket: "reservasi-dolan-sawah.appspot.com",
+    messagingSenderId: "213151400721",
+    appId: "1:213151400721:web:e51b0d8cdd24206cf682b0"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let allReservations = [];
+  let menuDetailsCache = {};
+  let selectedDate = new Date();
+  let currentFilter = 'all';
+  let unsubscribe = null;
+  let globalCompDetails = {};
+
+  // ============================================================
+  // MENU PRICE CACHE — diisi otomatis dari Firestore (field: price atau harga)
+  // ============================================================
+  let menuPriceCache = {};
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
+  function formatRupiah(amount) {
+    if (!amount || isNaN(amount)) return 'Rp 0';
+    return 'Rp ' + Math.round(amount).toLocaleString('id-ID');
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // ============================================================
+  // KASIR: hitung total untuk satu reservasi
+  // ============================================================
+  function calculateReservationTotal(r) {
+    let subTotal = 0;
+    const menus = [];
+
+    if (r.menus && r.menus.length) {
+      r.menus.forEach(item => {
+        const harga = getPriceByName(item.name);
+        const qty   = parseInt(item.quantity) || 1;
+        const line  = harga * qty;
+        subTotal += line;
+        menus.push({ name: item.name, qty, harga, line });
+      });
+    } else if (r.menu) {
+      const harga = getPriceByName(r.menu);
+      const qty   = 1;
+      subTotal += harga * qty;
+      menus.push({ name: r.menu, qty, harga, line: harga * qty });
+    }
+
+    // ✅ Extra dari catatan tambahan ikut dihitung
+    if (r.tambahan) {
+      const extras = parseExtraOrdersFromNotes(r.tambahan);
+      extras.forEach(item => {
+        const harga = getPriceByName(item.name);
+        const qty   = item.quantity || 1;
+        const line  = harga * qty;
+        subTotal += line;
+        menus.push({ name: item.name + ' (extra)', qty, harga, line });
+      });
+    }
+
+    const ppn               = subTotal * 0.10;
+    const totalSetelahPajak = subTotal + ppn;
+    const dp                = parseFloat(r.dp) || 0;
+    const sisa              = totalSetelahPajak - dp;
+
+    return { subTotal, ppn, totalSetelahPajak, dp, sisa, menus };
+  }
+
+  // ============================================================
+  // HIGHLIGHT KEYWORDS
+  // ============================================================
+  function highlightKeywords(text) {
+    const dangerWords = [
+      'tidak pedas', 'no pedas', 'tidak pakai',
+      'alergi', 'allergi',
+      'tanpa', 'jangan', 'buta',
+      'pedas'
+    ];
+    const actionWords = [
+      'extra tambah', 'tambah extra',
+      'tambah', 'extra', 'ekstra', 'request', 'minta'
+    ];
+
+    let result = escapeHtml(text);
+    const replacements = [];
+
+    const collectMatches = (words, cls) => {
+      words.forEach(word => {
+        const regex = new RegExp('(' + escapeRegex(word) + ')', 'gi');
+        result = result.replace(regex, (match) => {
+          const token = '%%KWTOKEN' + replacements.length + '%%';
+          replacements.push('<span class="kw-' + cls + '">' + match + '</span>');
+          return token;
+        });
+      });
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
 
-    let allReservations = [];
-    let menuDetailsCache = {};
-    let selectedDate = new Date();
-    let currentFilter = 'all';
-    let unsubscribe = null;
-    let globalCompDetails = {};
+    collectMatches(dangerWords, 'danger');
+    collectMatches(actionWords, 'action');
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-        }, 1000);
-
-        setInterval(updateAllTimers, 60000);
-
-        await loadMenuDetails();
-        renderDateScroller();
-        loadData(selectedDate);
+    replacements.forEach((span, i) => {
+      result = result.replace('%%KWTOKEN' + i + '%%', span);
     });
 
-    async function loadMenuDetails() {
-        try {
-            const snap = await db.collection('menus').get();
-            snap.forEach(doc => { menuDetailsCache[doc.id] = doc.data().details || []; });
-            console.log("Menu Cache Loaded:", Object.keys(menuDetailsCache).length);
-        } catch(e) {
-            console.error("Error loading menus", e);
+    return result;
+  }
+
+  // ============================================================
+  // NOTE CATEGORY
+  // ============================================================
+  function getNoteClass(text) {
+    const t = String(text).toLowerCase();
+    if (t.includes('alergi') || t.includes('allergi') || t.includes('tanpa') ||
+        t.includes('jangan') || t.includes('tidak') || t.includes('buta')) {
+      return 'danger';
+    }
+    if (t.includes('tambah') || t.includes('extra') || t.includes('ekstra') ||
+        t.includes('request') || t.includes('minta')) {
+      return 'action';
+    }
+    return 'normal';
+  }
+
+  // ============================================================
+  // EXTRA ORDERS FROM NOTES
+  // ============================================================
+  function parseExtraOrdersFromNotes(noteText) {
+    if (!noteText) return [];
+    const detectedItems = [];
+    const lowerNote = noteText.toLowerCase();
+    const menuNames = Object.keys(menuDetailsCache);
+
+    menuNames.forEach(menuName => {
+      const lowerMenu = menuName.toLowerCase();
+      if (lowerNote.includes(lowerMenu)) {
+        let quantity = 1;
+        const patternBefore = new RegExp('(\\d+)\\s+(?:porsi|buah|pcs)?\\s*' + escapeRegex(lowerMenu), 'i');
+        const patternAfter  = new RegExp(escapeRegex(lowerMenu) + '\\s+(?:sebagai|jadi)?\\s*(\\d+)', 'i');
+        const matchBefore = lowerNote.match(patternBefore);
+        const matchAfter  = lowerNote.match(patternAfter);
+        if (matchBefore) quantity = parseInt(matchBefore[1]);
+        else if (matchAfter) quantity = parseInt(matchAfter[1]);
+
+        const negativeCheck = new RegExp('(?:tanpa|no|jangan)\\s+' + escapeRegex(lowerMenu), 'i');
+        if (!negativeCheck.test(lowerNote)) {
+          detectedItems.push({ name: menuName, quantity, isExtra: true });
         }
+      }
+    });
+    return detectedItems;
+  }
+
+  // ============================================================
+  // TIMER
+  // ============================================================
+  function getTimerData(jamReservasi) {
+    const now = new Date();
+    const isToday = selectedDate.toDateString() === now.toDateString();
+    if (!isToday) return { text: 'Reservasi', class: 'timer-safe' };
+
+    const [h, m] = jamReservasi.split(':').map(Number);
+    const resTime = new Date();
+    resTime.setHours(h, m, 0);
+    const diffMs   = resTime - now;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 0) return { text: 'Lewat ' + Math.abs(diffMins) + ' mnt', class: 'timer-late' };
+    else if (diffMins <= 30) return { text: 'Segera! ' + diffMins + ' mnt', class: 'timer-late' };
+    else if (diffMins <= 60) return { text: 'Siap ' + diffMins + ' mnt', class: 'timer-warn' };
+    else {
+      const hours = Math.floor(diffMins / 60);
+      const mins  = diffMins % 60;
+      return { text: hours + 'j ' + mins + 'm lagi', class: 'timer-safe' };
     }
+  }
 
-    function loadData(dateObj) {
-        document.getElementById('loader').style.display = 'flex';
-        if (unsubscribe) unsubscribe();
+  function updateAllTimers() {
+    const now = new Date();
+    if (selectedDate.toDateString() !== now.toDateString()) return;
+    document.querySelectorAll('.countdown-badge').forEach(badge => {
+      const jam = badge.getAttribute('data-jam');
+      if (jam) {
+        const data = getTimerData(jam);
+        badge.className = 'countdown-badge ' + data.class;
+        badge.innerHTML = '<i class="fas fa-stopwatch"></i> ' + data.text;
+      }
+    });
+  }
 
-        const y = dateObj.getFullYear();
-        const m = String(dateObj.getMonth()+1).padStart(2,'0');
-        const d = String(dateObj.getDate()).padStart(2,'0');
-        const dateStr = `${y}-${m}-${d}`;
+  // ============================================================
+  // INIT
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', async () => {
+    setInterval(() => {
+      const now = new Date();
+      document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    }, 1000);
 
-        unsubscribe = db.collection('reservations')
-            .where('date', '==', dateStr)
-            .onSnapshot(snap => {
-                let temp = [];
-                snap.forEach(doc => temp.push({id: doc.id, ...doc.data()}));
-                allReservations = temp.sort((a,b) => a.jam.localeCompare(b.jam));
-                renderUI();
-                document.getElementById('loader').style.display = 'none';
-            });
+    setInterval(updateAllTimers, 60000);
+
+    await loadMenuDetails();
+    renderDateScroller();
+    loadData(selectedDate);
+  });
+
+  async function loadMenuDetails() {
+    try {
+      const snap = await db.collection('menus').get();
+      snap.forEach(doc => {
+        const data = doc.data();
+        menuDetailsCache[doc.id] = data.details || [];
+        // ✅ Ambil harga dari Firestore — support field: price ATAU harga
+        menuPriceCache[doc.id] = parseFloat(data.price || data.harga || 0);
+      });
+      console.log('Menu Cache Loaded:', Object.keys(menuDetailsCache).length);
+      console.log('Price Cache Loaded:', menuPriceCache);
+    } catch(e) {
+      console.error('Error loading menus', e);
     }
+  }
 
-    function renderUI() {
-        let filtered = allReservations;
-        if (currentFilter === 'pagi') filtered = allReservations.filter(r => parseInt(r.jam) < 15);
-        if (currentFilter === 'siang') filtered = allReservations.filter(r => parseInt(r.jam) >= 15);
+  // Lookup harga: exact match dulu, fallback case-insensitive + trim
+  function getPriceByName(name) {
+    const trimmed = (name || '').trim();
+    if (menuPriceCache[trimmed] !== undefined) return menuPriceCache[trimmed];
+    const lower = trimmed.toLowerCase();
+    const key = Object.keys(menuPriceCache).find(k => k.toLowerCase() === lower);
+    return (key !== undefined) ? menuPriceCache[key] : 0;
+  }
 
-        document.getElementById('totalRes').innerText = filtered.length;
-        document.getElementById('totalPax').innerText = filtered.reduce((a,b) => a + parseInt(b.jumlah||0), 0);
+  function loadData(dateObj) {
+    document.getElementById('loader').style.display = 'flex';
+    if (unsubscribe) unsubscribe();
 
-        renderFloor(filtered);
-        renderKitchen(filtered);
-    }
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    const dateStr = y + '-' + m + '-' + d;
 
-    function parseExtraOrdersFromNotes(noteText) {
-        if (!noteText) return [];
-        const detectedItems = [];
-        const lowerNote = noteText.toLowerCase();
-        const menuNames = Object.keys(menuDetailsCache);
-
-        menuNames.forEach(menuName => {
-            const lowerMenu = menuName.toLowerCase();
-            if (lowerNote.includes(lowerMenu)) {
-                let quantity = 1;
-                const patternBefore = new RegExp(`(\\d+)\\s+(?:porsi|buah|pcs)?\\s*${lowerMenu}`, 'i');
-                const patternAfter = new RegExp(`${lowerMenu}\\s+(?:sebagai|jadi)?\\s*(\\d+)`, 'i');
-                const matchBefore = lowerNote.match(patternBefore);
-                const matchAfter = lowerNote.match(patternAfter);
-                if (matchBefore) quantity = parseInt(matchBefore[1]);
-                else if (matchAfter) quantity = parseInt(matchAfter[1]);
-
-                const negativeCheck = new RegExp(`(?:tanpa|no|jangan)\\s+${lowerMenu}`, 'i');
-                if (!negativeCheck.test(lowerNote)) {
-                    detectedItems.push({ name: menuName, quantity: quantity, isExtra: true });
-                }
-            }
-        });
-        return detectedItems;
-    }
-
-    // ============================================
-    // HIGHLIGHT KEYWORDS (NEW)
-    // ============================================
-    function highlightKeywords(text) {
-        // PRIORITAS: kata panjang dulu → cegah double-highlight
-        // Misal "tidak pedas" harus match sebelum "pedas" dan "tidak" diproses sendiri
-        const dangerWords = [
-            'tidak pedas', 'no pedas', 'tidak pakai',
-            'alergi', 'allergi',
-            'tanpa', 'jangan', 'buta',
-            'pedas'
-        ];
-        const actionWords = [
-            'extra tambah', 'tambah extra',
-            'tambah', 'extra', 'ekstra', 'request', 'minta'
-        ];
-
-        let result = escapeHtml(text);
-
-        // Placeholder trick: ganti match dengan token unik dulu, baru wrap span
-        // Ini mencegah regex berikutnya menghit inside span yang sudah ditulis
-        const replacements = [];
-
-        const collectMatches = (words, cls) => {
-            words.forEach(word => {
-                const regex = new RegExp(`(${escapeRegex(word)})`, 'gi');
-                result = result.replace(regex, (match) => {
-                    const token = `%%KWTOKEN${replacements.length}%%`;
-                    replacements.push(`<span class="kw-${cls}">${match}</span>`);
-                    return token;
-                });
-            });
-        };
-
-        collectMatches(dangerWords, 'danger');
-        collectMatches(actionWords, 'action');
-
-        // Restore semua token
-        replacements.forEach((span, i) => {
-            result = result.replace(`%%KWTOKEN${i}%%`, span);
-        });
-
-        return result;
-    }
-
-    function escapeHtml(str) {
-        return str
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
-    }
-
-    function escapeRegex(str) {
-        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    // ============================================
-
-    function getTimerData(jamReservasi) {
-        const now = new Date();
-        const isToday = selectedDate.toDateString() === now.toDateString();
-        if (!isToday) return { text: "Reservasi", class: "timer-safe" };
-
-        const [h, m] = jamReservasi.split(':').map(Number);
-        const resTime = new Date();
-        resTime.setHours(h, m, 0);
-        const diffMs = resTime - now;
-        const diffMins = Math.floor(diffMs / 60000);
-
-        if (diffMins < 0) return { text: `Lewat ${Math.abs(diffMins)} mnt`, class: "timer-late" };
-        else if (diffMins <= 30) return { text: `Segera! ${diffMins} mnt`, class: "timer-late" };
-        else if (diffMins <= 60) return { text: `Siap ${diffMins} mnt`, class: "timer-warn" };
-        else {
-            const hours = Math.floor(diffMins / 60);
-            const mins = diffMins % 60;
-            return { text: `${hours}j ${mins}m lagi`, class: "timer-safe" };
-        }
-    }
-
-    function updateAllTimers() {
-        const now = new Date();
-        if (selectedDate.toDateString() !== now.toDateString()) return;
-        const timerBadges = document.querySelectorAll('.countdown-badge');
-        timerBadges.forEach(badge => {
-            const jam = badge.getAttribute('data-jam');
-            if (jam) {
-                const data = getTimerData(jam);
-                badge.className = `countdown-badge ${data.class}`;
-                badge.innerHTML = `<i class="fas fa-stopwatch"></i> ${data.text}`;
-            }
-        });
-    }
-
-    function renderFloor(data) {
-        const container = document.getElementById('floorContainer');
-        container.innerHTML = '';
-        let totalItems = 0;
-
-        if (data.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:40px; color:#999; grid-column: 1/-1;">Tidak ada reservasi untuk filter ini.</div>`;
-            document.getElementById('totalItems').innerText = 0;
-            return;
-        }
-
-        data.forEach(r => {
-            const hour = parseInt(r.jam);
-            const borderColor = hour >= 15 ? 'var(--accent)' : 'var(--secondary)';
-            const timer = getTimerData(r.jam);
-
-            let combinedMenus = [];
-            if (r.menus && r.menus.length) {
-                combinedMenus = r.menus.map(m => ({...m, isExtra:false}));
-            } else if (r.menu) {
-                combinedMenus.push({ name: r.menu, quantity: 1, isExtra:false });
-            }
-            if (r.tambahan) {
-                const detectedExtras = parseExtraOrdersFromNotes(r.tambahan);
-                if (detectedExtras.length > 0) combinedMenus = [...combinedMenus, ...detectedExtras];
-            }
-
-            let menuHtml = combinedMenus.map(item => {
-                totalItems += parseInt(item.quantity);
-                const details = menuDetailsCache[item.name] || [];
-                const detailString = details.length > 0 ? `<span class="menu-detail-text">• ${details.join(', ')}</span>` : '';
-                const extraBadge = item.isExtra ? '<span class="extra-detected">Extra (Catatan)</span>' : '';
-                return `
-                <div class="menu-row">
-                    <span class="menu-qty">${item.quantity}</span>
-                    <div class="menu-name">
-                        ${item.name} ${extraBadge}
-                        ${detailString}
-                    </div>
-                </div>`;
-            }).join('');
-
-            container.innerHTML += `
-                <div class="res-card" style="border-left-color: ${borderColor}">
-                    <div class="card-top-row">
-                        <div class="time-group">
-                            <div class="res-time">${r.jam}</div>
-                            <div class="countdown-badge ${timer.class}" data-jam="${r.jam}">
-                                <i class="fas fa-stopwatch"></i> ${timer.text}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="res-details">
-                        <span class="res-name">${r.nama}</span>
-                        <div class="res-meta">
-                            <span><i class="fas fa-users"></i> ${r.jumlah} Org</span> • <span>${r.tempat || '?'}</span>
-                        </div>
-                    </div>
-                    <div class="menu-box">${menuHtml || '<small>Belum ada menu</small>'}</div>
-                    ${r.tambahan ? `<div style="margin-top:10px;font-size:0.8rem;background:#fff5f5;padding:10px;border-radius:6px;color:var(--danger); border:1px dashed #feb2b2; line-height:1.4;"><i class="fas fa-comment-dots"></i> <b>Catatan:</b> ${escapeHtml(String(r.tambahan))}</div>` : ''}
-                </div>`;
-        });
-        document.getElementById('totalItems').innerText = totalItems;
-    }
-
-    // ============================================
-    // NOTE CATEGORY CLASSIFIER
-    // ============================================
-    function getNoteClass(text) {
-        const t = String(text).toLowerCase();
-        if (t.includes('alergi') || t.includes('allergi') || t.includes('tanpa') ||
-            t.includes('jangan') || t.includes('tidak') || t.includes('buta')) {
-            return 'danger';
-        }
-        if (t.includes('tambah') || t.includes('extra') || t.includes('ekstra') ||
-            t.includes('request') || t.includes('minta')) {
-            return 'action';
-        }
-        return 'normal';
-    }
-    // ============================================
-
-    function renderKitchen(data) {
-        // ============================================
-        // ✅ RENDER CATATAN TAMBAHAN (NEW - PALING ATAS)
-        // ============================================
-        const notesCont = document.getElementById('kitchenNotesContainer');
-        notesCont.innerHTML = '';
-
-        const notesList = data
-            .filter(r => r.tambahan && String(r.tambahan).trim() !== '')
-            .sort((a, b) => a.jam.localeCompare(b.jam));
-
-        // Update badge count
-        const notesCountEl = document.getElementById('notesCount');
-        if (notesList.length > 0) {
-            notesCountEl.textContent = `${notesList.length} catatan`;
-            notesCountEl.style.display = 'inline-block';
-        } else {
-            notesCountEl.style.display = 'none';
-        }
-
-        notesList.forEach(r => {
-            const noteClass = getNoteClass(r.tambahan);
-            notesCont.innerHTML += `
-            <div class="note-item note-${noteClass}">
-                <div class="note-time-badge">${r.jam}</div>
-                <div class="note-body">
-                    <span class="note-guest-name">
-                        <i class="fas fa-user" style="font-size:0.7rem; opacity:0.6;"></i>
-                        ${escapeHtml(r.nama)} &nbsp;·&nbsp; ${r.jumlah} org
-                    </span>
-                    <div class="note-text">${highlightKeywords(String(r.tambahan))}</div>
-                </div>
-            </div>`;
-        });
-
-        if (!notesCont.innerHTML) {
-            notesCont.innerHTML = `
-            <div class="note-empty">
-                <i class="fas fa-check-circle" style="color:#a7f3d0; font-size:1.5rem; display:block; margin-bottom:6px;"></i>
-                Tidak ada catatan tambahan.
-            </div>`;
-        }
-        // ============================================
-
-        const menuAgg = {};
-        globalCompDetails = {};
-
-        data.forEach(r => {
-            const processItem = (name, qty, sourceLabel) => {
-                menuAgg[name] = (menuAgg[name] || 0) + qty;
-                const details = menuDetailsCache[name];
-                if (details && details.length > 0) {
-                    details.forEach(comp => {
-                        const clean = comp.trim();
-                        if (!globalCompDetails[clean]) {
-                            globalCompDetails[clean] = { total: 0, items: [], sources: new Set() };
-                        }
-                        globalCompDetails[clean].total += qty;
-                        globalCompDetails[clean].sources.add(name);
-                        globalCompDetails[clean].items.push({ nama: r.nama, jam: r.jam, qty: qty, sourceMenu: name });
-                    });
-                }
-            };
-
-            if (r.menus && r.menus.length) {
-                r.menus.forEach(item => processItem(item.name, parseInt(item.quantity), "Menu Utama"));
-            } else if (r.menu) {
-                processItem(r.menu, 1, "Menu Utama");
-            }
-
-            if (r.tambahan) {
-                const detectedExtras = parseExtraOrdersFromNotes(r.tambahan);
-                detectedExtras.forEach(extra => processItem(extra.name, extra.quantity, "Request Tambahan"));
-            }
-        });
-
-        // RENDER: MENU UTAMA (PLATING)
-        const menuCont = document.getElementById('kitchenMenuContainer');
-        menuCont.innerHTML = '';
-        Object.entries(menuAgg).sort((a,b)=>b[1]-a[1]).forEach(([name, count]) => {
-            menuCont.innerHTML += `
-            <div class="prep-item">
-                <span class="prep-name">${name}</span>
-                <span class="prep-count">${count}</span>
-            </div>`;
-        });
-        if (!menuCont.innerHTML) menuCont.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">Belum ada pesanan.</div>';
-
-        // RENDER: TOTAL KOMPONEN (PREP)
-        const compCont = document.getElementById('kitchenCompContainer');
-        compCont.innerHTML = '';
-        Object.entries(globalCompDetails).sort((a,b)=>b[1].total - a[1].total).forEach(([name, data]) => {
-            const sourceArray = Array.from(data.sources);
-            let sourceText = "Utk: " + sourceArray.slice(0, 4).join(', ');
-            if (sourceArray.length > 4) sourceText += ", dll";
-
-            compCont.innerHTML += `
-            <div class="prep-item clickable" onclick="showComponentDetail('${name}')" style="cursor:pointer;">
-                <div class="prep-info">
-                    <span class="prep-name">
-                        <i class="fas fa-search-plus" style="color:var(--primary); font-size:0.8rem; margin-right:4px;"></i> ${name}
-                    </span>
-                    <span class="prep-sources">${sourceText}</span>
-                </div>
-                <span class="prep-count comp-count">${data.total}</span>
-            </div>`;
-        });
-        if (!compCont.innerHTML) compCont.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">Tidak ada data komponen.</div>';
-    }
-
-    function showComponentDetail(compName) {
-        const data = globalCompDetails[compName];
-        if (!data) return;
-        document.getElementById('modalTitle').innerText = compName;
-        const list = document.getElementById('detailList');
-        list.innerHTML = '';
-        data.items.sort((a,b) => a.jam.localeCompare(b.jam)).forEach(item => {
-            list.innerHTML += `
-            <li class="detail-row">
-                <div style="flex:1;">
-                    <span style="font-weight:600; display:block; font-size:0.95rem; color:var(--dark);">${item.nama}</span>
-                    <span style="font-size:0.8rem; color:#666; display:flex; align-items:center; gap:6px;">
-                        <i class="far fa-clock"></i> ${item.jam} • <span style="font-style:italic;">${item.sourceMenu}</span>
-                    </span>
-                </div>
-                <span style="font-weight:700; color:var(--primary-dark); font-size:1.1rem; background:#eee; padding:4px 10px; border-radius:6px;">
-                    ${item.qty}
-                </span>
-            </li>`;
-        });
-        document.getElementById('detailModal').classList.add('active');
-    }
-
-    function closeModal(e) { if(e.target.classList.contains('modal-overlay')) document.getElementById('detailModal').classList.remove('active'); }
-    function closeModalBtn() { document.getElementById('detailModal').classList.remove('active'); }
-
-    function toggleFilter(type) {
-        currentFilter = type;
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        if (type === 'all') document.getElementById('btnAll').classList.add('active');
-        if (type === 'pagi') document.getElementById('btnPagi').classList.add('active');
-        if (type === 'siang') document.getElementById('btnSiang').classList.add('active');
+    unsubscribe = db.collection('reservations')
+      .where('date', '==', dateStr)
+      .onSnapshot(snap => {
+        let temp = [];
+        snap.forEach(doc => temp.push({ id: doc.id, ...doc.data() }));
+        allReservations = temp.sort((a, b) => a.jam.localeCompare(b.jam));
         renderUI();
+        document.getElementById('loader').style.display = 'none';
+      });
+  }
+
+  function renderUI() {
+    let filtered = allReservations;
+    if (currentFilter === 'pagi')  filtered = allReservations.filter(r => parseInt(r.jam) < 15);
+    if (currentFilter === 'siang') filtered = allReservations.filter(r => parseInt(r.jam) >= 15);
+
+    document.getElementById('totalRes').innerText = filtered.length;
+    document.getElementById('totalPax').innerText = filtered.reduce((a, b) => a + parseInt(b.jumlah || 0), 0);
+
+    renderFloor(filtered);
+    renderKitchen(filtered);
+    renderCashier(filtered);
+  }
+
+  // ============================================================
+  // RENDER FLOOR
+  // ============================================================
+  function renderFloor(data) {
+    const container = document.getElementById('floorContainer');
+    container.innerHTML = '';
+    let totalItems = 0;
+
+    if (data.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:40px; color:#999; grid-column: 1/-1;">Tidak ada reservasi untuk filter ini.</div>';
+      document.getElementById('totalItems').innerText = 0;
+      return;
     }
 
-    function switchTab(tab) {
-        document.querySelectorAll('.nav-tabs .nav-btn').forEach(b => { if(!b.classList.contains('filter-btn')) b.classList.remove('active'); });
-        if (tab === 'floor') document.querySelectorAll('.nav-tabs .nav-btn')[0].classList.add('active');
-        if (tab === 'kitchen') document.querySelectorAll('.nav-tabs .nav-btn')[1].classList.add('active');
-        document.querySelectorAll('.content-area').forEach(c => c.classList.remove('active'));
-        document.getElementById(`view-${tab}`).classList.add('active');
+    data.forEach(r => {
+      const hour        = parseInt(r.jam);
+      const borderColor = hour >= 15 ? 'var(--accent)' : 'var(--secondary)';
+      const timer       = getTimerData(r.jam);
+
+      let combinedMenus = [];
+      if (r.menus && r.menus.length) {
+        combinedMenus = r.menus.map(m => ({ ...m, isExtra: false }));
+      } else if (r.menu) {
+        combinedMenus.push({ name: r.menu, quantity: 1, isExtra: false });
+      }
+      if (r.tambahan) {
+        const detectedExtras = parseExtraOrdersFromNotes(r.tambahan);
+        if (detectedExtras.length > 0) combinedMenus = [...combinedMenus, ...detectedExtras];
+      }
+
+      let menuHtml = combinedMenus.map(item => {
+        totalItems += parseInt(item.quantity);
+        const details      = menuDetailsCache[item.name] || [];
+        const detailString = details.length > 0 ? '<span class="menu-detail-text">• ' + details.join(', ') + '</span>' : '';
+        const extraBadge   = item.isExtra ? '<span class="extra-detected">Extra (Catatan)</span>' : '';
+        return '<div class="menu-row">' +
+          '<span class="menu-qty">' + item.quantity + '</span>' +
+          '<div class="menu-name">' + escapeHtml(item.name) + ' ' + extraBadge + detailString + '</div>' +
+          '</div>';
+      }).join('');
+
+      container.innerHTML +=
+        '<div class="res-card" style="border-left-color: ' + borderColor + '">' +
+          '<div class="card-top-row">' +
+            '<div class="time-group">' +
+              '<div class="res-time">' + r.jam + '</div>' +
+              '<div class="countdown-badge ' + timer.class + '" data-jam="' + r.jam + '">' +
+                '<i class="fas fa-stopwatch"></i> ' + timer.text +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="res-details">' +
+            '<span class="res-name">' + escapeHtml(r.nama) + '</span>' +
+            '<div class="res-meta"><span><i class="fas fa-users"></i> ' + r.jumlah + ' Org</span> • <span>' + (r.tempat || '?') + '</span></div>' +
+          '</div>' +
+          '<div class="menu-box">' + (menuHtml || '<small>Belum ada menu</small>') + '</div>' +
+          (r.tambahan ? '<div style="margin-top:10px;font-size:0.8rem;background:#fff5f5;padding:10px;border-radius:6px;color:var(--danger); border:1px dashed #feb2b2; line-height:1.4;"><i class="fas fa-comment-dots"></i> <b>Catatan:</b> ' + escapeHtml(String(r.tambahan)) + '</div>' : '') +
+        '</div>';
+    });
+    document.getElementById('totalItems').innerText = totalItems;
+  }
+
+  // ============================================================
+  // RENDER KITCHEN
+  // ============================================================
+  function renderKitchen(data) {
+    // --- CATATAN ---
+    const notesCont = document.getElementById('kitchenNotesContainer');
+    notesCont.innerHTML = '';
+
+    const notesList = data
+      .filter(r => r.tambahan && String(r.tambahan).trim() !== '')
+      .sort((a, b) => a.jam.localeCompare(b.jam));
+
+    const notesCountEl = document.getElementById('notesCount');
+    if (notesList.length > 0) {
+      notesCountEl.textContent = notesList.length + ' catatan';
+      notesCountEl.style.display = 'inline-block';
+    } else {
+      notesCountEl.style.display = 'none';
     }
 
-    function renderDateScroller() {
-        const scroller = document.getElementById('dateScroller');
-        scroller.innerHTML = '';
-        const start = new Date(selectedDate);
-        start.setDate(selectedDate.getDate() - 2);
-        for (let i = 0; i < 14; i++) {
-            const d = new Date(start);
-            d.setDate(start.getDate() + i);
-            const isSel = d.toDateString() === selectedDate.toDateString();
-            const pill = document.createElement('div');
-            pill.className = `date-pill ${isSel ? 'active' : ''}`;
-            pill.onclick = () => { selectedDate = d; renderDateScroller(); loadData(d); };
-            pill.innerHTML = `<span class="day">${d.toLocaleDateString('id-ID',{weekday:'short'})}</span><span class="num">${d.getDate()}</span>`;
-            scroller.appendChild(pill);
+    notesList.forEach(r => {
+      notesCont.innerHTML +=
+        '<div class="note-item note-' + getNoteClass(r.tambahan) + '">' +
+          '<div class="note-time-badge">' + r.jam + '</div>' +
+          '<div class="note-body">' +
+            '<span class="note-guest-name"><i class="fas fa-user" style="font-size:0.7rem; opacity:0.6;"></i> ' + escapeHtml(r.nama) + ' &nbsp;&middot;&nbsp; ' + r.jumlah + ' org</span>' +
+            '<div class="note-text">' + highlightKeywords(String(r.tambahan)) + '</div>' +
+          '</div>' +
+        '</div>';
+    });
+
+    if (!notesCont.innerHTML) {
+      notesCont.innerHTML =
+        '<div class="note-empty">' +
+          '<i class="fas fa-check-circle" style="color:#a7f3d0; font-size:1.5rem; display:block; margin-bottom:6px;"></i>' +
+          'Tidak ada catatan tambahan.' +
+        '</div>';
+    }
+
+    // --- AGGREGASI MENU & KOMPONEN ---
+    const menuAgg = {};
+    globalCompDetails = {};
+
+    data.forEach(r => {
+      const processItem = (name, qty, sourceLabel) => {
+        menuAgg[name] = (menuAgg[name] || 0) + qty;
+        const details = menuDetailsCache[name];
+        if (details && details.length > 0) {
+          details.forEach(comp => {
+            const clean = comp.trim();
+            if (!globalCompDetails[clean]) {
+              globalCompDetails[clean] = { total: 0, items: [], sources: new Set() };
+            }
+            globalCompDetails[clean].total += qty;
+            globalCompDetails[clean].sources.add(name);
+            globalCompDetails[clean].items.push({ nama: r.nama, jam: r.jam, qty, sourceMenu: name });
+          });
         }
+      };
+
+      if (r.menus && r.menus.length) {
+        r.menus.forEach(item => processItem(item.name, parseInt(item.quantity), 'Menu Utama'));
+      } else if (r.menu) {
+        processItem(r.menu, 1, 'Menu Utama');
+      }
+
+      if (r.tambahan) {
+        parseExtraOrdersFromNotes(r.tambahan).forEach(extra => processItem(extra.name, extra.quantity, 'Request Tambahan'));
+      }
+    });
+
+    // --- RENDER MENU UTAMA ---
+    const menuCont = document.getElementById('kitchenMenuContainer');
+    menuCont.innerHTML = '';
+    Object.entries(menuAgg).sort((a, b) => b[1] - a[1]).forEach(([name, count]) => {
+      menuCont.innerHTML +=
+        '<div class="prep-item">' +
+          '<span class="prep-name">' + escapeHtml(name) + '</span>' +
+          '<span class="prep-count">' + count + '</span>' +
+        '</div>';
+    });
+    if (!menuCont.innerHTML) menuCont.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">Belum ada pesanan.</div>';
+
+    // --- RENDER KOMPONEN ---
+    const compCont = document.getElementById('kitchenCompContainer');
+    compCont.innerHTML = '';
+    Object.entries(globalCompDetails).sort((a, b) => b[1].total - a[1].total).forEach(([name, d]) => {
+      const sourceArray = Array.from(d.sources);
+      let sourceText = 'Utk: ' + sourceArray.slice(0, 4).join(', ');
+      if (sourceArray.length > 4) sourceText += ', dll';
+
+      compCont.innerHTML +=
+        '<div class="prep-item clickable" onclick="showComponentDetail(\'' + escapeHtml(name) + '\')" style="cursor:pointer;">' +
+          '<div class="prep-info">' +
+            '<span class="prep-name"><i class="fas fa-search-plus" style="color:var(--primary); font-size:0.8rem; margin-right:4px;"></i> ' + escapeHtml(name) + '</span>' +
+            '<span class="prep-sources">' + escapeHtml(sourceText) + '</span>' +
+          '</div>' +
+          '<span class="prep-count comp-count">' + d.total + '</span>' +
+        '</div>';
+    });
+    if (!compCont.innerHTML) compCont.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">Tidak ada data komponen.</div>';
+  }
+
+  // ============================================================
+  // RENDER CASHIER (NEW)
+  // ============================================================
+  function renderCashier(data) {
+    const container = document.getElementById('cashierContainer');
+    container.innerHTML = '';
+
+    let grandTotalDp    = 0;
+    let grandTotalOmzet = 0;
+    let grandTotalSisa  = 0;
+
+    // Update jumlah reservasi
+    document.getElementById('cashierTotalRes').innerText = data.length;
+
+    if (data.length === 0) {
+      container.innerHTML =
+        '<div class="cashier-empty">' +
+          '<i class="fas fa-receipt"></i>' +
+          'Tidak ada reservasi untuk filter ini.' +
+        '</div>';
+      document.getElementById('cashierTotalDp').innerText    = 'Rp 0';
+      document.getElementById('cashierTotalOmzet').innerText = 'Rp 0';
+      document.getElementById('cashierTotalSisa').innerText  = 'Rp 0';
+      return;
     }
 
-    function goToToday() { selectedDate = new Date(); renderDateScroller(); loadData(selectedDate); }
-    function handleDateSelect(val) { if(val){ selectedDate = new Date(val); renderDateScroller(); loadData(selectedDate); } }
+    // Sort by jam (sudah sorted dari allReservations, tapi sort lagi untuk keamanan)
+    const sorted = [...data].sort((a, b) => a.jam.localeCompare(b.jam));
+
+    sorted.forEach(r => {
+      const calc = calculateReservationTotal(r);
+
+      grandTotalDp    += calc.dp;
+      grandTotalOmzet += calc.totalSetelahPajak;
+      grandTotalSisa  += Math.max(0, calc.sisa);
+
+      // Status pembayaran
+      let statusClass  = 'status-belum';
+      let badgeClass   = 'badge-belum';
+      let badgeLabel   = '<i class="fas fa-times-circle"></i> Belum DP';
+      if (calc.sisa <= 0) {
+        statusClass = 'status-lunas';
+        badgeClass  = 'badge-lunas';
+        badgeLabel  = '<i class="fas fa-check-circle"></i> LUNAS';
+      } else if (calc.dp > 0) {
+        statusClass = 'status-dp';
+        badgeClass  = 'badge-dp';
+        badgeLabel  = '<i class="fas fa-clock"></i> DP Masuk';
+      }
+
+      // Apakah ada harga atau semua 0?
+      const hasPrice = calc.subTotal > 0;
+      const noPriceNote = !hasPrice
+        ? '<div class="no-price-info" style="padding: 6px 16px 10px; font-size:0.75rem; color:#aaa; font-style:italic;"><i class="fas fa-info-circle"></i> Harga paket belum dikonfigurasi di sistem.</div>'
+        : '';
+
+      // Menu list HTML
+      let menuListHtml = '';
+      if (calc.menus.length > 0) {
+        menuListHtml = calc.menus.map(item =>
+          '<div class="cashier-menu-item">' +
+            '<span class="cmenu-name">' + escapeHtml(item.name) + '</span>' +
+            '<span class="cmenu-qty">x' + item.qty + '</span>' +
+            '<span class="cmenu-price">' + (item.harga > 0 ? formatRupiah(item.line) : '<span style="color:#ccc;">-</span>') + '</span>' +
+          '</div>'
+        ).join('');
+      } else {
+        menuListHtml = '<div style="font-size:0.8rem; color:#bbb; font-style:italic;">Menu belum dipilih</div>';
+      }
+
+      // Catatan tambahan
+      const catatanHtml = r.tambahan
+        ? '<div class="cashier-note-box">' +
+            '<div class="cashier-note-title"><i class="fas fa-exclamation-triangle"></i> Catatan Tambahan</div>' +
+            '<div class="cashier-note-text">' + escapeHtml(String(r.tambahan)) + '</div>' +
+            '<span class="cashier-note-warning"><i class="fas fa-info-circle"></i> Periksa manual — kemungkinan ada item yang belum terhitung.</span>' +
+          '</div>'
+        : '';
+
+      // Sisa label
+      const sisaClass = calc.sisa <= 0 ? 'billing-val sisa-lunas' : 'billing-val sisa-val';
+      const sisaText  = calc.sisa <= 0 ? 'LUNAS ✓' : formatRupiah(calc.sisa);
+
+      container.innerHTML +=
+        '<div class="cashier-card ' + statusClass + '">' +
+
+          // HEADER
+          '<div class="cashier-card-header">' +
+            '<div class="cashier-guest">' +
+              '<span class="cashier-guest-name">' + escapeHtml(r.nama) + '</span>' +
+              '<div class="cashier-guest-meta"><i class="fas fa-users"></i> ' + r.jumlah + ' orang &nbsp;&bull;&nbsp; ' + (r.tempat || '?') + '</div>' +
+              '<span class="payment-badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+            '</div>' +
+            '<div class="cashier-time-badge">' + r.jam + '</div>' +
+          '</div>' +
+
+          // BILLING
+          '<div class="cashier-billing">' +
+            '<div class="billing-item">' +
+              '<span class="billing-label">DP Masuk</span>' +
+              '<span class="billing-val dp-val">' + formatRupiah(calc.dp) + '</span>' +
+            '</div>' +
+            '<div class="billing-item">' +
+              '<span class="billing-label">Sub-Total</span>' +
+              '<span class="billing-val">' + (hasPrice ? formatRupiah(calc.subTotal) : '-') + '</span>' +
+            '</div>' +
+            '<div class="billing-item">' +
+              '<span class="billing-label">Total incl. PPN 10%</span>' +
+              '<span class="billing-val total-val">' + (hasPrice ? formatRupiah(calc.totalSetelahPajak) : '-') + '</span>' +
+            '</div>' +
+            '<div class="billing-item">' +
+              '<span class="billing-label">Sisa Tagihan</span>' +
+              '<span class="' + sisaClass + '">' + (hasPrice ? sisaText : '-') + '</span>' +
+            '</div>' +
+          '</div>' +
+
+          // MENU LIST
+          '<div class="cashier-menu-section">' +
+            '<span class="cashier-menu-label"><i class="fas fa-utensils"></i> Detail Pesanan</span>' +
+            '<div class="cashier-menu-list">' + menuListHtml + '</div>' +
+          '</div>' +
+
+          noPriceNote +
+          catatanHtml +
+
+        '</div>';
+    });
+
+    // Update summary cards
+    document.getElementById('cashierTotalDp').innerText    = formatRupiah(grandTotalDp);
+    document.getElementById('cashierTotalOmzet').innerText = formatRupiah(grandTotalOmzet);
+    document.getElementById('cashierTotalSisa').innerText  = formatRupiah(grandTotalSisa);
+  }
+
+  // ============================================================
+  // MODAL (COMPONENT DETAIL)
+  // ============================================================
+  function showComponentDetail(compName) {
+    const data = globalCompDetails[compName];
+    if (!data) return;
+    document.getElementById('modalTitle').innerText = compName;
+    const list = document.getElementById('detailList');
+    list.innerHTML = '';
+    data.items.sort((a, b) => a.jam.localeCompare(b.jam)).forEach(item => {
+      list.innerHTML +=
+        '<li class="detail-row">' +
+          '<div style="flex:1;">' +
+            '<span style="font-weight:600; display:block; font-size:0.95rem; color:var(--dark);">' + escapeHtml(item.nama) + '</span>' +
+            '<span style="font-size:0.8rem; color:#666; display:flex; align-items:center; gap:6px;">' +
+              '<i class="far fa-clock"></i> ' + item.jam + ' &bull; <span style="font-style:italic;">' + escapeHtml(item.sourceMenu) + '</span>' +
+            '</span>' +
+          '</div>' +
+          '<span style="font-weight:700; color:var(--primary-dark); font-size:1.1rem; background:#eee; padding:4px 10px; border-radius:6px;">' + item.qty + '</span>' +
+        '</li>';
+    });
+    document.getElementById('detailModal').classList.add('active');
+  }
+
+  function closeModal(e) {
+    if (e.target.classList.contains('modal-overlay')) document.getElementById('detailModal').classList.remove('active');
+  }
+  function closeModalBtn() { document.getElementById('detailModal').classList.remove('active'); }
+
+  // ============================================================
+  // NAV / FILTER / DATE
+  // ============================================================
+  function toggleFilter(type) {
+    currentFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if (type === 'all')   document.getElementById('btnAll').classList.add('active');
+    if (type === 'pagi')  document.getElementById('btnPagi').classList.add('active');
+    if (type === 'siang') document.getElementById('btnSiang').classList.add('active');
+    renderUI();
+  }
+
+  function switchTab(tab) {
+    // Reset semua tab button (hanya non-filter)
+    document.querySelectorAll('.nav-tabs .nav-btn').forEach(b => {
+      if (!b.classList.contains('filter-btn')) b.classList.remove('active');
+    });
+    // Aktifkan tab yang dipilih
+    const tabMap = { floor: 0, kitchen: 1, cashier: 2 };
+    const tabBtns = Array.from(document.querySelectorAll('.nav-tabs .nav-btn')).filter(b => !b.classList.contains('filter-btn'));
+    if (tabBtns[tabMap[tab]]) tabBtns[tabMap[tab]].classList.add('active');
+
+    document.querySelectorAll('.content-area').forEach(c => c.classList.remove('active'));
+    document.getElementById('view-' + tab).classList.add('active');
+  }
+
+  function renderDateScroller() {
+    const scroller = document.getElementById('dateScroller');
+    scroller.innerHTML = '';
+    const start = new Date(selectedDate);
+    start.setDate(selectedDate.getDate() - 2);
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const isSel = d.toDateString() === selectedDate.toDateString();
+      const pill = document.createElement('div');
+      pill.className = 'date-pill ' + (isSel ? 'active' : '');
+      pill.onclick = () => { selectedDate = d; renderDateScroller(); loadData(d); };
+      pill.innerHTML =
+        '<span class="day">' + d.toLocaleDateString('id-ID', { weekday: 'short' }) + '</span>' +
+        '<span class="num">' + d.getDate() + '</span>';
+      scroller.appendChild(pill);
+    }
+  }
+
+  function goToToday()        { selectedDate = new Date(); renderDateScroller(); loadData(selectedDate); }
+  function handleDateSelect(val) { if (val) { selectedDate = new Date(val); renderDateScroller(); loadData(selectedDate); } }
 </script>
 
 </body>
