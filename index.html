@@ -362,8 +362,14 @@
       <label>DP (Rupiah): <input type="number" id="dp" value="0" min="0" /></label>
       <label>Tipe Pembayaran DP: 
         <select id="tipeDp">
-          <option value="">- Tanpa DP -</option><option>Cash</option><option>QRIS</option><option>Transfer BCA</option><option>Transfer Mandiri</option><option>Transfer BRI</option>
-        </select>
+  <option value="">- Tanpa DP -</option>
+  <option>Cash</option>
+  <option>QRIS</option>
+  <option>Transfer BCA</option>
+  <option>Transfer Mandiri</option>
+  <option>Transfer BRI</option>
+  <option>Transfer BNI</option> <!-- TAMBAHKAN INI -->
+</select>
       </label>
       
       <label>Tempat: <select id="tempat" required onchange="updateCapacityInfo('reservation-form')"></select>
@@ -1050,7 +1056,14 @@
       
       // Populate Tipe DP
       const tipeDpSelect = editFormEl.querySelector('#tipeDp');
-      tipeDpSelect.innerHTML = `<option value="">- Tanpa DP -</option><option>Cash</option><option>QRIS</option><option>Transfer BCA</option><option>Transfer Mandiri</option><option>Transfer BRI</option>`;
+      tipeDpSelect.innerHTML = `
+  <option value="">- Tanpa DP -</option>
+  <option>Cash</option>
+  <option>QRIS</option>
+  <option>Transfer BCA</option>
+  <option>Transfer Mandiri</option>
+  <option>Transfer BRI</option>
+  <option>Transfer BNI</option>`; // TAMBAHKAN INI
       tipeDpSelect.value = res.tipeDp || '';
       
       // Populate Tempat
@@ -1970,7 +1983,15 @@
 
         if (!allReservationsCache) {
             try {
-                const snapshot = await db.collection('reservations').get();
+                const year = new Date().getFullYear();
+
+const startDate = `${year}-01-01`;
+const endDate = `${year}-12-31`;
+
+const snapshot = await db.collection('reservations')
+  .where('date', '>=', startDate)
+  .where('date', '<=', endDate)
+  .get();
                 allReservationsCache = snapshot.docs.map(doc => doc.data());
             } catch (e) { showToast("Gagal memuat data analisis.", "error"); return; }
         }
