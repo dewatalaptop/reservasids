@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Sistem Reservasi Dolan Sawah - V5.6</title>
+  <title>Sistem Reservasi Dolan Sawah - V5.7</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -318,16 +318,22 @@
       padding: 16px 18px 18px;
       padding-top: calc(14px + env(safe-area-inset-top));
       text-align: left;
+      overflow: visible; /* PENTING: overflow:hidden lama memotong dropdown notifikasi */
     }
     header h2 { font-size: 1.45rem; letter-spacing: .2px; }
     header small { font-size: .72rem; }
 
     /* Lonceng & logout tidak lagi tumpang tindih */
-    #notification-bell-container { right: 64px; }
+    #notification-bell-container {
+      right: 60px;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+    }
     #notification-bell-container .fa-bell { font-size: 1.4rem; }
     .notification-badge {
       width: 18px; height: 18px; font-size: .68rem;
-      top: -6px; right: -8px; border-width: 2px;
+      top: 1px; right: 1px; border-width: 2px;
     }
     #logout-button {
       top: calc(12px + env(safe-area-inset-top));
@@ -462,12 +468,15 @@
       #reservation-view-container { padding: 14px 12px !important; }
       #reservation-detail-list { grid-template-columns: 1fr !important; gap: 14px !important; }
 
-      /* Dropdown notifikasi memenuhi lebar layar dengan aman */
+      /* Dropdown notifikasi: JANGAN pakai position:fixed di sini —
+         induknya ber-transform sehingga 'fixed' jadi relatif ke induk (rusak).
+         Absolute + lebar viewport bekerja andal. */
       .notification-list-dropdown {
-        position: fixed;
-        top: calc(64px + env(safe-area-inset-top));
-        left: 10px; right: 10px;
-        width: auto; max-height: 62vh;
+        position: absolute;
+        top: calc(100% + 10px);
+        right: -48px; left: auto;
+        width: min(calc(100vw - 24px), 380px);
+        max-height: 62vh;
         border-radius: var(--radius);
       }
 
@@ -484,19 +493,56 @@
       button, .calendar-day { transition: none; }
       button:active { transform: none; }
     }
+
+    /* ==========================================================
+       V5.7 — PENGUATAN UI TAMBAHAN
+       ========================================================== */
+    /* Cegah geser horizontal tak sengaja */
+    body { overflow-x: hidden; }
+
+    /* Teks panjang (nama/nomor/catatan tanpa spasi) tidak menjebol kartu */
+    .reservation-item, .notification-item, .menu-item span,
+    .broadcast-customer-item .customer-info, .popup-form,
+    .history-item, .analysis-item {
+      overflow-wrap: anywhere;
+    }
+
+    /* Umpan balik sentuh yang bersih (tanpa kilat abu-abu default iOS/Android) */
+    * { -webkit-tap-highlight-color: transparent; }
+    .calendar-day:active { transform: scale(.96); }
+
+    /* Scroll halus khas iOS di area yang bisa digulir */
+    .popup-form, .notification-list-dropdown, .header-actions,
+    #menu-list-container, #location-list-container, #customer-list,
+    #broadcast-customer-list, .profile-history {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Perangkat sentuh: cegah warna :hover "nyangkut" setelah ditekan.
+       (Hover generik lama membuat SEMUA tombol berubah biru gelap,
+       dan di layar sentuh warna itu menempel sampai tap berikutnya.) */
+    @media (hover: none) {
+      button:hover { background-color: var(--primary); }
+      button.secondary:hover { background-color: #6c757d; }
+      button.danger:hover { background-color: var(--danger); }
+      button.whatsapp:hover { background-color: var(--whatsapp); }
+      button.accent:hover { background-color: var(--accent); }
+      button.info:hover { background-color: var(--info); }
+      .menu-selection-row .remove-btn:hover { background-color: var(--danger); }
+    }
   </style>
 </head>
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Versi 5.6 (UI Mobile Profesional)</small>
+    <small>Versi 5.7 (Perbaikan Notifikasi Mobile)</small>
 
     <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
       <i class="fas fa-bell"></i>
       <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
       <div id="notification-dropdown" class="notification-list-dropdown">
         <h4><i class="fas fa-bell"></i> Pengingat Ucapan Terima Kasih</h4>
-        <ul id="notification-list-ul"></ul>
+        <ul id="notification-list-ul"><li style="padding:15px;text-align:center;color:#888;">Memuat pengingat...</li></ul>
       </div>
     </div>
   </header>
@@ -1211,7 +1257,7 @@
         options.style.display = (options.style.display === 'block') ? 'none' : 'block';
     }
 
-    // Tutup dropdown sort & WhatsApp options saat klik di luar
+    // Tutup dropdown sort, WhatsApp options, & notifikasi saat klik di luar
     window.addEventListener('click', function(e) {
         document.querySelectorAll('.sort-options-container').forEach(container => {
             if (!container.contains(e.target)) {
@@ -1224,6 +1270,18 @@
                 if (opts) opts.style.display = 'none';
             }
         });
+        const bellContainer = document.getElementById('notification-bell-container');
+        if (bellContainer && !bellContainer.contains(e.target)) {
+            document.getElementById('notification-dropdown').style.display = 'none';
+        }
+    });
+
+    // Tap pada latar gelap menutup popup/bottom-sheet yang sedang terbuka
+    // (perilaku standar aplikasi mobile; data isian tetap tersimpan di form
+    // karena elemen hanya disembunyikan, tidak di-reset).
+    overlay.addEventListener('click', function() {
+        document.querySelectorAll('.popup-form').forEach(p => p.style.display = 'none');
+        overlay.style.display = 'none';
     });
 
     function sortReservations(sortBy) {
