@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Sistem Reservasi Dolan Sawah - V5.7</title>
+  <title>Sistem Reservasi Dolan Sawah - V5.8</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -318,26 +318,38 @@
       padding: 16px 18px 18px;
       padding-top: calc(14px + env(safe-area-inset-top));
       text-align: left;
-      overflow: visible; /* PENTING: overflow:hidden lama memotong dropdown notifikasi */
+      overflow: visible; /* overflow:hidden lama memotong dropdown notifikasi */
+      position: relative;
+      z-index: 900;      /* angkat header (beserta dropdown) di atas kalender */
     }
     header h2 { font-size: 1.45rem; letter-spacing: .2px; }
     header small { font-size: .72rem; }
+    header::after { z-index: 0; } /* garis gradien jangan menimpa dropdown */
 
-    /* Lonceng & logout tidak lagi tumpang tindih */
+    /* Lonceng & logout tidak lagi tumpang tindih.
+       PENTING: 'transform' menciptakan stacking context baru, membuat z-index
+       dropdown terkurung di dalam kotak lonceng sehingga kalah dari kalender.
+       Pemusatan vertikal diganti margin negatif (tinggi 44px → -22px). */
     #notification-bell-container {
       right: 60px;
+      top: 50%;
+      transform: none;
+      margin-top: -22px;
       width: 44px; height: 44px;
       display: flex; align-items: center; justify-content: center;
       border-radius: 50%;
+      z-index: 10;
     }
     #notification-bell-container .fa-bell { font-size: 1.4rem; }
     .notification-badge {
       width: 18px; height: 18px; font-size: .68rem;
       top: 1px; right: 1px; border-width: 2px;
     }
+    .notification-list-dropdown { z-index: 1600; }
     #logout-button {
       top: calc(12px + env(safe-area-inset-top));
       right: 12px;
+      z-index: 901; /* di atas konten, tapi di bawah overlay (999) & popup (1000) */
       width: 40px; height: 40px; padding: 0;
       justify-content: center; border-radius: 50%;
       font-size: 0; /* sembunyikan teks "Logout", sisakan ikon */
@@ -535,7 +547,7 @@
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Versi 5.7 (Perbaikan Notifikasi Mobile)</small>
+    <small>Versi 5.8 (Perbaikan Lapisan Notifikasi)</small>
 
     <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
       <i class="fas fa-bell"></i>
