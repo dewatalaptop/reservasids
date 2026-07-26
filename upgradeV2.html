@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Sistem Reservasi Dolan Sawah - V5.8</title>
+  <title>Sistem Reservasi Dolan Sawah - V5.9</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -547,7 +547,7 @@
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Versi 5.8 (Perbaikan Lapisan Notifikasi)</small>
+    <small>Versi 5.9 (Perbaikan Tombol Urutkan &amp; WhatsApp)</small>
 
     <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
       <i class="fas fa-bell"></i>
@@ -1255,10 +1255,48 @@
       updateReservationList(filtered);
     }
     
+    // Menghitung posisi dropdown sebagai position:fixed relatif ke tombol pemicunya.
+    // Kenapa perlu: dropdown yang position:absolute akan TERPOTONG oleh ancestor mana pun
+    // yang overflow-nya bukan 'visible' (mis. toolbar '.header-actions' yang overflow-x:auto
+    // agar bisa digeser di mobile — ini yang membuat tombol "Urutkan" terlihat tidak berfungsi,
+    // padahal dropdown-nya sebenarnya terbuka, hanya terpotong/tersembunyi).
+    // position:fixed dihitung lewat JS ini kebal terhadap masalah tersebut, SELAMA tidak ada
+    // ancestor yang memakai 'transform' (transform mengubah containing block elemen fixed).
+    function positionFloatingDropdown(dropdownEl, anchorEl) {
+        dropdownEl.style.visibility = 'hidden';
+        dropdownEl.style.display = 'block';
+        dropdownEl.style.position = 'fixed';
+
+        const rect = anchorEl.getBoundingClientRect();
+        const width = Math.min(300, window.innerWidth - 20);
+        dropdownEl.style.width = width + 'px';
+
+        const dropdownHeight = dropdownEl.offsetHeight;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const openUpward = spaceBelow < dropdownHeight + 16 && rect.top > dropdownHeight;
+
+        let left = rect.right - width; // rata kanan ke tombol
+        left = Math.max(10, Math.min(left, window.innerWidth - width - 10));
+        dropdownEl.style.left = left + 'px';
+
+        if (openUpward) {
+            dropdownEl.style.top = 'auto';
+            dropdownEl.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+        } else {
+            dropdownEl.style.top = (rect.bottom + 6) + 'px';
+            dropdownEl.style.bottom = 'auto';
+        }
+        dropdownEl.style.visibility = 'visible';
+    }
+
     function toggleDetailSort(event) {
         event.stopPropagation();
         const sortOptions = document.getElementById('sortOptionsDetail');
-        sortOptions.style.display = (sortOptions.style.display === 'block') ? 'none' : 'block';
+        if (sortOptions.style.display === 'block') {
+            sortOptions.style.display = 'none';
+        } else {
+            positionFloatingDropdown(sortOptions, event.currentTarget);
+        }
     }
 
     // Tombol "Bagikan WhatsApp" di halaman utama (sebelumnya fungsi ini tidak ada
@@ -1266,7 +1304,11 @@
     function toggleWhatsAppOptions(event) {
         event.stopPropagation();
         const options = document.getElementById('whatsappOptions');
-        options.style.display = (options.style.display === 'block') ? 'none' : 'block';
+        if (options.style.display === 'block') {
+            options.style.display = 'none';
+        } else {
+            positionFloatingDropdown(options, event.currentTarget);
+        }
     }
 
     // Tutup dropdown sort, WhatsApp options, & notifikasi saat klik di luar
