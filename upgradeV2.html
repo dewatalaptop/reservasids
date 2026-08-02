@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Sistem Reservasi Dolan Sawah - V5.9</title>
+  <title>Sistem Reservasi Dolan Sawah - V6.0</title>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -547,7 +547,7 @@
 <body>
   <header>
     <h2><i class="fas fa-leaf"></i> Sistem Reservasi Dolan Sawah</h2>
-    <small>Versi 5.9 (Perbaikan Tombol Urutkan &amp; WhatsApp)</small>
+    <small>Versi 6.0 (Perbaikan Tuntas Dropdown di Safari/iOS)</small>
 
     <div id="notification-bell-container" onclick="toggleNotificationDropdown(event)">
       <i class="fas fa-bell"></i>
@@ -1255,17 +1255,29 @@
       updateReservationList(filtered);
     }
     
-    // Menghitung posisi dropdown sebagai position:fixed relatif ke tombol pemicunya.
-    // Kenapa perlu: dropdown yang position:absolute akan TERPOTONG oleh ancestor mana pun
-    // yang overflow-nya bukan 'visible' (mis. toolbar '.header-actions' yang overflow-x:auto
-    // agar bisa digeser di mobile — ini yang membuat tombol "Urutkan" terlihat tidak berfungsi,
-    // padahal dropdown-nya sebenarnya terbuka, hanya terpotong/tersembunyi).
-    // position:fixed dihitung lewat JS ini kebal terhadap masalah tersebut, SELAMA tidak ada
-    // ancestor yang memakai 'transform' (transform mengubah containing block elemen fixed).
+    // Pindahkan elemen dropdown menjadi anak langsung <body> ("portal").
+    // INI PENYEBAB ASLI tombol "Urutkan" tetap tidak berfungsi di iPhone:
+    // WebKit/Safari punya bug lama — elemen position:fixed yang masih menjadi
+    // keturunan DOM dari kontainer ber-'-webkit-overflow-scrolling: touch'
+    // (dipakai di '.header-actions' agar toolbar bisa digeser mulus) TIDAK
+    // benar-benar lepas ke posisi layar; tetap terkurung/terpotong seolah
+    // masih 'absolute' di dalam kontainer itu. Chromium (dipakai untuk
+    // pengujian sebelumnya) tidak mereproduksi bug spesifik WebKit ini,
+    // sehingga lolos di simulasi tapi tetap gagal di Safari sungguhan.
+    // Memindahkan elemen keluar dari subtree tersebut menghilangkan masalah
+    // ini sepenuhnya, di semua browser — bukan cuma menghindarinya di satu kasus.
+    function escapeToBody(el) {
+        if (el.parentElement !== document.body) {
+            document.body.appendChild(el);
+        }
+    }
+
     function positionFloatingDropdown(dropdownEl, anchorEl) {
+        escapeToBody(dropdownEl);
         dropdownEl.style.visibility = 'hidden';
         dropdownEl.style.display = 'block';
         dropdownEl.style.position = 'fixed';
+        dropdownEl.style.zIndex = '950'; // di atas header (900), di bawah popup (1000)
 
         const rect = anchorEl.getBoundingClientRect();
         const width = Math.min(300, window.innerWidth - 20);
@@ -1311,22 +1323,25 @@
         }
     }
 
-    // Tutup dropdown sort, WhatsApp options, & notifikasi saat klik di luar
+    // Tutup dropdown sort, WhatsApp options, & notifikasi saat klik di luar.
+    // Memakai referensi elemen langsung (bukan container.querySelector) karena
+    // ketiga dropdown ini kini dipindah ke <body> saat dibuka (lihat escapeToBody
+    // di atas) — mereka tidak lagi berada di dalam kontainer/tombol pemicunya
+    // secara DOM, jadi deteksi "klik di luar" harus memeriksa dropdown itu sendiri.
     window.addEventListener('click', function(e) {
-        document.querySelectorAll('.sort-options-container').forEach(container => {
-            if (!container.contains(e.target)) {
-                container.querySelector('.sort-options').style.display = 'none';
-            }
-        });
-        document.querySelectorAll('.whatsapp-options-container').forEach(container => {
-            if (!container.contains(e.target)) {
-                const opts = container.querySelector('.whatsapp-options');
-                if (opts) opts.style.display = 'none';
-            }
-        });
+        const sortOptions = document.getElementById('sortOptionsDetail');
+        if (sortOptions && sortOptions.style.display === 'block' && !sortOptions.contains(e.target)) {
+            sortOptions.style.display = 'none';
+        }
+        const waOptions = document.getElementById('whatsappOptions');
+        if (waOptions && waOptions.style.display === 'block' && !waOptions.contains(e.target)) {
+            waOptions.style.display = 'none';
+        }
+        const notifDropdown = document.getElementById('notification-dropdown');
         const bellContainer = document.getElementById('notification-bell-container');
-        if (bellContainer && !bellContainer.contains(e.target)) {
-            document.getElementById('notification-dropdown').style.display = 'none';
+        if (notifDropdown && notifDropdown.style.display === 'block' &&
+            !notifDropdown.contains(e.target) && (!bellContainer || !bellContainer.contains(e.target))) {
+            notifDropdown.style.display = 'none';
         }
     });
 
@@ -2826,7 +2841,11 @@
     function toggleNotificationDropdown(e) { 
         e.stopPropagation(); 
         const d = document.getElementById('notification-dropdown'); 
-        d.style.display = d.style.display === 'block' ? 'none' : 'block'; 
+        if (d.style.display === 'block') {
+            d.style.display = 'none';
+        } else {
+            positionFloatingDropdown(d, document.getElementById('notification-bell-container'));
+        }
     }
     
     function sendThankYouWhatsApp(id, name, phone) { 
