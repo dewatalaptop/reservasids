@@ -624,27 +624,65 @@
   // ============================================================
   // EXTRA ORDERS FROM NOTES
   // ============================================================
+  // ✅ Deteksi "extra order" HANYA kalau ada kata kunci permintaan (tambah/extra/request/minta)
+  // di SEKITAR nama menu, bukan sekadar nama menu disebut di catatan (mis. komplain rasa,
+  // nomor meja, dll). Ini mencegah item palsu muncul di Floor/Dapur/Kasir.
+  const EXTRA_ACTION_WORDS    = ['tambah', 'extra', 'ekstra', 'request', 'minta', 'nambah'];
+  const EXTRA_NEGATION_WORDS  = ['tanpa', 'jangan', 'tidak', 'gak usah', 'ga usah', 'no '];
+  const EXTRA_PROXIMITY_CHARS = 40; // jarak maksimal (karakter) antara kata kunci aksi & nama menu
+
   function parseExtraOrdersFromNotes(noteText) {
     if (!noteText) return [];
     const detectedItems = [];
-    const lowerNote = noteText.toLowerCase();
-    const menuNames = Object.keys(menuDetailsCache);
+    const lowerNote = String(noteText).toLowerCase();
+    // ✅ Proses nama menu terpanjang dulu ("Nasi Goreng" sebelum "Nasi"), supaya menu
+    // spesifik tidak menghasilkan duplikat palsu dari menu generik yang jadi bagian katanya.
+    const menuNames = Object.keys(menuDetailsCache).sort((a, b) => b.length - a.length);
+    const claimedRanges = []; // rentang teks yang sudah "dimiliki" oleh match yang lebih spesifik
+    const isClaimed = (start, end) => claimedRanges.some(r => start < r.end && end > r.start);
 
     menuNames.forEach(menuName => {
-      const lowerMenu = menuName.toLowerCase();
-      if (lowerNote.includes(lowerMenu)) {
-        let quantity = 1;
-        const patternBefore = new RegExp('(\\d+)\\s+(?:porsi|buah|pcs)?\\s*' + escapeRegex(lowerMenu), 'i');
-        const patternAfter  = new RegExp(escapeRegex(lowerMenu) + '\\s+(?:sebagai|jadi)?\\s*(\\d+)', 'i');
-        const matchBefore = lowerNote.match(patternBefore);
-        const matchAfter  = lowerNote.match(patternAfter);
-        if (matchBefore) quantity = parseInt(matchBefore[1]);
-        else if (matchAfter) quantity = parseInt(matchAfter[1]);
+      const lowerMenu = menuName.toLowerCase().trim();
+      if (!lowerMenu) return;
 
-        const negativeCheck = new RegExp('(?:tanpa|no|jangan)\\s+' + escapeRegex(lowerMenu), 'i');
-        if (!negativeCheck.test(lowerNote)) {
+      // ✅ Batas kata (word boundary) supaya nama menu pendek ("Es", "Nasi") tidak
+      // salah cocok sebagai substring di dalam kata lain yang tidak berhubungan.
+      const boundaryRegex = new RegExp('\\b' + escapeRegex(lowerMenu) + '\\b', 'g');
+      let match;
+      while ((match = boundaryRegex.exec(lowerNote)) !== null) {
+        const idx      = match.index;
+        const matchEnd = idx + lowerMenu.length;
+        if (isClaimed(idx, matchEnd)) continue; // sudah tercakup nama menu yang lebih spesifik
+        claimedRanges.push({ start: idx, end: matchEnd });
+
+        const windowStart = Math.max(0, idx - EXTRA_PROXIMITY_CHARS);
+        const windowEnd   = Math.min(lowerNote.length, matchEnd + EXTRA_PROXIMITY_CHARS);
+        const window      = lowerNote.slice(windowStart, windowEnd);
+
+        // Wajib ada kata kunci permintaan di dekat nama menu, kalau tidak, lewati.
+        const hasActionWord = EXTRA_ACTION_WORDS.some(w => window.includes(w));
+        if (!hasActionWord) continue;
+
+        // Kalau ada kata negasi di sekitarnya, jangan anggap ini permintaan tambahan.
+        const hasNegation = EXTRA_NEGATION_WORDS.some(w => window.includes(w));
+        if (hasNegation) continue;
+
+        let quantity = 1;
+        // Angka SEBELUM nama menu ("tambah 2 nasi goreng") — cukup umum, tidak wajib ada satuan.
+        const patternBefore = new RegExp('(\\d{1,2})\\s+(?:porsi|buah|pcs)?\\s*' + escapeRegex(lowerMenu));
+        // Angka SETELAH nama menu wajib disertai satuan eksplisit, supaya nomor meja/jam/harga
+        // yang kebetulan ada di dekat nama menu tidak salah dibaca sebagai quantity.
+        const patternAfter  = new RegExp(escapeRegex(lowerMenu) + '\\s*(?:sebagai|jadi)?\\s*(\\d{1,2})\\s*(?:porsi|buah|pcs)\\b');
+        const matchBefore = window.match(patternBefore);
+        const matchAfter  = window.match(patternAfter);
+        if (matchBefore) quantity = parseInt(matchBefore[1]) || 1;
+        else if (matchAfter) quantity = parseInt(matchAfter[1]) || 1;
+        if (quantity < 1 || quantity > 20) quantity = 1; // batas wajar, tolak angka liar
+
+        if (!detectedItems.some(d => d.name === menuName)) {
           detectedItems.push({ name: menuName, quantity, isExtra: true });
         }
+        break; // satu deteksi per nama menu sudah cukup
       }
     });
     return detectedItems;
@@ -741,10 +779,18 @@
       .where('date', '==', dateStr)
       .onSnapshot(snap => {
         let temp = [];
-        snap.forEach(doc => temp.push({ id: doc.id, ...doc.data() }));
+        snap.forEach(doc => {
+          const d = doc.data();
+          // ✅ Default jam agar dokumen tanpa field 'jam' tidak meng-crash sort/render
+          temp.push({ id: doc.id, ...d, jam: d.jam || '00:00' });
+        });
         allReservations = temp.sort((a, b) => a.jam.localeCompare(b.jam));
-        renderUI();
-        document.getElementById('loader').style.display = 'none';
+        try {
+          renderUI();
+        } finally {
+          // ✅ Loader selalu ditutup walau renderUI() gagal, agar UI tidak macet selamanya
+          document.getElementById('loader').style.display = 'none';
+        }
       });
   }
 
@@ -792,12 +838,14 @@
       }
 
       let menuHtml = combinedMenus.map(item => {
-        totalItems += parseInt(item.quantity);
+        // ✅ Fallback ke 1 kalau quantity kosong/invalid, biar tidak jadi NaN dan meracuni totalItems
+        const qty = parseInt(item.quantity) || 1;
+        totalItems += qty;
         const details      = menuDetailsCache[item.name] || [];
         const detailString = details.length > 0 ? '<span class="menu-detail-text">• ' + details.join(', ') + '</span>' : '';
         const extraBadge   = item.isExtra ? '<span class="extra-detected">Extra (Catatan)</span>' : '';
         return '<div class="menu-row">' +
-          '<span class="menu-qty">' + item.quantity + '</span>' +
+          '<span class="menu-qty">' + qty + '</span>' +
           '<div class="menu-name">' + escapeHtml(item.name) + ' ' + extraBadge + detailString + '</div>' +
           '</div>';
       }).join('');
@@ -884,7 +932,8 @@
       };
 
       if (r.menus && r.menus.length) {
-        r.menus.forEach(item => processItem(item.name, parseInt(item.quantity), 'Menu Utama'));
+        // ✅ Fallback ke 1 kalau quantity kosong/invalid, biar agregasi tidak jadi NaN
+        r.menus.forEach(item => processItem(item.name, parseInt(item.quantity) || 1, 'Menu Utama'));
       } else if (r.menu) {
         processItem(r.menu, 1, 'Menu Utama');
       }
@@ -914,8 +963,11 @@
       let sourceText = 'Utk: ' + sourceArray.slice(0, 4).join(', ');
       if (sourceArray.length > 4) sourceText += ', dll';
 
+      // ✅ JSON.stringify menghasilkan literal string JS yang valid (aman utk apostrof/kutip),
+      // lalu di-escapeHtml lagi agar aman ditempel ke dalam atribut HTML onclick="..."
+      const compNameJs = escapeHtml(JSON.stringify(name));
       compCont.innerHTML +=
-        '<div class="prep-item clickable" onclick="showComponentDetail(\'' + escapeHtml(name) + '\')" style="cursor:pointer;">' +
+        '<div class="prep-item clickable" onclick="showComponentDetail(' + compNameJs + ')" style="cursor:pointer;">' +
           '<div class="prep-info">' +
             '<span class="prep-name"><i class="fas fa-search-plus" style="color:var(--primary); font-size:0.8rem; margin-right:4px;"></i> ' + escapeHtml(name) + '</span>' +
             '<span class="prep-sources">' + escapeHtml(sourceText) + '</span>' +
