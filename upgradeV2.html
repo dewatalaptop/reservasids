@@ -647,7 +647,16 @@
   <div id="locationManagementPopup" class="popup-form"></div>
   <div id="customerListPopup" class="popup-form"></div>
   <div id="analysisPopup" class="popup-form"></div>
-  
+
+  <div id="aiCheckPopup" class="popup-form" style="max-width: 550px;">
+    <h3><i class="fas fa-robot"></i> Asisten AI: Cek Kelengkapan Data</h3>
+    <div id="aiCheckContent"></div>
+    <div class="data-actions" style="margin-top: 20px;">
+        <button type="button" id="aiCheckSaveAnywayBtn" class="accent"><i class="fas fa-save"></i> Tetap Simpan</button>
+        <button type="button" class="secondary" onclick="closePopup('aiCheckPopup')"><i class="fas fa-arrow-left"></i> Perbaiki Dulu</button>
+    </div>
+  </div>
+
   <div id="exportDataPopup" class="popup-form">
     <h3><i class="fas fa-file-export"></i> Export Data ASCII untuk Viewer</h3>
     <p>Salin kode di bawah ini dan tempelkan ke dalam kolom import di website kalender viewer.</p>
@@ -1528,36 +1537,40 @@
 
     async function simpanReservasi() {
       const formData = await validateAndGetFormData('reservation-form');
-      
-      if (!formData || !tanggalDipilih) { 
-          if(!tanggalDipilih) showToast("Tanggal belum dipilih!", "error"); 
-          return; 
+
+      if (!formData || !tanggalDipilih) {
+          if(!tanggalDipilih) showToast("Tanggal belum dipilih!", "error");
+          return;
       };
-      
+
       const targetDate = `${currentYear}-${tanggalDipilih}`;
       const conflict = await checkAggregateConflict(formData.tempat, formData.jam, formData.jumlah, targetDate, null);
       if (conflict) {
           const lanjut = confirm(`Perhatian: Pada ${formatDateIndo(targetDate)} sekitar jam ${formData.jam} di "${formData.tempat}" sudah ada ${conflict.count} reservasi lain dengan total ${conflict.totalJumlah} orang, melebihi kapasitas tempat (${conflict.capacity} orang). Tetap simpan reservasi ini?`);
           if (!lanjut) return;
       }
-      
-      const data = { 
-          ...formData, 
-          date: targetDate, 
+
+      await runAiCompletenessCheck(formData, 'reservation-form', () => actuallySimpanReservasi(formData, targetDate));
+    }
+
+    async function actuallySimpanReservasi(formData, targetDate) {
+      const data = {
+          ...formData,
+          date: targetDate,
           thankYouSent: false,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
-      
+
       showLoader();
       try {
         await db.collection('reservations').add(data);
         showToast("Reservasi berhasil disimpan!");
-        closePopup('addFormPopup'); 
-      } catch (e) { 
+        closePopup('addFormPopup');
+      } catch (e) {
         console.error(e);
-        showToast("Gagal menyimpan reservasi", "error"); 
-      } finally { 
-        hideLoader(); 
+        showToast("Gagal menyimpan reservasi", "error");
+      } finally {
+        hideLoader();
       }
     }
     
@@ -1578,18 +1591,22 @@
       }
       
       const tanggalBerubah = resSebelum && resSebelum.date && resSebelum.date !== targetDate;
-      
+
+      await runAiCompletenessCheck(formData, 'edit-reservation-form', () => actuallySimpanPerubahanReservasi(id, formData, targetDate, tanggalBerubah));
+    }
+
+    async function actuallySimpanPerubahanReservasi(id, formData, targetDate, tanggalBerubah) {
       showLoader();
       try {
         await db.collection('reservations').doc(id).update(formData);
-        showToast(tanggalBerubah 
-            ? `Reservasi dipindahkan ke ${formatDateIndo(targetDate)}` 
+        showToast(tanggalBerubah
+            ? `Reservasi dipindahkan ke ${formatDateIndo(targetDate)}`
             : "Perubahan berhasil disimpan");
         closePopup('editFormPopup');
-      } catch (e) { 
-        showToast("Gagal menyimpan perubahan", "error"); 
-      } finally { 
-        hideLoader(); 
+      } catch (e) {
+        showToast("Gagal menyimpan perubahan", "error");
+      } finally {
+        hideLoader();
       }
     }
 
@@ -1604,6 +1621,104 @@
       } finally { 
           hideLoader(); 
       }
+    }
+
+    // =========================================
+    // ASISTEN AI: CEK KELENGKAPAN DATA RESERVASI
+    // =========================================
+    // Dipanggil sebelum menyimpan (tambah/edit). Cloud Function melakukan
+    // 2 lapis pemeriksaan: rule-based (field wajib) + AI (baca teks bebas
+    // "Request Tambahan" untuk mendeteksi item yang kemungkinan berbayar
+    // tapi belum masuk ke paket menu terstruktur). Sifatnya HANYA peringatan
+    // -- kalau AI gagal/timeout, staf tetap bisa lanjut simpan (fail-open),
+    // supaya fitur ini tidak pernah jadi penghalang kerja operasional.
+    const AI_FUNCTIONS_BASE_URL = 'https://asia-southeast2-reservasi-dolan-sawah.cloudfunctions.net';
+    let pendingAiCheckSaveCallback = null;
+
+    function getCapacityForLocationName(name) {
+        const key = Object.keys(locationsData).find(k => locationsData[k].name === name);
+        return key ? locationsData[key].capacity : null;
+    }
+
+    async function callAiFunction(functionName, payload) {
+        const user = auth.currentUser;
+        if (!user) throw new Error('Belum login');
+        const token = await user.getIdToken();
+        const res = await fetch(`${AI_FUNCTIONS_BASE_URL}/${functionName}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`AI function gagal (${res.status})`);
+        return res.json();
+    }
+
+    async function runAiCompletenessCheck(formData, formId, saveCallback) {
+        let result;
+        try {
+            result = await callAiFunction('checkReservationCompleteness', {
+                reservation: formData,
+                capacity: getCapacityForLocationName(formData.tempat),
+                knownMenuNames: Object.keys(detailMenu)
+            });
+        } catch (e) {
+            console.warn('Pengecekan AI tidak tersedia, lanjut simpan tanpa peringatan:', e);
+            saveCallback();
+            return;
+        }
+
+        const ruleFlags = result.ruleFlags || [];
+        const aiItems = (result.tambahanAnalysis && result.tambahanAnalysis.items) || [];
+
+        if (ruleFlags.length === 0 && aiItems.length === 0) {
+            saveCallback();
+            return;
+        }
+
+        showAiCheckPopup(ruleFlags, aiItems, formId, saveCallback);
+    }
+
+    function showAiCheckPopup(ruleFlags, aiItems, formId, saveCallback) {
+        pendingAiCheckSaveCallback = saveCallback;
+        const content = document.getElementById('aiCheckContent');
+
+        let html = '';
+        if (ruleFlags.length > 0) {
+            html += `<h4 style="margin-bottom:8px;"><i class="fas fa-exclamation-triangle"></i> Data Kurang Lengkap</h4><ul class="analysis-list">`;
+            html += ruleFlags.map(f => `<li class="analysis-item" style="display:block;">${escapeHtml(f.message)}</li>`).join('');
+            html += `</ul>`;
+        }
+        if (aiItems.length > 0) {
+            html += `<h4 style="margin:15px 0 8px;"><i class="fas fa-comment-dots"></i> Kemungkinan Menu Tambahan Belum Dihitung</h4>`;
+            html += aiItems.map((item, idx) => `
+                <div class="broadcast-customer-item">
+                    <div class="customer-info">
+                        "${escapeHtml(item.mentionedText || '')}"
+                        <small>${escapeHtml(item.note || '')}</small>
+                    </div>
+                    ${item.possibleMatch ? `<button type="button" class="broadcast-btn" onclick="addSuggestedMenuFromAi('${escapeForJsAttr(formId)}', '${escapeForJsAttr(item.possibleMatch)}')"><i class="fas fa-plus"></i> Tambah "${escapeHtml(item.possibleMatch)}"</button>` : `<small style="color:#888;">Menu tidak dikenali</small>`}
+                </div>`).join('');
+        }
+        content.innerHTML = html || '<p>Tidak ada catatan.</p>';
+
+        document.getElementById('aiCheckSaveAnywayBtn').onclick = () => {
+            closePopup('aiCheckPopup');
+            if (pendingAiCheckSaveCallback) pendingAiCheckSaveCallback();
+        };
+
+        document.getElementById('aiCheckPopup').style.display = 'block';
+        overlay.style.display = 'block';
+    }
+
+    // Dipanggil dari tombol "+ Tambah menu" di popup AI. Menambahkan baris
+    // paket menu ke form yang MASIH TERBUKA di baliknya, supaya staf tinggal
+    // cek jumlah lalu klik Simpan lagi seperti biasa (bukan flow terpisah).
+    function addSuggestedMenuFromAi(formId, menuName) {
+        addMenuSelectionRow(formId, menuName, 1);
+        closePopup('aiCheckPopup');
+        document.getElementById(formId === 'reservation-form' ? 'addFormPopup' : 'editFormPopup').style.display = 'block';
+        overlay.style.display = 'block';
+        showToast(`Menu "${menuName}" ditambahkan. Cek jumlahnya lalu simpan lagi.`, 'info');
     }
 
     // --- FORM VALIDATION ---
