@@ -184,9 +184,32 @@
     .menu-selection-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
     .menu-selection-row .menu-select { flex: 3; }
     .menu-selection-row .quantity-input { flex: 1; }
+    .menu-selection-row .menu-name-input { flex: 3; }
+    .menu-selection-row .price-input { flex: 1.3; }
     .menu-selection-row .remove-btn { flex: 0 0 auto; background-color: var(--danger); padding: 8px 12px; margin-top: 0; }
     #add-menu-btn { margin-top: 5px; margin-bottom: 15px; padding: 8px 15px; font-size: 0.9rem; }
     #capacity-info { font-size: 0.8rem; color: #555; display: block; margin-top: 4px; font-weight: 400; }
+
+    /* Progress bar saat asisten AI menganalisa reservasi */
+    #aiLoadingOverlay .ai-loading-box {
+        background: white; padding: 30px; border-radius: 12px; text-align: center; min-width: 280px; max-width: 90%;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    #aiLoadingOverlay .ai-loading-box i { font-size: 2rem; color: var(--primary); margin-bottom: 15px; }
+    #aiLoadingOverlay .ai-loading-box p { margin-bottom: 15px; font-weight: 500; color: var(--primary-dark); }
+    .ai-progress-track { background: #eee; border-radius: 10px; overflow: hidden; height: 10px; }
+    .ai-progress-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.2s ease; }
+    #aiProgressText { margin-top: 8px; font-size: 0.85rem; color: #666; }
+
+    /* Mini-form harga/jumlah per item di dalam popup Asisten AI */
+    .ai-item-card { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; }
+    .ai-item-card:last-child { border-bottom: none; }
+    .ai-item-card .mentioned-text { font-size: 0.95rem; }
+    .ai-item-card .mentioned-text small { display: block; color: #6c757d; font-size: 0.8rem; margin-top: 2px; }
+    .ai-item-inputs { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+    .ai-item-inputs input { margin-top: 0; padding: 8px; width: auto; flex: 1 1 90px; }
+    .ai-item-inputs button { margin-top: 0; padding: 8px 14px; font-size: 0.85rem; white-space: nowrap; }
+    .ai-item-inputs .ai-item-matched-label { flex: 2 1 140px; font-size: 0.85rem; color: #555; }
 
     #customer-profile-view { padding: 10px; }
     #customer-profile-view h4 { font-size: 1.3rem; margin-bottom: 15px; color: var(--primary-dark); }
@@ -560,6 +583,15 @@
   </header>
   
   <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
+
+  <div class="loading-overlay" id="aiLoadingOverlay" style="z-index: 2001;">
+    <div class="ai-loading-box">
+      <i class="fas fa-robot"></i>
+      <p>Asisten AI sedang memeriksa reservasi...</p>
+      <div class="ai-progress-track"><div class="ai-progress-fill" id="aiProgressFill"></div></div>
+      <p id="aiProgressText">0%</p>
+    </div>
+  </div>
   <div class="toast" id="toast"></div>
   
   <div id="login-container">
@@ -1471,7 +1503,17 @@
       const menuContainer = editFormEl.querySelector('#selected-menus-container');
       menuContainer.innerHTML = '';
       if (Array.isArray(res.menus) && res.menus.length > 0) {
-        res.menus.forEach(item => addMenuSelectionRow('edit-reservation-form', item.name, item.quantity));
+        res.menus.forEach(item => {
+          // Menu yang masih ada di master: pakai baris select biasa (harga selalu
+          // ikut harga TERKINI, sesuai perilaku lama). Item custom/menu yang sudah
+          // dihapus dari master: pakai baris custom supaya harga yang TERSIMPAN
+          // tidak diam-diam jadi Rp0 saat form ini disimpan ulang.
+          if (detailMenu.hasOwnProperty(item.name)) {
+            addMenuSelectionRow('edit-reservation-form', item.name, item.quantity);
+          } else {
+            addCustomMenuRow('edit-reservation-form', item.name, item.quantity, item.price || 0);
+          }
+        });
       } else if (res.menu) {
         addMenuSelectionRow('edit-reservation-form', res.menu, 1);
       } else {
@@ -1634,6 +1676,8 @@
     // supaya fitur ini tidak pernah jadi penghalang kerja operasional.
     const AI_FUNCTIONS_BASE_URL = 'https://asia-southeast2-reservasi-dolan-sawah.cloudfunctions.net';
     let pendingAiCheckSaveCallback = null;
+    let pendingAiItems = [];
+    let pendingAiFormId = null;
 
     function getCapacityForLocationName(name) {
         const key = Object.keys(locationsData).find(k => locationsData[k].name === name);
@@ -1653,7 +1697,38 @@
         return res.json();
     }
 
+    // --- Progress bar simulasi saat AI menganalisa ---
+    // Cloud Function bukan API streaming, jadi durasi asli tidak bisa dipantau
+    // real-time. Progress ini estimasi (mengisi cepat lalu melambat mendekati
+    // 90%, baru lompat ke 100% saat jawaban benar-benar sudah datang) supaya
+    // staf tetap dapat gambaran progres, bukan angka pasti per token.
+    let aiProgressInterval = null;
+    let aiProgressValue = 0;
+
+    function showAiLoadingProgress() {
+        aiProgressValue = 0;
+        document.getElementById('aiProgressFill').style.width = '0%';
+        document.getElementById('aiProgressText').textContent = '0%';
+        document.getElementById('aiLoadingOverlay').style.display = 'flex';
+        if (aiProgressInterval) clearInterval(aiProgressInterval);
+        aiProgressInterval = setInterval(() => {
+            const remaining = 90 - aiProgressValue;
+            aiProgressValue += Math.max(remaining * 0.08, 0.3);
+            if (aiProgressValue > 90) aiProgressValue = 90;
+            document.getElementById('aiProgressFill').style.width = aiProgressValue + '%';
+            document.getElementById('aiProgressText').textContent = Math.round(aiProgressValue) + '%';
+        }, 200);
+    }
+
+    function hideAiLoadingProgress() {
+        if (aiProgressInterval) { clearInterval(aiProgressInterval); aiProgressInterval = null; }
+        document.getElementById('aiProgressFill').style.width = '100%';
+        document.getElementById('aiProgressText').textContent = '100%';
+        setTimeout(() => { document.getElementById('aiLoadingOverlay').style.display = 'none'; }, 250);
+    }
+
     async function runAiCompletenessCheck(formData, formId, saveCallback) {
+        showAiLoadingProgress();
         let result;
         try {
             result = await callAiFunction('checkReservationCompleteness', {
@@ -1663,9 +1738,11 @@
             });
         } catch (e) {
             console.warn('Pengecekan AI tidak tersedia, lanjut simpan tanpa peringatan:', e);
+            hideAiLoadingProgress();
             saveCallback();
             return;
         }
+        hideAiLoadingProgress();
 
         const ruleFlags = result.ruleFlags || [];
         const aiItems = (result.tambahanAnalysis && result.tambahanAnalysis.items) || [];
@@ -1680,6 +1757,8 @@
 
     function showAiCheckPopup(ruleFlags, aiItems, formId, saveCallback) {
         pendingAiCheckSaveCallback = saveCallback;
+        pendingAiItems = aiItems;
+        pendingAiFormId = formId;
         const content = document.getElementById('aiCheckContent');
 
         let html = '';
@@ -1690,14 +1769,24 @@
         }
         if (aiItems.length > 0) {
             html += `<h4 style="margin:15px 0 8px;"><i class="fas fa-comment-dots"></i> Kemungkinan Menu Tambahan Belum Dihitung</h4>`;
-            html += aiItems.map((item, idx) => `
-                <div class="broadcast-customer-item">
-                    <div class="customer-info">
+            html += aiItems.map((item, idx) => {
+                const qty = parseInt(item.suggestedQuantity) > 0 ? parseInt(item.suggestedQuantity) : 1;
+                const matchedPrice = item.possibleMatch ? (menuPrices[item.possibleMatch] || 0) : 0;
+                return `
+                <div class="ai-item-card">
+                    <div class="mentioned-text">
                         "${escapeHtml(item.mentionedText || '')}"
                         <small>${escapeHtml(item.note || '')}</small>
                     </div>
-                    ${item.possibleMatch ? `<button type="button" class="broadcast-btn" onclick="addSuggestedMenuFromAi('${escapeForJsAttr(formId)}', '${escapeForJsAttr(item.possibleMatch)}')"><i class="fas fa-plus"></i> Tambah "${escapeHtml(item.possibleMatch)}"</button>` : `<small style="color:#888;">Menu tidak dikenali</small>`}
-                </div>`).join('');
+                    <div class="ai-item-inputs">
+                        <input type="number" id="ai-item-${idx}-qty" value="${qty}" min="1" placeholder="Jml">
+                        ${item.possibleMatch
+                            ? `<span class="ai-item-matched-label">x Rp${formatRupiah(matchedPrice)} (${escapeHtml(item.possibleMatch)})</span>`
+                            : `<input type="number" id="ai-item-${idx}-price" min="0" placeholder="Harga satuan (Rp)">`}
+                        <button type="button" onclick="addAiItemToForm(${idx})"><i class="fas fa-plus"></i> Tambahkan</button>
+                    </div>
+                </div>`;
+            }).join('');
         }
         content.innerHTML = html || '<p>Tidak ada catatan.</p>';
 
@@ -1710,15 +1799,36 @@
         overlay.style.display = 'block';
     }
 
-    // Dipanggil dari tombol "+ Tambah menu" di popup AI. Menambahkan baris
-    // paket menu ke form yang MASIH TERBUKA di baliknya, supaya staf tinggal
-    // cek jumlah lalu klik Simpan lagi seperti biasa (bukan flow terpisah).
-    function addSuggestedMenuFromAi(formId, menuName) {
-        addMenuSelectionRow(formId, menuName, 1);
+    // Dipanggil dari tombol "Tambahkan" per item di popup AI. Kalau item cocok
+    // dengan menu asli (possibleMatch), harga ikut menu tsb & hanya jumlah yang
+    // dipakai dari input. Kalau tidak cocok, staf mengisi harga manual di situ
+    // juga -- item custom ini tetap ikut terhitung ke orderTotal saat disimpan
+    // (lihat baris .custom-menu-row di validateAndGetFormData).
+    function addAiItemToForm(idx) {
+        const item = pendingAiItems[idx];
+        const formId = pendingAiFormId;
+        if (!item || !formId) return;
+
+        const qtyInput = document.getElementById(`ai-item-${idx}-qty`);
+        const quantity = parseInt(qtyInput.value) || 1;
+
+        if (item.possibleMatch) {
+            addMenuSelectionRow(formId, item.possibleMatch, quantity);
+        } else {
+            const priceInput = document.getElementById(`ai-item-${idx}-price`);
+            const price = parseInt(priceInput.value) || 0;
+            if (price <= 0) {
+                priceInput.classList.add('invalid');
+                showToast('Isi harga satuan dulu sebelum menambahkan.', 'error');
+                return;
+            }
+            addCustomMenuRow(formId, item.mentionedText, quantity, price);
+        }
+
         closePopup('aiCheckPopup');
         document.getElementById(formId === 'reservation-form' ? 'addFormPopup' : 'editFormPopup').style.display = 'block';
         overlay.style.display = 'block';
-        showToast(`Menu "${menuName}" ditambahkan. Cek jumlahnya lalu simpan lagi.`, 'info');
+        showToast(`Item ditambahkan. Cek lagi lalu simpan.`, 'info');
     }
 
     // --- FORM VALIDATION ---
@@ -1795,32 +1905,48 @@
         }
         
         menuRows.forEach(row => {
-            const menuSelect = row.querySelector('select');
-            const quantityInput = row.querySelector('input');
-            const menuName = menuSelect.value;
+            const isCustom = row.classList.contains('custom-menu-row');
+            const quantityInput = row.querySelector('.quantity-input');
             const quantity = parseInt(quantityInput.value);
-            
-            if (!menuName) { 
-                getErrorEl('menus').textContent = 'Semua paket menu harus dipilih.'; 
-                menuSelect.classList.add('invalid'); 
-                isValid = false; 
+
+            let menuName, price;
+            if (isCustom) {
+                // Item custom dari Asisten AI (harga diisi manual, bukan dari master menu).
+                const nameInput = row.querySelector('.menu-name-input');
+                const priceInput = row.querySelector('.price-input');
+                menuName = nameInput.value.trim();
+                price = parseInt(priceInput.value) || 0;
+                if (!menuName) {
+                    getErrorEl('menus').textContent = 'Nama item custom wajib diisi.';
+                    nameInput.classList.add('invalid');
+                    isValid = false;
+                }
+            } else {
+                const menuSelect = row.querySelector('.menu-select');
+                menuName = menuSelect.value;
+                // Simpan harga saat ini (snapshot) agar nilai pesanan tetap akurat
+                // secara historis meskipun harga menu diubah di kemudian hari.
+                price = menuPrices[menuName] || 0;
+                if (!menuName) {
+                    getErrorEl('menus').textContent = 'Semua paket menu harus dipilih.';
+                    menuSelect.classList.add('invalid');
+                    isValid = false;
+                }
             }
-            if (isNaN(quantity) || quantity < 1) { 
-                getErrorEl('menus').textContent = 'Jumlah menu minimal 1.'; 
-                quantityInput.classList.add('invalid'); 
-                isValid = false; 
+
+            if (isNaN(quantity) || quantity < 1) {
+                getErrorEl('menus').textContent = 'Jumlah menu minimal 1.';
+                quantityInput.classList.add('invalid');
+                isValid = false;
             }
             // Cek Duplikat
-            if (selectedMenuNames.has(menuName)) { 
-                getErrorEl('menus').textContent = 'Tidak boleh ada paket menu yang sama.'; 
-                menuSelect.classList.add('invalid'); 
-                isValid = false; 
+            if (menuName && selectedMenuNames.has(menuName)) {
+                getErrorEl('menus').textContent = 'Tidak boleh ada paket menu yang sama.';
+                isValid = false;
             }
-            
+
             if(menuName) selectedMenuNames.add(menuName);
-            // Simpan harga saat ini (snapshot) agar nilai pesanan tetap akurat
-            // secara historis meskipun harga menu diubah di kemudian hari.
-            if(menuName && quantity > 0) menus.push({ name: menuName, quantity: quantity, price: menuPrices[menuName] || 0 });
+            if(menuName && quantity > 0) menus.push({ name: menuName, quantity: quantity, price: price });
         });
         
         if (!isValid) return null;
@@ -1880,7 +2006,25 @@
       
       container.appendChild(newRow);
     }
-    
+
+    // Baris item custom (nama+harga bebas, bukan dari master menu). Dipakai
+    // saat Asisten AI menemukan item di "Request Tambahan" yang tidak cocok
+    // dengan menu manapun, supaya tetap bisa dihitung ke orderTotal tanpa
+    // harus dibuatkan menu permanen dulu di "Kelola Menu".
+    function addCustomMenuRow(formId, name = '', quantity = 1, price = 0) {
+      const container = document.querySelector(`#${formId} #selected-menus-container`);
+      const newRow = document.createElement('div');
+      newRow.className = 'menu-selection-row custom-menu-row';
+      newRow.innerHTML = `
+        <input type="text" class="menu-name-input" value="${escapeHtml(name)}" placeholder="Nama item custom">
+        <input type="number" class="quantity-input" value="${quantity}" min="1" placeholder="Jml">
+        <input type="number" class="price-input" value="${price}" min="0" placeholder="Harga satuan (Rp)">
+        <button type="button" class="remove-btn" onclick="this.parentElement.remove()">
+            <i class="fas fa-trash-alt"></i>
+        </button>`;
+      container.appendChild(newRow);
+    }
+
     function populateLocationDropdown(selectElement, selectedValue = '') {
         if (!selectElement) return;
         selectElement.innerHTML = '<option value="">Pilih Tempat...</option>';

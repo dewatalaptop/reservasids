@@ -38,16 +38,21 @@ const secretCache = {};
 
 async function getSharedSecret(name) {
   if (secretCache[name]) return secretCache[name];
-  const [version] = await secretClient.accessSecretVersion({
-    name: `projects/${SHARED_SECRETS_PROJECT}/secrets/${name}/versions/latest`
-  });
-  const value = version.payload.data.toString("utf8");
-  secretCache[name] = value;
-  return value;
+  try {
+    const [version] = await secretClient.accessSecretVersion({
+      name: `projects/${SHARED_SECRETS_PROJECT}/secrets/${name}/versions/latest`
+    });
+    const value = version.payload.data.toString("utf8");
+    secretCache[name] = value;
+    return value;
+  } catch (err) {
+    logger.error(`getSharedSecret(${name}) gagal mengambil dari project ${SHARED_SECRETS_PROJECT}:`, err.message);
+    throw err;
+  }
 }
 
 const ZAI_FALLBACK_MODEL = "glm-4.5-flash";
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-3.6-flash";
 
 async function callGemini(body) {
   const apiKey = await getSharedSecret("GEMINI_API_KEY");
@@ -82,7 +87,12 @@ async function callAiWithFallback(body) {
     logger.warn(`AI proxy: Gemini gagal (${geminiRes.status}), coba fallback ke z.ai.`);
     const zaiRes = await callZai(body);
     const zaiData = await zaiRes.json();
+    if (!zaiRes.ok) logger.error(`AI proxy: z.ai juga gagal (${zaiRes.status}):`, JSON.stringify(zaiData));
     return { ok: zaiRes.ok, status: zaiRes.status, data: zaiData };
+  }
+  if (!geminiRes.ok) {
+    const errText = await geminiRes.clone().text();
+    logger.error(`AI proxy: Gemini gagal (${geminiRes.status}), TIDAK fallback (bukan 429/5xx):`, errText);
   }
   const data = await geminiRes.json();
   return { ok: geminiRes.ok, status: geminiRes.status, data };
@@ -207,7 +217,7 @@ Daftar nama menu yang SAH ada di sistem (cocokkan ke sini kalau relevan): ${JSON
 Menu yang SUDAH dipilih di reservasi ini: ${JSON.stringify(selectedMenuNames)}
 
 Balas HANYA dengan JSON valid, tanpa markdown, format persis:
-{"items": [{"mentionedText": "kutipan singkat dari catatan", "possibleMatch": "nama menu dari daftar sah jika cocok, atau null", "note": "penjelasan singkat kenapa ini perlu dicek staf"}]}
+{"items": [{"mentionedText": "kutipan singkat dari catatan", "possibleMatch": "nama menu dari daftar sah jika cocok, atau null", "suggestedQuantity": angka jumlah yang disebutkan di catatan (mis. "kerupuk 20pcs" -> 20, "es teh 5 gelas" -> 5), atau null kalau tidak disebutkan, "note": "penjelasan singkat kenapa ini perlu dicek staf"}]}
 Kalau catatan hanya berisi permintaan non-berbayar (misal: "tolong tidak pedas", "dekat pintu masuk", "request ulang tahun tanpa tambahan barang"), balas {"items": []}.
 Jangan mengarang menu yang tidak ada di daftar sah. Kalau tidak yakin ada di daftar, isi possibleMatch: null.`;
 
