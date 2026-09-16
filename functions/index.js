@@ -5,7 +5,17 @@ const { SecretManagerServiceClient } = require("@google-cloud/secret-manager");
 
 admin.initializeApp();
 
-const ALLOWED_ORIGINS = ["https://dewatalaptop.github.io", /^http:\/\/localhost:\d+$/];
+// dewatalaptop.github.io -> app reservasids (kalender admin). www/apex
+// dolansawah.my.id -> dashboard admin (dolansawahhomepage), custom domain
+// via CNAME tapi tetap dilayani GitHub Pages sehingga github.io-nya juga
+// bisa diakses langsung -- keduanya diizinkan supaya tidak putus kalau
+// diakses lewat salah satu.
+const ALLOWED_ORIGINS = [
+  "https://dewatalaptop.github.io",
+  "https://www.dolansawah.my.id",
+  "https://dolansawah.my.id",
+  /^http:\/\/localhost:\d+$/
+];
 const REGION = "asia-southeast2";
 
 async function verifyFirebaseAuth(req) {
