@@ -288,7 +288,11 @@ Jangan mengarang menu yang tidak ada di daftar sah. Kalau tidak yakin ada di daf
 exports.checkReservationCompleteness = onRequest(
   {
     region: REGION,
-    cors: ALLOWED_ORIGINS
+    cors: ALLOWED_ORIGINS,
+    // Selalu ada 1 instance siaga supaya tidak pernah kena cold start (yang
+    // sebelumnya jadi sumber lambat utama saat fungsi ini jarang dipanggil).
+    // Konsekuensinya: biaya bulanan kecil untuk instance yang idle ini.
+    minInstances: 1
   },
   async (req, res) => {
     if (req.method !== "POST") {
