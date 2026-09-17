@@ -1727,13 +1727,49 @@
         setTimeout(() => { document.getElementById('aiLoadingOverlay').style.display = 'none'; }, 250);
     }
 
+    // Sama persis dengan buildRuleFlags di functions/index.js -- dihitung DUA
+    // KALI (di sini & di server) supaya sisi klien bisa langsung tahu hasilnya
+    // tanpa nunggu jaringan sama sekali kalau ternyata tidak perlu panggil AI
+    // (lihat runAiCompletenessCheck: baru hubungi server kalau ada catatan
+    // yang perlu dianalisis).
+    function buildRuleFlagsClient(reservation, capacity) {
+        const flags = [];
+        const r = reservation || {};
+        if (!r.nomorHp) {
+            flags.push({ field: 'nomorHp', severity: 'warning', message: 'Nomor HP kosong -- tidak bisa kirim konfirmasi/ucapan terima kasih via WhatsApp.' });
+        }
+        if ((r.dp || 0) > 0 && !r.tipeDp) {
+            flags.push({ field: 'tipeDp', severity: 'warning', message: 'DP diisi tapi tipe pembayaran DP belum dipilih.' });
+        }
+        if (!Array.isArray(r.menus) || r.menus.length === 0) {
+            flags.push({ field: 'menus', severity: 'warning', message: 'Belum ada paket menu dipilih -- estimasi total akan Rp0.' });
+        }
+        if (typeof capacity === 'number' && r.jumlah && r.jumlah > capacity) {
+            flags.push({ field: 'jumlah', severity: 'warning', message: `Jumlah peserta (${r.jumlah}) melebihi kapasitas tempat (${capacity} orang).` });
+        }
+        return flags;
+    }
+
     async function runAiCompletenessCheck(formData, formId, saveCallback) {
+        const capacity = getCapacityForLocationName(formData.tempat);
+        const ruleFlags = buildRuleFlagsClient(formData, capacity);
+        const note = (formData.tambahan || '').trim();
+
+        // Tidak ada catatan untuk dianalisis -> tidak perlu hubungi server sama
+        // sekali. Ini kasus paling sering (banyak reservasi tanpa catatan
+        // khusus) dan sebelumnya tetap menunggu jaringan+cold start percuma.
+        if (!note) {
+            if (ruleFlags.length === 0) { saveCallback(); return; }
+            showAiCheckPopup(ruleFlags, [], formId, saveCallback);
+            return;
+        }
+
         showAiLoadingProgress();
         let result;
         try {
             result = await callAiFunction('checkReservationCompleteness', {
                 reservation: formData,
-                capacity: getCapacityForLocationName(formData.tempat),
+                capacity,
                 knownMenuNames: Object.keys(detailMenu)
             });
         } catch (e) {
@@ -1744,7 +1780,6 @@
         }
         hideAiLoadingProgress();
 
-        const ruleFlags = result.ruleFlags || [];
         const aiItems = (result.tambahanAnalysis && result.tambahanAnalysis.items) || [];
 
         if (ruleFlags.length === 0 && aiItems.length === 0) {

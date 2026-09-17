@@ -214,10 +214,34 @@ function extractJsonFromAiText(text) {
   }
 }
 
+// Cache in-memory per instance warm (bukan lintas instance/persisten) --
+// kalau catatan+konteks menu yang SAMA persis dicek ulang dalam waktu dekat
+// (mis. admin klik Chat lalu langsung Terima pada request yang sama), jawaban
+// lama dipakai lagi tanpa memanggil Gemini/z.ai ulang. TTL pendek supaya tidak
+// menyembunyikan perubahan harga/menu master yang baru saja di-update admin.
+const aiResultCache = new Map();
+const AI_CACHE_TTL_MS = 5 * 60 * 1000;
+const AI_CACHE_MAX_ENTRIES = 200;
+
+function buildAiCacheKey(tambahan, knownMenuNames, selectedMenuNames) {
+  return JSON.stringify([
+    tambahan,
+    (knownMenuNames || []).slice().sort(),
+    (selectedMenuNames || []).slice().sort()
+  ]);
+}
+
 async function analyzeTambahanWithAi({ tambahan, knownMenuNames, existingMenus }) {
   if (!tambahan || !tambahan.trim()) return { items: [] };
 
   const selectedMenuNames = (existingMenus || []).map((m) => m.name);
+
+  const cacheKey = buildAiCacheKey(tambahan, knownMenuNames, selectedMenuNames);
+  const cached = aiResultCache.get(cacheKey);
+  if (cached && (Date.now() - cached.at) < AI_CACHE_TTL_MS) {
+    logger.info("checkReservationCompleteness: cache hit, skip panggilan AI.");
+    return cached.result;
+  }
   const systemPrompt = `Kamu asisten admin restoran/tempat reservasi bernama Dolan Sawah.
 Tugasmu HANYA membaca catatan "Request Tambahan" (teks bebas dari staf/pelanggan) dan
 mendeteksi apakah ada permintaan barang/menu tambahan yang KEMUNGKINAN berbayar tapi
@@ -237,7 +261,10 @@ Jangan mengarang menu yang tidak ada di daftar sah. Kalau tidak yakin ada di daf
       { role: "system", content: systemPrompt },
       { role: "user", content: `Catatan Request Tambahan: "${tambahan}"` }
     ],
-    temperature: 0.1
+    temperature: 0.1,
+    // Jawaban selalu JSON pendek (beberapa item singkat) -- batasi supaya model
+    // tidak menghabiskan waktu generate token yang tidak perlu.
+    max_tokens: 400
   };
 
   const { ok, data } = await callAiWithFallback(body);
@@ -248,6 +275,13 @@ Jangan mengarang menu yang tidak ada di daftar sah. Kalau tidak yakin ada di daf
   if (!parsed || !Array.isArray(parsed.items)) {
     return { items: [], error: "Jawaban AI tidak bisa dibaca." };
   }
+
+  if (aiResultCache.size >= AI_CACHE_MAX_ENTRIES) {
+    const oldestKey = aiResultCache.keys().next().value;
+    aiResultCache.delete(oldestKey);
+  }
+  aiResultCache.set(cacheKey, { result: parsed, at: Date.now() });
+
   return parsed;
 }
 
