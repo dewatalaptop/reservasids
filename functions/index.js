@@ -89,41 +89,20 @@ async function callZai(body) {
 }
 
 // ============================================================
-// Batas keras biaya Gemini berbayar: maksimal Rp10.000/bulan (diminta user).
-// Google Cloud Billing Budget cuma kirim NOTIFIKASI, bukan menghentikan
-// pemakaian -- jadi jaminan sebenarnya harus dipaksa di kode kita sendiri.
+// Tetap 100% gratis (tidak upgrade billing) -- jadi pertahanan yang relevan
+// di sini BUKAN soal biaya, tapi soal kecepatan: begitu Gemini kena limit
+// harian gratisnya (429), kemungkinan besar akan 429 lagi untuk permintaan
+// berikutnya sampai kuota reset (harian). Daripada tiap panggilan baru
+// tetap nunggu Gemini gagal dulu (buang waktu) sebelum jatuh ke z.ai,
+// begitu 429 terjadi kita "ingat" untuk sementara dan langsung ke z.ai.
 //
-// Harga Gemini 3.6 Flash (per Sep 2026): $0.75/1M token input, $3.75/1M
-// token output. Worst-case per panggilan di sini (~1500 token input,
-// output dibatasi max_tokens=400) -> sekitar Rp40-45/panggilan. Batas 200
-// panggilan/bulan -> worst-case ~Rp8.800, masih ada margin di bawah Rp10rb.
-// Counter disimpan di Firestore (bukan memori) supaya tetap akurat lintas
-// cold start/instance, dan reset otomatis tiap bulan (key = "YYYY-MM").
-// Begitu kuota habis, TIDAK error -- otomatis lanjut pakai z.ai (gratis)
-// untuk sisa bulan itu, fitur tetap jalan dengan kualitas z.ai.
+// In-memory per instance warm (bukan Firestore) -- ini sengaja: cukup untuk
+// tujuannya (skip percobaan yang hampir pasti gagal) dan tidak menambah
+// round-trip database di jalur tercepat. minInstances:1 membuat sebagian
+// besar traffic tetap kena instance yang sama sehingga cooldown ini efektif.
 // ============================================================
-const GEMINI_MONTHLY_CALL_CAP = 200;
-const db = admin.firestore();
-
-async function tryReserveGeminiQuota() {
-  const monthKey = new Date().toISOString().slice(0, 7); // "2026-09"
-  const ref = db.collection("_ai_usage").doc(monthKey);
-  try {
-    return await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      const count = snap.exists ? (snap.data().geminiCalls || 0) : 0;
-      if (count >= GEMINI_MONTHLY_CALL_CAP) return false;
-      tx.set(ref, { geminiCalls: count + 1, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      return true;
-    });
-  } catch (err) {
-    // Kalau Firestore-nya sendiri bermasalah, JANGAN ikut memblokir fitur AI
-    // (fail-closed ke Gemini di sini justru lebih berisiko daripada langsung
-    // fallback z.ai) -- anggap kuota penuh supaya aman, pakai z.ai saja.
-    logger.error("tryReserveGeminiQuota gagal, fallback ke z.ai demi keamanan biaya:", err.message);
-    return false;
-  }
-}
+const GEMINI_COOLDOWN_MS = 30 * 60 * 1000; // 30 menit
+let geminiRateLimitedUntil = 0;
 
 async function callZaiOnly(body) {
   const zaiRes = await callZai(body);
@@ -132,19 +111,19 @@ async function callZaiOnly(body) {
   return { ok: zaiRes.ok, status: zaiRes.status, data: zaiData };
 }
 
-// Coba Gemini dulu (kalau kuota bulanan masih ada), jatuh ke z.ai kalau
-// limit (429), error server (5xx), atau kuota bulanan sudah habis.
-// Mengembalikan { ok, status, data } supaya pemanggil tidak perlu tahu
-// provider mana yang akhirnya menjawab.
+// Coba Gemini dulu, jatuh ke z.ai kalau limit (429), error server (5xx),
+// atau masih dalam jendela cooldown sejak 429 terakhir. Mengembalikan
+// { ok, status, data } supaya pemanggil tidak perlu tahu provider mana
+// yang akhirnya menjawab.
 async function callAiWithFallback(body) {
-  const quotaOk = await tryReserveGeminiQuota();
-  if (!quotaOk) {
-    logger.warn("AI proxy: kuota bulanan Gemini tercapai, langsung pakai z.ai.");
+  if (Date.now() < geminiRateLimitedUntil) {
+    logger.info("AI proxy: masih cooldown rate-limit Gemini, langsung z.ai.");
     return callZaiOnly(body);
   }
 
   const geminiRes = await callGemini(body);
   if (geminiRes.status === 429 || geminiRes.status >= 500) {
+    if (geminiRes.status === 429) geminiRateLimitedUntil = Date.now() + GEMINI_COOLDOWN_MS;
     logger.warn(`AI proxy: Gemini gagal (${geminiRes.status}), coba fallback ke z.ai.`);
     return callZaiOnly(body);
   }
