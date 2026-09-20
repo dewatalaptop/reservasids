@@ -769,6 +769,12 @@
       setTimeout(() => { toast.style.display = 'none'; }, 3000);
     }
     
+    // Catatan bisa tersimpan di `tambahan` (form customer / edit di sini) atau `note`
+    // (hasil Edit di dashboard admin versi lama) -- baca keduanya supaya tidak hilang.
+    function getCatatan(r) {
+        return (r && (r.note || r.catatan || r.pesan || r.tambahan)) || '';
+    }
+
     function formatRupiah(amount) { 
         return (amount || 0).toLocaleString('id-ID'); 
     }
@@ -927,7 +933,7 @@
                     <div class="menu-detail">
                         <b><i class="fas fa-utensils"></i> ${menuTitle}:</b><br/>${menuItemsHtml}
                     </div>
-                    <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${r.tambahan || '-'}</div>
+                    <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${getCatatan(r) || '-'}</div>
                 </div>
                 <div class="data-actions">
                     ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.id}')"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
@@ -1044,7 +1050,7 @@
           <div id="selected-menus-container"></div>
           <button type="button" class="secondary" id="add-menu-btn" onclick="addMenuSelectionRow('edit-reservation-form')"><i class="fas fa-plus"></i> Tambah Paket</button>
           
-          <label>Tambahan: <textarea id="tambahan">${res.tambahan || ''}</textarea></label>
+          <label>Tambahan: <textarea id="tambahan">${getCatatan(res)}</textarea></label>
           
           <div class="data-actions">
             <button type="button" onclick="simpanPerubahanReservasi()"><i class="fas fa-save"></i> Simpan</button>
@@ -1120,7 +1126,7 @@
       
       showLoader();
       try {
-        await db.collection('reservations').doc(id).update(formData);
+        await db.collection('reservations').doc(id).update({ ...formData, note: firebase.firestore.FieldValue.delete() });
         showToast("Perubahan berhasil disimpan");
         closePopup('editFormPopup');
       } catch (e) { 
@@ -1717,7 +1723,7 @@
             menuList = `  - *${res.menu}*\n${detailString}`;
         }
         
-        const tambahanInfo = res.tambahan ? `📝 *Request Tambahan:*\n${res.tambahan}\n\n` : '';
+        const tambahanInfo = getCatatan(res) ? `📝 *Request Tambahan:*\n${getCatatan(res)}\n\n` : '';
         const dpInfo = res.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(res.dp)} ${res.tipeDp ? `(via ${res.tipeDp})` : ''} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
         
         const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
@@ -1769,7 +1775,7 @@
                 message += `⏰ Jam: *${r.jam || '?'}* | 📍 Tempat: *${r.tempat || '?'}* | 👥 Jumlah: *${r.jumlah || '?'} org*\n`;
                 message += `🍽️ *Pesanan Menu:*\n${menuList}\n`;
                 if (r.dp > 0) message += `💰 DP: *Rp ${formatRupiah(r.dp)}* ${r.tipeDp ? `(${r.tipeDp})` : ''}\n`;
-                if (r.tambahan) message += `📝 Tambahan: *${r.tambahan}*\n`;
+                if (getCatatan(r)) message += `📝 Tambahan: *${getCatatan(r)}*\n`;
                 message += `-------------------------\n\n`;
             });
             }
@@ -1815,7 +1821,7 @@
             }
 
             let dpHtml = r.dp > 0 ? `<p><strong>💰 DP:</strong> Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
-            let tambahanHtml = r.tambahan ? `<p><strong>📝 Catatan:</strong> ${r.tambahan}</p>` : '';
+            let tambahanHtml = getCatatan(r) ? `<p><strong>📝 Catatan:</strong> ${getCatatan(r)}</p>` : '';
             body += `<li style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;"><h3 style="color: #2a9d8f; margin-bottom: 10px;">${r.nama || 'Nama tidak ada'}</h3><p><strong>⏰ Jam:</strong> ${r.jam || '?'}</p><p><strong>📍 Tempat:</strong> ${r.tempat || '?'}</p><p><strong>👥 Jumlah:</strong> ${r.jumlah || '?'} orang</p><p><strong>🍽️ Pesanan Menu:</strong></p>${menuListHtml}${dpHtml}${tambahanHtml}</li>`;
         });
         body += `</ol>`;
@@ -1908,7 +1914,7 @@
                 } else { menuList = `&bull; _(Tidak ada detail menu)_`; }
             }
             const dpInfo = options.showDp && r.dp > 0 ? `<p><i class="fas fa-money-bill-wave"></i> <strong>DP:</strong> Rp ${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</p>` : '';
-            const tambahanInfo = options.showTambahan && r.tambahan ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${r.tambahan}</p>` : '';
+            const tambahanInfo = options.showTambahan && getCatatan(r) ? `<p><i class="fas fa-comment"></i> <strong>Tambahan:</strong> ${getCatatan(r)}</p>` : '';
             const kontakInfo = options.showKontak && r.nomorHp ? `<p><i class="fas fa-phone"></i> <strong>Kontak:</strong> ${r.nomorHp}</p>` : '';
 
             return `
