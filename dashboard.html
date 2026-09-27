@@ -115,6 +115,7 @@
     .card-2 .card-icon { background: rgba(233, 196, 106, 0.2); color: #d4a373; }
     .card-3 .card-icon { background: rgba(32, 58, 67, 0.1); color: var(--primary-dark); }
     .card-4 .card-icon { background: rgba(211, 84, 0, 0.1); color: var(--highlight); }
+    .card-5 .card-icon { background: rgba(157, 78, 221, 0.12); color: #7b2cbf; }
 
     .card h3 { margin: 0 0 5px; font-size: 1.1rem; color: var(--primary-dark); }
     .card p { margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
@@ -192,17 +193,24 @@
             <i class="fas fa-arrow-right card-arrow"></i>
         </a>
 
-        <a href="https://dewatalaptop.github.io/reservasids" target="_blank" class="card card-3">
+        <a href="upgradeV2.html" target="_blank" class="card card-3">
             <div class="card-icon"><i class="fas fa-database"></i></div>
-            <h3>Master Admin (Utama)</h3>
-            <p>Pusat kendali database utama (GitHub).</p>
+            <h3>Aplikasi Utama (Owner)</h3>
+            <p>Kalender, kelola reservasi, menu & lokasi -- dipegang owner sehari-hari.</p>
             <i class="fas fa-arrow-right card-arrow"></i>
         </a>
 
-        <a href="https://dewatalaptop.github.io/checkerds/" target="_blank" class="card card-4">
+        <a href="ds-information-board.html" target="_blank" class="card card-4">
             <div class="card-icon"><i class="fas fa-desktop"></i></div>
-            <h3>Viewer / Checker</h3>
-            <p>Tampilan kalender & denah untuk operasional.</p>
+            <h3>Papan Info Karyawan</h3>
+            <p>Live board Dapur, Lantai & Kasir untuk staf -- sinkron real-time.</p>
+            <i class="fas fa-arrow-right card-arrow"></i>
+        </a>
+
+        <a href="https://dewatalaptop.github.io/test-reservasi/" target="_blank" class="card card-5">
+            <div class="card-icon"><i class="fas fa-print"></i></div>
+            <h3>Laporan & Cetak Lengkap</h3>
+            <p>Tampilan paling lengkap -- cetak laporan harian, kelola menu detail.</p>
             <i class="fas fa-arrow-right card-arrow"></i>
         </a>
 
@@ -214,8 +222,8 @@
             <button class="btn-tool" onclick="copyLink('https://www.dolansawah.my.id/reservasimandiri.html')">
                 <i class="far fa-copy"></i> Salin Link Reservasi
             </button>
-            <button class="btn-tool" onclick="copyLink('https://dewatalaptop.github.io/checkerds/')">
-                <i class="far fa-copy"></i> Salin Link Viewer
+            <button class="btn-tool" onclick="copyLink('https://dewatalaptop.github.io/reservasids/ds-information-board.html')">
+                <i class="far fa-copy"></i> Salin Link Papan Info
             </button>
             <button class="btn-tool" onclick="window.open('https://wa.me/', '_blank')">
                 <i class="fab fa-whatsapp"></i> Buka WhatsApp
@@ -226,7 +234,7 @@
   </div>
 
   <footer>
-    &copy; 2025 Dolan Sawah Management System.
+    &copy; <span id="footYear">2025</span> Dolan Sawah Management System.
   </footer>
 
   <div class="toast" id="toast">
@@ -257,6 +265,7 @@
     
     setInterval(updateTime, 1000);
     updateTime();
+    document.getElementById('footYear').textContent = new Date().getFullYear();
 
     // 2. Fungsi Copy Link
     function copyLink(text) {
