@@ -572,7 +572,11 @@
 
     if (r.menus && r.menus.length) {
       r.menus.forEach(item => {
-        const harga = getPriceByName(item.name);
+        // Menu custom/admin bisa punya harga sendiri yang menempel langsung
+        // di item (lihat 5672231.html/upgradeV2.html) -- itu HARUS didahulukan
+        // di atas harga master menu, kalau tidak total di papan ini salah
+        // (biasanya jadi Rp0) untuk setiap reservasi dengan menu "Custom".
+        const harga = (typeof item.price === 'number') ? item.price : getPriceByName(item.name);
         const qty   = parseInt(item.quantity) || 1;
         const line  = harga * qty;
         subTotal += line;
