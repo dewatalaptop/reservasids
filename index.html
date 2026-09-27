@@ -2364,21 +2364,32 @@ const snapshot = await db.collection('reservations')
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const sevenDaysAgo = new Date(today); sevenDaysAgo.setDate(today.getDate() - 7);
-        
-        const todayStr = today.toISOString().split('T')[0]; 
-        const sevenAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-        
+
+        // Sama persis dengan fix di upgradeV2.html -- dua bug sekaligus di sini
+        // sebelumnya: (1) Firestore menolak query dengan filter pertidaksamaan
+        // (>=, <=, !=) di lebih dari satu field ('date' DAN 'thankYouSent'
+        // bersamaan) -- query ini gagal total (throw) setiap kali dipanggil,
+        // jadi notifikasi ucapan terima kasih tidak pernah muncul. (2)
+        // toISOString() berbasis UTC: di WIB (UTC+7) hasilnya mundur 1 hari,
+        // jadi reservasi hari ini tidak pernah masuk rentang query walau
+        // query-nya sendiri sudah benar.
+        const toLocalDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const todayStr = toLocalDateStr(today);
+        const sevenAgoStr = toLocalDateStr(sevenDaysAgo);
+
         try {
             const snapshot = await db.collection('reservations')
                 .where('date', '>=', sevenAgoStr)
                 .where('date', '<=', todayStr)
-                .where('thankYouSent', '!=', true).get();
-            
+                .get();
+
             const pending = [];
             snapshot.forEach(doc => {
                 const r = { id: doc.id, ...doc.data() };
+                if (r.thankYouSent === true) return; // Sudah dikirim, lewati (filter di klien, bukan di query)
                 if (!r.jam || !r.date) return;
-                
+                if (!r.nomorHp) return; // Tanpa nomor HP tidak bisa dikirimi WA, jangan tampilkan
+
                 const resTime = new Date(r.date + 'T' + r.jam);
                 if (isNaN(resTime.getTime())) return;
                 
