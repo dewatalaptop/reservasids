@@ -775,10 +775,34 @@
         return (r && (r.note || r.catatan || r.pesan || r.tambahan)) || '';
     }
 
-    function formatRupiah(amount) { 
-        return (amount || 0).toLocaleString('id-ID'); 
+    function formatRupiah(amount) {
+        return (amount || 0).toLocaleString('id-ID');
     }
-    
+
+    // Sama persis dengan upgradeV2.html -- file ini sebelumnya menyisipkan nama
+    // menu/tempat MENTAH ke dalam HTML/onclick tanpa escaping sama sekali, jadi
+    // nama yang mengandung tanda kutip atau simbol HTML (mis. "Mie Goreng
+    // "Spesial"") merusak tombol edit/hapusnya atau bocor ke markup.
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+    function escapeForJsAttr(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, ' ')
+            .replace(/\r/g, '');
+    }
+
     function cleanPhoneNumber(phone) { 
         return phone.replace(/[^0-9]/g, ''); 
     }
@@ -919,7 +943,7 @@
                 if (r.thankYouSent) {
                     thankYouButtonHtml = `<button style="background-color: var(--success);" disabled><i class="fas fa-check-circle"></i> Terima Kasih Terkirim</button>`;
                 } else {
-                    thankYouButtonHtml = `<button class="accent" id="thank-you-btn-${r.id}" onclick="sendThankYouMessage('${r.id}', '${r.nama}', '${r.nomorHp}')"><i class="fas fa-gift"></i> Ucapkan Terima Kasih</button>`;
+                    thankYouButtonHtml = `<button class="accent" id="thank-you-btn-${r.id}" onclick="sendThankYouMessage('${r.id}', '${escapeForJsAttr(r.nama)}', '${escapeForJsAttr(r.nomorHp)}')"><i class="fas fa-gift"></i> Ucapkan Terima Kasih</button>`;
                 }
             }
 
@@ -927,13 +951,13 @@
             return `
             <div class="reservation-item" style="display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
                 <div class="reservation-details">
-                    <b><i class="fas fa-user"></i> ${r.nama || 'Nama tidak ada'}</b><br/>
-                    <span><i class="fas fa-map-marker-alt"></i> ${r.tempat || '?'} • <i class="far fa-clock"></i> ${r.jam  || '?'} • <i class="fas fa-users"></i> ${r.jumlah  || '?'} org</span>
+                    <b><i class="fas fa-user"></i> ${escapeHtml(r.nama) || 'Nama tidak ada'}</b><br/>
+                    <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(r.tempat) || '?'} • <i class="far fa-clock"></i> ${escapeHtml(r.jam)  || '?'} • <i class="fas fa-users"></i> ${r.jumlah  || '?'} org</span>
                     ${dpInfo} ${phoneInfo}
                     <div class="menu-detail">
-                        <b><i class="fas fa-utensils"></i> ${menuTitle}:</b><br/>${menuItemsHtml}
+                        <b><i class="fas fa-utensils"></i> ${escapeHtml(menuTitle)}:</b><br/>${menuItemsHtml}
                     </div>
-                    <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${getCatatan(r) || '-'}</div>
+                    <div><i class="fas fa-comment"></i> <b>Tambahan:</b> ${escapeHtml(getCatatan(r)) || '-'}</div>
                 </div>
                 <div class="data-actions">
                     ${r.nomorHp ? `<button class="whatsapp" onclick="contactViaWhatsApp('${r.id}')"><i class="fab fa-whatsapp"></i> Hubungi</button>` : ''}
@@ -1026,10 +1050,10 @@
           <h3><i class="fas fa-edit"></i> Edit Reservasi</h3>
           <input type="hidden" id="editReservationId" value="${id}" />
           
-          <label>Nama: <input type="text" id="nama" value="${res.nama || ''}" required />
+          <label>Nama: <input type="text" id="nama" value="${escapeHtml(res.nama)}" required />
             <span class="error-message" id="nama-error"></span></label>
-          
-          <label>Nomor HP: <input type="tel" id="nomorHp" value="${res.nomorHp || ''}" />
+
+          <label>Nomor HP: <input type="tel" id="nomorHp" value="${escapeHtml(res.nomorHp)}" />
             <span class="error-message" id="nomorHp-error"></span></label>
           
           <label>Jam: <input type="time" id="jam" value="${res.jam || ''}" required />
@@ -1050,7 +1074,7 @@
           <div id="selected-menus-container"></div>
           <button type="button" class="secondary" id="add-menu-btn" onclick="addMenuSelectionRow('edit-reservation-form')"><i class="fas fa-plus"></i> Tambah Paket</button>
           
-          <label>Tambahan: <textarea id="tambahan">${getCatatan(res)}</textarea></label>
+          <label>Tambahan: <textarea id="tambahan">${escapeHtml(getCatatan(res))}</textarea></label>
           
           <div class="data-actions">
             <button type="button" onclick="simpanPerubahanReservasi()"><i class="fas fa-save"></i> Simpan</button>
@@ -1091,48 +1115,105 @@
       overlay.style.display = 'block';
     }
 
+    // Sama persis dengan upgradeV2.html -- file ini sebelumnya TIDAK PERNAH
+    // memeriksa potensi bentrok kapasitas sebelum menyimpan reservasi baru
+    // maupun perubahan, padahal aplikasi utama (upgradeV2.html) sudah punya
+    // pengecekan ini sejak awal. Hanya peringatan (tidak memblokir), sama
+    // seperti di sana.
+    async function checkAggregateConflict(tempat, jamBaru, jumlahBaru, dateStr, excludeId) {
+        if (!tempat || !jamBaru || !dateStr) return null;
+
+        const dateKeySedangDibuka = tanggalDipilih ? `${currentYear}-${tanggalDipilih}` : null;
+        let candidates;
+        if (dateStr === dateKeySedangDibuka) {
+            candidates = dataReservasi[tanggalDipilih] || [];
+        } else {
+            try {
+                const snapshot = await db.collection('reservations').where('date', '==', dateStr).get();
+                candidates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (e) {
+                console.error("Gagal memeriksa potensi bentrok:", e);
+                return null; // Jangan sampai gagal cek bentrok memblokir penyimpanan
+            }
+        }
+
+        const toMinutes = (t) => { const p = (t || '').split(':').map(Number); return (p[0] || 0) * 60 + (p[1] || 0); };
+        const newMin = toMinutes(jamBaru);
+
+        const clashing = candidates.filter(r =>
+            r.tempat === tempat &&
+            r.id !== excludeId &&
+            r.jam &&
+            Math.abs(toMinutes(r.jam) - newMin) < 60
+        );
+        if (clashing.length === 0) return null;
+
+        const totalJumlah = clashing.reduce((sum, r) => sum + (parseInt(r.jumlah) || 0), 0) + jumlahBaru;
+        const locationKey = Object.keys(locationsData).find(key => locationsData[key].name === tempat);
+        const capacity = locationKey ? locationsData[locationKey].capacity : null;
+
+        if (capacity && totalJumlah > capacity) {
+            return { count: clashing.length, totalJumlah, capacity };
+        }
+        return null;
+    }
+
     async function simpanReservasi() {
       const formData = await validateAndGetFormData('reservation-form');
-      
-      if (!formData || !tanggalDipilih) { 
-          if(!tanggalDipilih) showToast("Tanggal belum dipilih!", "error"); 
-          return; 
+
+      if (!formData || !tanggalDipilih) {
+          if(!tanggalDipilih) showToast("Tanggal belum dipilih!", "error");
+          return;
       };
-      
-      const data = { 
-          ...formData, 
-          date: `${currentYear}-${tanggalDipilih}`, 
-          createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+
+      const targetDate = `${currentYear}-${tanggalDipilih}`;
+      const conflict = await checkAggregateConflict(formData.tempat, formData.jam, formData.jumlah, targetDate, null);
+      if (conflict) {
+          const lanjut = confirm(`Perhatian: sekitar jam ${formData.jam} di "${formData.tempat}" sudah ada ${conflict.count} reservasi lain dengan total ${conflict.totalJumlah} orang, melebihi kapasitas tempat (${conflict.capacity} orang). Tetap simpan reservasi ini?`);
+          if (!lanjut) return;
+      }
+
+      const data = {
+          ...formData,
+          date: targetDate,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
-      
+
       showLoader();
       try {
         await db.collection('reservations').add(data);
         showToast("Reservasi berhasil disimpan!");
-        closePopup('addFormPopup'); 
-      } catch (e) { 
+        closePopup('addFormPopup');
+      } catch (e) {
         console.error(e);
-        showToast("Gagal menyimpan reservasi", "error"); 
-      } finally { 
-        hideLoader(); 
+        showToast("Gagal menyimpan reservasi", "error");
+      } finally {
+        hideLoader();
       }
     }
-    
+
     async function simpanPerubahanReservasi() {
       const id = document.getElementById('editReservationId').value;
       const formData = await validateAndGetFormData('edit-reservation-form');
-      
+
       if (!formData) return;
-      
+
+      const targetDate = formData.date || `${currentYear}-${tanggalDipilih}`;
+      const conflict = await checkAggregateConflict(formData.tempat, formData.jam, formData.jumlah, targetDate, id);
+      if (conflict) {
+          const lanjut = confirm(`Perhatian: sekitar jam ${formData.jam} di "${formData.tempat}" sudah ada ${conflict.count} reservasi lain dengan total ${conflict.totalJumlah} orang, melebihi kapasitas tempat (${conflict.capacity} orang). Tetap simpan perubahan ini?`);
+          if (!lanjut) return;
+      }
+
       showLoader();
       try {
         await db.collection('reservations').doc(id).update({ ...formData, note: firebase.firestore.FieldValue.delete() });
         showToast("Perubahan berhasil disimpan");
         closePopup('editFormPopup');
-      } catch (e) { 
-        showToast("Gagal menyimpan perubahan", "error"); 
-      } finally { 
-        hideLoader(); 
+      } catch (e) {
+        showToast("Gagal menyimpan perubahan", "error");
+      } finally {
+        hideLoader();
       }
     }
 
@@ -1360,16 +1441,16 @@
       container.innerHTML = Object.keys(detailMenu).sort().map(name => {
           // Ambil harga, default 0 jika error
           const harga = menuPrices[name] ? parseInt(menuPrices[name]) : 0;
-          
+
           return `
           <div class="menu-item">
             <span>
-                <b>${name}</b><br/>
+                <b>${escapeHtml(name)}</b><br/>
                 <small style="color:var(--primary); font-weight:600;">Rp ${formatRupiah(harga)}</small>
             </span>
             <div class="menu-item-actions">
-                <button onclick="openEditMenuPopup('${name}')"><i class="fas fa-edit"></i></button>
-                <button class="danger" onclick="deleteMenu('${name}')"><i class="fas fa-trash-alt"></i></button>
+                <button onclick="openEditMenuPopup('${escapeForJsAttr(name)}')"><i class="fas fa-edit"></i></button>
+                <button class="danger" onclick="deleteMenu('${escapeForJsAttr(name)}')"><i class="fas fa-trash-alt"></i></button>
             </div>
           </div>`;
       }).join('');
@@ -1427,21 +1508,21 @@
 
       document.getElementById('menuManagementPopup').innerHTML = `
         <h3><i class="fas fa-edit"></i> Edit Menu</h3>
-        
-        <label>Nama Menu: 
-            <input type="text" id="editingMenuName" value="${name}">
+
+        <label>Nama Menu:
+            <input type="text" id="editingMenuName" value="${escapeHtml(name)}">
         </label>
-        
-        <label>Harga (Rp): 
+
+        <label>Harga (Rp):
             <input type="number" id="editingMenuPrice" value="${currentPrice}">
         </label>
-        
-        <label>Detail (pisahkan koma): 
-            <textarea id="editingMenuDetails">${currentDetails}</textarea>
+
+        <label>Detail (pisahkan koma):
+            <textarea id="editingMenuDetails">${escapeHtml(currentDetails)}</textarea>
         </label>
-        
+
         <div class="data-actions">
-            <button onclick="saveEditedMenu('${name}')"><i class="fas fa-save"></i> Simpan</button>
+            <button onclick="saveEditedMenu('${escapeForJsAttr(name)}')"><i class="fas fa-save"></i> Simpan</button>
             <button class="danger" onclick="showMenuManagement()">Batal</button>
         </div>`;
     }
@@ -1535,11 +1616,11 @@
             .sort((a,b) => locationsData[a].name.localeCompare(locationsData[b].name))
             .map(docId => `
                 <div class="menu-item">
-                    <span>${locationsData[docId].name}<br/>
+                    <span>${escapeHtml(locationsData[docId].name)}<br/>
                     <small>Kapasitas: ${locationsData[docId].capacity} org</small></span>
                     <div class="menu-item-actions">
-                        <button onclick="openEditLocationPopup('${docId}')"><i class="fas fa-edit"></i></button>
-                        <button class="danger" onclick="deleteLocation('${docId}')"><i class="fas fa-trash-alt"></i></button>
+                        <button onclick="openEditLocationPopup('${escapeForJsAttr(docId)}')"><i class="fas fa-edit"></i></button>
+                        <button class="danger" onclick="deleteLocation('${escapeForJsAttr(docId)}')"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>`).join('');
     }
@@ -1593,7 +1674,7 @@
         const location = locationsData[docId];
         document.getElementById('locationManagementPopup').innerHTML = `
             <h3><i class="fas fa-edit"></i> Edit Tempat</h3>
-            <label>Nama Tempat: <input type="text" id="editingLocationName" value="${location.name}"></label>
+            <label>Nama Tempat: <input type="text" id="editingLocationName" value="${escapeHtml(location.name)}"></label>
             <label>Kapasitas: <input type="number" id="editingLocationCapacity" value="${location.capacity}" min="1"></label>
             <div class="data-actions">
                 <button onclick="saveEditedLocation('${docId}')"><i class="fas fa-save"></i> Simpan</button>
@@ -1686,9 +1767,9 @@
             ? `<p style="text-align:center;">Tidak ada customer yang cocok.</p>`
             : customerData.map(([phone, name]) => `
                 <div class="menu-item">
-                    <span><i class="fas fa-user"></i> ${name} <br/><small style="color:#777;">${phone}</small></span>
+                    <span><i class="fas fa-user"></i> ${escapeHtml(name)} <br/><small style="color:#777;">${escapeHtml(phone)}</small></span>
                     <div class="menu-item-actions">
-                        <button class="whatsapp" onclick="openWhatsApp('${phone}', '${name}')"><i class="fab fa-whatsapp"></i> Hubungi</button>
+                        <button class="whatsapp" onclick="openWhatsApp('${escapeForJsAttr(phone)}', '${escapeForJsAttr(name)}')"><i class="fab fa-whatsapp"></i> Hubungi</button>
                     </div>
                 </div>`).join('');
     }
@@ -2154,7 +2235,7 @@ const snapshot = await db.collection('reservations')
         document.getElementById('anl-details').innerHTML = `
         <div class="analysis-section">
             <h4><i class="fas fa-crown"></i> Pelanggan Setia</h4>
-            <ul class="analysis-list">${results.frequentCustomers.map(c => `<li class="analysis-item"><span class="name-clickable" onclick="showCustomerProfile('${c.nomorHp}', '${c.name}')">${c.name}</span><span class="value">${c.count}x</span></li>`).join('') || '<li>Belum ada data</li>'}</ul>
+            <ul class="analysis-list">${results.frequentCustomers.map(c => `<li class="analysis-item"><span class="name-clickable" onclick="showCustomerProfile('${escapeForJsAttr(c.nomorHp)}', '${escapeForJsAttr(c.name)}')">${escapeHtml(c.name)}</span><span class="value">${c.count}x</span></li>`).join('') || '<li>Belum ada data</li>'}</ul>
         </div>
         <div class="analysis-section">
             <h4><i class="fas fa-utensils"></i> Menu Laris</h4>
@@ -2166,13 +2247,13 @@ const snapshot = await db.collection('reservations')
         const customerReservations = allReservationsCache.filter(r => r.nomorHp === nomorHp).sort((a,b) => b.date.localeCompare(a.date));
         const totalDp = customerReservations.reduce((sum, r) => sum + (r.dp || 0), 0);
         
-        const historyHtml = customerReservations.map(r => `<div class="history-item"><strong>${r.date}</strong> - ${r.jumlah} org</div>`).join('');
-        
+        const historyHtml = customerReservations.map(r => `<div class="history-item"><strong>${escapeHtml(r.date)}</strong> - ${r.jumlah} org</div>`).join('');
+
         document.getElementById('analysis-result').innerHTML = `
         <div id="customer-profile-view">
             <button class="secondary" onclick="runAdvancedAnalysis()" style="margin-bottom:15px;"><i class="fas fa-arrow-left"></i> Kembali</button>
-            <h4><i class="fas fa-user-circle"></i> ${name}</h4>
-            <p>${nomorHp}</p>
+            <h4><i class="fas fa-user-circle"></i> ${escapeHtml(name)}</h4>
+            <p>${escapeHtml(nomorHp)}</p>
             <div class="profile-stats">
                 <div class="stat-card"><div class="value">${customerReservations.length}</div><div class="label">Reservasi</div></div>
                 <div class="stat-card"><div class="value">Rp ${formatK(totalDp)}</div><div class="label">Total DP</div></div>
@@ -2236,8 +2317,8 @@ const snapshot = await db.collection('reservations')
     function renderBroadcastCustomerList(customers) {
         document.getElementById('broadcast-customer-list').innerHTML = customers.map(c => `
             <div class="broadcast-customer-item">
-                <div class="customer-info"><strong>${c.name}</strong><small>${c.phone}</small></div>
-                <button class="broadcast-btn" id="promo-btn-${c.phone}" onclick="sendPromoBroadcast('${c.phone}', '${c.name}', this.id)">
+                <div class="customer-info"><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(c.phone)}</small></div>
+                <button class="broadcast-btn" id="promo-btn-${c.phone}" onclick="sendPromoBroadcast('${escapeForJsAttr(c.phone)}', '${escapeForJsAttr(c.name)}', this.id)">
                     <i class="fab fa-whatsapp"></i> Broadcast
                 </button>
             </div>`).join('');
@@ -2315,8 +2396,8 @@ const snapshot = await db.collection('reservations')
                 badge.style.display = 'flex';
                 document.getElementById('notification-list-ul').innerHTML = pending.map(r => `
                     <li class="notification-item" id="notification-item-${r.id}">
-                        <span class="info"><strong>${r.nama}</strong> (${r.date})</span>
-                        <button class="whatsapp" onclick="sendThankYouWhatsApp('${r.id}', '${r.nama}', '${r.nomorHp}')">
+                        <span class="info"><strong>${escapeHtml(r.nama)}</strong> (${r.date})</span>
+                        <button class="whatsapp" onclick="sendThankYouWhatsApp('${r.id}', '${escapeForJsAttr(r.nama)}', '${escapeForJsAttr(r.nomorHp)}')">
                             <i class="fab fa-whatsapp"></i> Kirim Ucapan
                         </button>
                     </li>`).join('');
