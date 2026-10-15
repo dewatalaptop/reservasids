@@ -2292,7 +2292,16 @@ let activeDPReportData = []; // Menyimpan data laporan yang sedang ditampilkan
     function setupReliableNotificationChecker() {
         if (notificationInterval) clearInterval(notificationInterval);
         runNotificationCheck(true);
-        notificationInterval = setInterval(() => runNotificationCheck(true), 120000); // 2 menit
+        // Hemat biaya Firestore: tiap pengecekan membaca semua reservasi 7 hari. Dulu jalan tiap 2 menit di setiap tab
+        // (termasuk tab yang tersembunyi); sekarang tiap 15 menit, hanya saat tab terlihat, dan langsung disegarkan saat tab
+        // kembali dibuka (kalau pengecekan terakhir sudah lebih dari 5 menit).
+        notificationInterval = setInterval(() => { if (!document.hidden) runNotificationCheck(true); }, 15 * 60 * 1000);
+        if (!window.__notifVisBound) {
+            window.__notifVisBound = true;
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && Date.now() - lastNotificationCheck > 5 * 60 * 1000) runNotificationCheck(true);
+            });
+        }
     }
     
     function runNotificationCheck(force) {

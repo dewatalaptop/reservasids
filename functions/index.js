@@ -316,10 +316,9 @@ exports.checkReservationCompleteness = onRequest(
   {
     region: REGION,
     cors: ALLOWED_ORIGINS,
-    // Selalu ada 1 instance siaga supaya tidak pernah kena cold start (yang
-    // sebelumnya jadi sumber lambat utama saat fungsi ini jarang dipanggil).
-    // Konsekuensinya: biaya bulanan kecil untuk instance yang idle ini.
-    minInstances: 1
+    // minInstances sengaja TIDAK dipakai: 1 instance siaga 24 jam menghabiskan sekitar Rp 40-55 ribu/bulan (lebih besar dari
+    // seluruh budget project). Konsekuensinya: panggilan pertama setelah lama sepi bisa 1-3 detik lebih lambat (cold start).
+    memory: "256MiB"
   },
   async (req, res) => {
     if (req.method !== "POST") {
