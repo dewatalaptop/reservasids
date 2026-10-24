@@ -830,6 +830,8 @@
     // Variabel Logika Fitur
     let lastAnalysisPeriod = 'month';
     let hasAutoOpened = false; // Mencegah auto-open berulang
+    let autoOpenFailTimer = null;  // Timer fallback bila reservasi tak kunjung ditemukan
+    let autoOpenFailShown = false; // Pesan fallback hanya ditampilkan sekali
     let notificationInterval = null;
     let lastNotificationCheck = 0;
     
@@ -1027,34 +1029,56 @@
         const paramSearch = urlParams.get('search');
 
         // Jalankan hanya jika parameter lengkap dan belum pernah dibuka
-        if (autoOpen && paramDate && paramSearch && !hasAutoOpened) {
-            const d = new Date(paramDate);
-            
-            // Pastikan kita di bulan yang tepat
-            if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-                
-                const checkDateKey = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                const dailyData = dataReservasi[checkDateKey] || [];
+        if (!(autoOpen && paramDate && paramSearch) || hasAutoOpened) return;
 
-                // Cari apakah data yang dimaksud sudah masuk di snapshot ini
-                const dataFound = dailyData.some(r => r.nama && r.nama.toLowerCase().includes(paramSearch.toLowerCase()));
+        const d = new Date(paramDate);
 
-                if (dataFound) {
-                    const day = d.getDate();
-                    pilihTanggal(day); // Buka view detail
-                    
-                    const searchInput = document.getElementById('detailSearchInput');
-                    if (searchInput) {
-                        searchInput.value = paramSearch;
-                        filterReservations(paramSearch); 
-                        showToast(`Data baru ditemukan: ${paramSearch}`, "success");
-                    }
-                    
-                    hasAutoOpened = true; // Tandai sudah dibuka
-                    // Bersihkan URL agar bersih
-                    window.history.replaceState({}, document.title, window.location.pathname);
+        // Pastikan kita di bulan yang tepat
+        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+
+            const checkDateKey = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const dailyData = dataReservasi[checkDateKey] || [];
+
+            // Cari apakah data yang dimaksud sudah masuk di snapshot ini
+            const dataFound = dailyData.some(r => r.nama && r.nama.toLowerCase().includes(paramSearch.toLowerCase()));
+
+            if (dataFound) {
+                const day = d.getDate();
+                pilihTanggal(day); // Buka view detail
+
+                const searchInput = document.getElementById('detailSearchInput');
+                if (searchInput) {
+                    searchInput.value = paramSearch;
+                    filterReservations(paramSearch);
+                    showToast(`Data baru ditemukan: ${paramSearch}`, "success");
                 }
+
+                hasAutoOpened = true; // Tandai sudah dibuka
+                if (autoOpenFailTimer) { clearTimeout(autoOpenFailTimer); autoOpenFailTimer = null; }
+                // Bersihkan URL agar bersih
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
             }
+        }
+
+        // Belum ketemu di snapshot ini. Bisa karena data belum sinkron (listener baru),
+        // nama tak cocok, atau beda bulan. Beri waktu beberapa detik untuk sinkronisasi;
+        // kalau tetap gagal JANGAN diam -- buka tanggalnya, isi pencarian, dan beri tahu
+        // admin supaya cari manual. Hanya dipasang/ditampilkan sekali.
+        if (!autoOpenFailTimer && !autoOpenFailShown) {
+            autoOpenFailTimer = setTimeout(() => {
+                autoOpenFailTimer = null;
+                if (hasAutoOpened || autoOpenFailShown) return;
+                autoOpenFailShown = true;
+                const dd = new Date(paramDate);
+                if (!isNaN(dd.getTime()) && dd.getMonth() === currentMonth && dd.getFullYear() === currentYear) {
+                    pilihTanggal(dd.getDate());
+                    const si = document.getElementById('detailSearchInput');
+                    if (si) { si.value = paramSearch; filterReservations(paramSearch); }
+                }
+                showToast(`Reservasi "${paramSearch}" belum ditemukan otomatis — silakan cari manual.`, "error");
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 5000);
         }
     }
     // =========================================
