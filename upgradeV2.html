@@ -1027,6 +1027,7 @@
         const autoOpen = urlParams.get('autoOpen');
         const paramDate = urlParams.get('date');
         const paramSearch = urlParams.get('search');
+        const paramId = urlParams.get('id'); // ID dokumen (link baru) -- cocokkan tepat
 
         // Jalankan hanya jika parameter lengkap dan belum pernah dibuka
         if (!(autoOpen && paramDate && paramSearch) || hasAutoOpened) return;
@@ -1037,20 +1038,32 @@
         if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
 
             const checkDateKey = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            const dailyData = dataReservasi[checkDateKey] || [];
 
-            // Cari apakah data yang dimaksud sudah masuk di snapshot ini
-            const dataFound = dailyData.some(r => r.nama && r.nama.toLowerCase().includes(paramSearch.toLowerCase()));
+            // Prioritas: cocokkan by-ID dokumen (paling andal, tak tertukar nama mirip).
+            // Fallback: pencocokan substring nama -- tetap kompatibel dengan link lama tanpa `id`.
+            let matched = null;
+            if (paramId) {
+                for (const k in dataReservasi) {
+                    matched = (dataReservasi[k] || []).find(r => r.id === paramId);
+                    if (matched) break;
+                }
+            } else {
+                matched = (dataReservasi[checkDateKey] || []).find(r => r.nama && r.nama.toLowerCase().includes(paramSearch.toLowerCase()));
+            }
 
-            if (dataFound) {
-                const day = d.getDate();
-                pilihTanggal(day); // Buka view detail
+            if (matched) {
+                // Buka tanggal milik data yang cocok (kalau ada), jatuh ke paramDate.
+                const md = matched.date ? new Date(matched.date) : d;
+                const openDay = (!isNaN(md.getTime()) && md.getMonth() === currentMonth && md.getFullYear() === currentYear)
+                    ? md.getDate() : d.getDate();
+                pilihTanggal(openDay); // Buka view detail
 
                 const searchInput = document.getElementById('detailSearchInput');
+                const q = matched.nama || paramSearch;
                 if (searchInput) {
-                    searchInput.value = paramSearch;
-                    filterReservations(paramSearch);
-                    showToast(`Data baru ditemukan: ${paramSearch}`, "success");
+                    searchInput.value = q;
+                    filterReservations(q);
+                    showToast(`Data baru ditemukan: ${q}`, "success");
                 }
 
                 hasAutoOpened = true; // Tandai sudah dibuka
