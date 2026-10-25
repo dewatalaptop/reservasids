@@ -1284,6 +1284,7 @@
             // Info DP & Phone
             const dpInfo = r.dp > 0 ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</div>` : '';
             const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> ${escapeHtml(r.nomorHp)}</div>` : '';
+            const lunasInfo = r.lunas ? '<div style="color:var(--success);font-weight:700"><i class="fas fa-check-circle"></i> LUNAS</div>' : '';
             const orderTotalVal = getReservationOrderTotal(r);
             const orderTotalInfo = orderTotalVal > 0 ? `<div><i class="fas fa-receipt"></i> Estimasi Total: Rp${formatRupiah(orderTotalVal)}</div>` : '';
 
@@ -1303,7 +1304,7 @@
                 <div class="reservation-details">
                     <b><i class="fas fa-user"></i> ${escapeHtml(r.nama) || 'Nama tidak ada'}</b><br/>
                     <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(r.tempat) || '?'} • <i class="far fa-clock"></i> ${escapeHtml(r.jam)  || '?'} • <i class="fas fa-users"></i> ${r.jumlah  || '?'} org</span>
-                    ${dpInfo} ${orderTotalInfo} ${phoneInfo}
+                    ${dpInfo} ${lunasInfo} ${orderTotalInfo} ${phoneInfo}
                     <div class="menu-detail">
                         <b><i class="fas fa-utensils"></i> ${escapeHtml(menuTitle)}:</b><br/>${menuItemsHtml}
                     </div>
@@ -1499,6 +1500,8 @@
             <span class="error-message" id="jumlah-error"></span></label>
           
           <label>DP: <input type="number" id="dp" value="${res.dp || 0}" min="0" /></label>
+
+          <label style="display:flex;align-items:center;gap:10px;font-weight:600;"><input type="checkbox" id="lunas" ${res.lunas ? 'checked' : ''} style="width:auto;margin:0;" /> Sudah lunas (pelunasan diterima) — invoice menjadi LUNAS</label>
           
           <label>Tipe Pembayaran DP: <select id="tipeDp"></select></label>
           
@@ -2041,6 +2044,7 @@
         if (elements.tanggal) {
             result.date = elements.tanggal.value;
         }
+        if (elements.lunas) { result.lunas = !!elements.lunas.checked; }
         return result;
     }
     // =========================================
@@ -2535,9 +2539,11 @@
         }
         
         const tambahanInfo = res.tambahan ? `📝 *Request Tambahan:*\n${res.tambahan}\n\n` : '';
-        const dpInfo = res.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(res.dp)} ${res.tipeDp ? `(via ${res.tipeDp})` : ''} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
+        const dpInfo = res.lunas ? '💰 *Pembayaran:* LUNAS (terima kasih 🙏)\n\n' : res.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(res.dp)} ${res.tipeDp ? `(via ${res.tipeDp})` : ''} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
         
-        const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}Mohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
+        // Halaman konfirmasi sementara (berlaku sampai tanggal reservasi): detail, invoice, peraturan.
+        const linkReservasi = `https://dolansawah.my.id/reservasi.html?id=${encodeURIComponent(res.id)}&d=${encodeURIComponent(res.date || '')}`;
+        const message = `Halo Kak *${res.nama}* 👋,\n\nKami dari *Dolan Sawah* ingin mengkonfirmasi reservasi Anda:\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n🍽️ *Pesanan Menu:*\n${menuList}\n\n${tambahanInfo}${dpInfo}🔗 *Detail reservasi, invoice & peraturan:*\n${linkReservasi}\n_(Link berlaku sampai tanggal reservasi)_\n\nMohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya ya! 😊`;
         
         openWhatsApp(res.nomorHp, res.nama, message);
     }
