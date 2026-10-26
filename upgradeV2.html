@@ -1126,6 +1126,12 @@
         return 0;
     }
     
+    // Total setelah PPN 10% (orderTotal/harga menu tersimpan SEBELUM pajak) -- sama dengan halaman tamu reservasi.html.
+    function getReservationGrandTotal(r) {
+        const sub = getReservationOrderTotal(r);
+        return sub + Math.round(sub * 0.10);
+    }
+
     function cleanPhoneNumber(phone) { 
         return phone.replace(/[^0-9]/g, ''); 
     }
@@ -1285,8 +1291,8 @@
             const dpInfo = r.dp > 0 ? `<div><i class="fas fa-money-bill-wave"></i> DP: Rp${formatRupiah(r.dp)} ${r.tipeDp ? `(${r.tipeDp})` : ''}</div>` : '';
             const phoneInfo = r.nomorHp ? `<div><i class="fas fa-phone"></i> ${escapeHtml(r.nomorHp)}</div>` : '';
             const lunasInfo = r.lunas ? '<div style="color:var(--success);font-weight:700"><i class="fas fa-check-circle"></i> LUNAS</div>' : '';
-            const orderTotalVal = getReservationOrderTotal(r);
-            const orderTotalInfo = orderTotalVal > 0 ? `<div><i class="fas fa-receipt"></i> Estimasi Total: Rp${formatRupiah(orderTotalVal)}</div>` : '';
+            const orderTotalVal = getReservationGrandTotal(r);
+            const orderTotalInfo = orderTotalVal > 0 ? `<div><i class="fas fa-receipt"></i> Estimasi Total (incl. PPN 10%): Rp${formatRupiah(orderTotalVal)}</div>` : '';
 
             // Tombol "Terima Kasih"
             let thankYouButtonHtml = '';
@@ -2866,12 +2872,12 @@
         const stats = analyzeData(filteredData);
         const totalPax = filteredData.reduce((sum, r) => sum + parseInt(r.jumlah||0), 0);
         const totalRevenueDP = filteredData.reduce((sum, r) => sum + parseInt(r.dp||0), 0);
-        const totalOrderValue = filteredData.reduce((sum, r) => sum + getReservationOrderTotal(r), 0);
+        const totalOrderValue = filteredData.reduce((sum, r) => sum + getReservationGrandTotal(r), 0);
         
         document.getElementById('anl-stats-grid').innerHTML = `
             <div class="mini-stat"><div class="val">${filteredData.length}</div><div class="lbl">Total Reservasi</div></div>
             <div class="mini-stat"><div class="val">${totalPax}</div><div class="lbl">Total Tamu</div></div>
-            <div class="mini-stat"><div class="val">Rp ${formatK(totalOrderValue)}</div><div class="lbl">Estimasi Omzet Pesanan</div></div>
+            <div class="mini-stat"><div class="val">Rp ${formatK(totalOrderValue)}</div><div class="lbl">Estimasi Omzet Pesanan (incl. PPN)</div></div>
             <div class="mini-stat"><div class="val">Rp ${formatK(totalRevenueDP)}</div><div class="lbl">Omzet DP Masuk</div></div>`;
         
         renderChart(labels, chartData, xLabel);
@@ -2987,7 +2993,7 @@
     function showCustomerProfile(nomorHp, name) {
         const customerReservations = currentAnalysisData.filter(r => r.nomorHp === nomorHp).sort((a,b) => b.date.localeCompare(a.date));
         const totalDp = customerReservations.reduce((sum, r) => sum + (r.dp || 0), 0);
-        const totalOrderValue = customerReservations.reduce((sum, r) => sum + getReservationOrderTotal(r), 0);
+        const totalOrderValue = customerReservations.reduce((sum, r) => sum + getReservationGrandTotal(r), 0);
         
         const historyHtml = customerReservations.map(r => `<div class="history-item"><strong>${escapeHtml(r.date)}</strong> - ${r.jumlah} org</div>`).join('');
         
@@ -2998,7 +3004,7 @@
             <p>${escapeHtml(nomorHp)}</p>
             <div class="profile-stats">
                 <div class="stat-card"><div class="value">${customerReservations.length}</div><div class="label">Reservasi</div></div>
-                <div class="stat-card"><div class="value">Rp ${formatK(totalOrderValue)}</div><div class="label">Estimasi Total Pesanan</div></div>
+                <div class="stat-card"><div class="value">Rp ${formatK(totalOrderValue)}</div><div class="label">Estimasi Total Pesanan (incl. PPN)</div></div>
                 <div class="stat-card"><div class="value">Rp ${formatK(totalDp)}</div><div class="label">Total DP</div></div>
             </div>
             <h5>Riwayat:</h5>
