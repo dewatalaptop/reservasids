@@ -2534,7 +2534,7 @@
         const dpInfo = res.lunas ? '💰 *Pembayaran:* LUNAS (terima kasih 🙏)\n\n' : res.dp > 0 ? `💰 *DP:* Rp ${formatRupiah(res.dp)} ${res.tipeDp ? `(via ${res.tipeDp})` : ''} (Sudah kami terima, terima kasih 🙏)\n\n` : '';
         
         // Halaman konfirmasi sementara (berlaku sampai tanggal reservasi): detail, invoice, peraturan.
-        const linkReservasi = `https://dolansawah.my.id/reservasi.html?id=${encodeURIComponent(res.id)}&d=${encodeURIComponent(res.date || '')}`;
+        const linkReservasi = `https://www.dolansawah.my.id/reservasi.html?id=${encodeURIComponent(res.id)}&d=${encodeURIComponent(res.date || '')}`;
         const message = `Halo Kak *${res.nama}* 👋,\n\nReservasi Anda di *Dolan Sawah* telah *dikonfirmasi* ✅\n\n🗓️ *Tanggal:* ${res.date}\n⏰ *Jam:* ${res.jam}\n📍 *Tempat:* ${res.tempat}\n👥 *Jumlah:* ${res.jumlah} orang\n\n${dpInfo}📲 *Detail lengkap reservasi (menu, pembayaran & invoice)* dapat dilihat di:\n${linkReservasi}\n_(Link berlaku sampai tanggal reservasi)_\n\n⚠️ *PENTING:* Mohon baca *Peraturan Reservasi* pada halaman tersebut (tombol *Peraturan Reservasi*) sebelum kedatangan, ya.\n\nMohon balas pesan ini untuk konfirmasi. Kami tunggu kedatangannya! 😊`;
         
         openWhatsApp(res.nomorHp, res.nama, message);
