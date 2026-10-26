@@ -391,7 +391,7 @@ function toAvailabilityItems(snap, kind) {
       date: String(x.date || ""),
       jam: typeof x.jam === "string" ? x.jam.slice(0, 5) : "",
       tempat: String(x.tempat || "").slice(0, 100),
-      jumlah: parseInt(x.jumlah, 10) || 0,
+      jumlah: Math.max(0, parseInt(x.jumlah, 10) || 0),
       kind
     });
   });
