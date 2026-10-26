@@ -360,3 +360,76 @@ exports.checkReservationCompleteness = onRequest(
     }
   }
 );
+
+// ============================================================
+// publicAvailability: ketersediaan tempat TANPA data pribadi.
+//
+// Halaman publik (pesantempat.html, reservasimandiri.html) dulu membaca
+// koleksi reservations/reservation_requests langsung dari browser, sehingga
+// nama, nomor HP, menu, dan catatan semua tamu terbaca siapa saja. Fungsi ini
+// membaca lewat Admin SDK dan hanya mengembalikan field yang aman:
+// tanggal, jam, tempat, jumlah tamu, jenis (confirmed/pending). Dengan begitu
+// aturan Firestore boleh menutup baca publik (list) pada kedua koleksi itu.
+// ============================================================
+const AVAIL_MAX_DAYS = 62;
+const AVAIL_MAX_DOCS = 3000;
+const CANCELLED_STATUSES = ["batal", "dibatalkan", "cancel", "cancelled", "canceled", "ditolak", "rejected"];
+
+function isIsoDate(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ""));
+  if (!m) return false;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3];
+}
+
+function toAvailabilityItems(snap, kind) {
+  const out = [];
+  snap.forEach((doc) => {
+    const x = doc.data() || {};
+    if (CANCELLED_STATUSES.includes(String(x.status == null ? "" : x.status).trim().toLowerCase())) return;
+    out.push({
+      date: String(x.date || ""),
+      jam: typeof x.jam === "string" ? x.jam.slice(0, 5) : "",
+      tempat: String(x.tempat || "").slice(0, 100),
+      jumlah: parseInt(x.jumlah, 10) || 0,
+      kind
+    });
+  });
+  return out;
+}
+
+exports.publicAvailability = onRequest(
+  {
+    region: REGION,
+    cors: ALLOWED_ORIGINS,
+    memory: "256MiB",
+    maxInstances: 5
+  },
+  async (req, res) => {
+    if (req.method !== "GET") {
+      res.status(405).json({ error: "Method not allowed" });
+      return;
+    }
+    const from = String(req.query.from || "");
+    const to = String(req.query.to || req.query.from || "");
+    if (!isIsoDate(from) || !isIsoDate(to) || from > to) {
+      res.status(400).json({ error: "Parameter from/to harus YYYY-MM-DD dan from <= to." });
+      return;
+    }
+    const spanDays = (Date.parse(to + "T00:00:00Z") - Date.parse(from + "T00:00:00Z")) / 864e5;
+    if (spanDays > AVAIL_MAX_DAYS) {
+      res.status(400).json({ error: `Rentang maksimal ${AVAIL_MAX_DAYS} hari.` });
+      return;
+    }
+    try {
+      const db = admin.firestore();
+      const q = (col) => db.collection(col).where("date", ">=", from).where("date", "<=", to).limit(AVAIL_MAX_DOCS).get();
+      const [confirmed, pending] = await Promise.all([q("reservations"), q("reservation_requests")]);
+      res.set("Cache-Control", "public, max-age=10, s-maxage=10");
+      res.status(200).json({ items: [...toAvailabilityItems(confirmed, "confirmed"), ...toAvailabilityItems(pending, "pending")] });
+    } catch (err) {
+      logger.error("publicAvailability gagal:", err);
+      res.status(502).json({ error: "Gagal memuat ketersediaan." });
+    }
+  }
+);
