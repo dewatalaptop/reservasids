@@ -12,7 +12,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
   <style>
     :root {
@@ -380,18 +379,6 @@
 </head>
 <body>
 
-  <!-- Papan staf memuat data pribadi tamu: wajib login (akun staf yang sama dengan aplikasi admin). Sesi tersimpan di perangkat, jadi layar dapur/kasir cukup login sekali. -->
-  <div id="staffLogin" role="dialog" aria-modal="true" aria-labelledby="slTitle" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(38,70,83,.97);align-items:center;justify-content:center;padding:20px;">
-    <form id="slForm" style="background:#fff;border-radius:16px;padding:26px 22px;width:100%;max-width:340px;box-shadow:0 20px 50px rgba(0,0,0,.35);display:grid;gap:12px;">
-      <h2 id="slTitle" style="font-size:1.15rem;color:#264653;">Masuk Papan Staf</h2>
-      <p style="font-size:.82rem;color:#666;">Halaman ini memuat data tamu, jadi perlu login staf.</p>
-      <label style="font-size:.82rem;font-weight:600;color:#264653;">Email<input id="slEmail" type="email" autocomplete="username" required style="display:block;width:100%;margin-top:4px;padding:11px 12px;border:1px solid #ccd;border-radius:10px;font-size:1rem;"></label>
-      <label style="font-size:.82rem;font-weight:600;color:#264653;">Password<input id="slPass" type="password" autocomplete="current-password" required style="display:block;width:100%;margin-top:4px;padding:11px 12px;border:1px solid #ccd;border-radius:10px;font-size:1rem;"></label>
-      <p id="slErr" role="alert" style="display:none;color:#c0392b;font-size:.82rem;"></p>
-      <button id="slBtn" type="submit" style="padding:12px;border:0;border-radius:10px;background:#2a9d8f;color:#fff;font-weight:700;font-size:1rem;cursor:pointer;">Masuk</button>
-    </form>
-  </div>
-
   <div id="loader"><div class="spinner"></div><small style="color:#888;">Sinkronisasi Data...</small></div>
 
   <div class="sticky-wrapper">
@@ -535,7 +522,6 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  const auth = firebase.auth();
 
   // ✅ Offline persistence: staf tetap bisa lihat data terakhir yang sudah tersinkron
   // walau internet sempat putus (mis. lokasi outdoor/sawah dengan sinyal lemah).
@@ -827,41 +813,10 @@
 
     setInterval(updateAllTimers, 60000);
 
+    await loadMenuDetails();
     renderDateScroller();
-
-    bindStaffLogin();
-    let started = false;
-    auth.onAuthStateChanged(async (user) => {
-      const ov = document.getElementById('staffLogin');
-      if (!user) {
-        started = false;
-        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-        document.getElementById('loader').style.display = 'none';
-        ov.style.display = 'flex';
-        document.getElementById('slEmail').focus();
-        return;
-      }
-      ov.style.display = 'none';
-      if (started) return;
-      started = true;
-      await loadMenuDetails();
-      loadData(selectedDate);
-    });
+    loadData(selectedDate);
   });
-
-  function bindStaffLogin() {
-    document.getElementById('slForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const err = document.getElementById('slErr'), btn = document.getElementById('slBtn');
-      err.style.display = 'none'; btn.disabled = true;
-      try {
-        await auth.signInWithEmailAndPassword(document.getElementById('slEmail').value.trim(), document.getElementById('slPass').value);
-        document.getElementById('slPass').value = '';
-      } catch (ex) {
-        err.textContent = 'Email atau password salah.'; err.style.display = 'block';
-      } finally { btn.disabled = false; }
-    });
-  }
 
   async function loadMenuDetails() {
     try {
@@ -888,6 +843,14 @@
     return (key !== undefined) ? menuPriceCache[key] : 0;
   }
 
+  // Data papan dibaca lewat fungsi publik boardReservations (tanpa login; hanya kolom yang dipakai papan, tanpa nomor HP) dan
+  // diperbarui otomatis tiap 20 detik. Daftar `reservations` di Firestore sendiri tertutup untuk umum.
+  const BOARD_URL = 'https://asia-southeast2-reservasi-dolan-sawah.cloudfunctions.net/boardReservations';
+  const BOARD_POLL_MS = 20000;
+  let loadSeq = 0;
+  let tarikSekarang = null;
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && tarikSekarang) tarikSekarang(); });
+
   function loadData(dateObj) {
     document.getElementById('loader').style.display = 'flex';
     if (unsubscribe) unsubscribe();
@@ -896,31 +859,30 @@
     const m = String(dateObj.getMonth() + 1).padStart(2, '0');
     const d = String(dateObj.getDate()).padStart(2, '0');
     const dateStr = y + '-' + m + '-' + d;
+    const seq = ++loadSeq;
 
-    unsubscribe = db.collection('reservations')
-      .where('date', '==', dateStr)
-      .onSnapshot(snap => {
-        let temp = [];
-        snap.forEach(doc => {
-          const d = doc.data();
-          // ✅ Default jam agar dokumen tanpa field 'jam' tidak meng-crash sort/render
-          temp.push({ id: doc.id, ...d, jam: d.jam || '00:00' });
-        });
-        allReservations = temp.sort((a, b) => a.jam.localeCompare(b.jam));
+    const tarik = async () => {
+      try {
+        const res = await fetch(BOARD_URL + '?date=' + dateStr, { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (seq !== loadSeq) return; // pengguna sudah pindah tanggal
+        // Default jam agar dokumen tanpa field 'jam' tidak meng-crash sort/render
+        allReservations = (data.items || []).map(x => ({ ...x, jam: x.jam || '00:00' })).sort((a, b) => a.jam.localeCompare(b.jam));
         try {
           renderUI();
           updateSyncStatus(true);
-        } finally {
-          // ✅ Loader selalu ditutup walau renderUI() gagal, agar UI tidak macet selamanya
-          document.getElementById('loader').style.display = 'none';
-        }
-      }, err => {
-        // ✅ Kalau listener Firestore gagal (izin/koneksi), tampilkan status jelas
-        // daripada diam-diam menampilkan data basi tanpa peringatan.
-        console.error('Firestore listen error', err);
-        updateSyncStatus(false);
-        document.getElementById('loader').style.display = 'none';
-      });
+        } catch (e) { console.error('renderUI gagal', e); }
+      } catch (err) {
+        if (seq === loadSeq) { console.error('Gagal memuat data papan', err); updateSyncStatus(false); }
+      } finally {
+        if (seq === loadSeq) document.getElementById('loader').style.display = 'none';
+      }
+    };
+    tarikSekarang = tarik;
+    tarik();
+    const timer = setInterval(() => { if (!document.hidden) tarik(); }, BOARD_POLL_MS);
+    unsubscribe = () => clearInterval(timer);
   }
 
   function renderUI() {

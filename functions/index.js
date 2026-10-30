@@ -4,6 +4,7 @@ const admin = require("firebase-admin");
 const { SecretManagerServiceClient } = require("@google-cloud/secret-manager");
 const crypto = require("crypto");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { handleBoard } = require("./board");
 const { STATUS_BATAL, LIMITS, isCancelled, sisaKapasitas, cekAturanTempat, validateRequest } = require("./submit");
 
 admin.initializeApp();
@@ -669,3 +670,12 @@ exports.reservationStatus = onRequest(
   reservationStatusHandler
 );
 exports._reservationStatusHandler = reservationStatusHandler; // untuk tes
+
+// ============================================================
+// boardReservations: data untuk papan karyawan (ds-information-board.html, upgradeteam.html) TANPA login.
+// Hanya kolom yang dipakai papan; tanpa nomor HP. Logika: functions/board.js.
+// ============================================================
+exports.boardReservations = onRequest(
+  { region: REGION, cors: ALLOWED_ORIGINS, memory: "256MiB", maxInstances: 5 },
+  (req, res) => handleBoard(req, res, { admin, logger })
+);
