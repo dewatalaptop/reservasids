@@ -857,7 +857,22 @@
     // =========================================
     // 4. OTENTIKASI & LOGIN ADMIN
     // =========================================
+    // Jembatan ke aplikasi Android (WebView). Di browser biasa window.DolanAndroid tidak ada, jadi tidak melakukan apa pun.
+    // Mengabarkan login/logout supaya aplikasi bisa mendaftarkan perangkat untuk notifikasi (token hanya dikirim ke aplikasi native).
+    async function kabariAplikasi(user) {
+      try {
+        if (!window.DolanAndroid) return;
+        if (user) {
+          const t = await user.getIdToken();
+          window.DolanAndroid.postMessage('session\n' + t + '\n' + (user.email || ''));
+        } else {
+          window.DolanAndroid.postMessage('logout');
+        }
+      } catch (e) { /* tidak boleh mengganggu aplikasi web */ }
+    }
+    
     auth.onAuthStateChanged(user => {
+        kabariAplikasi(user);
         if (user) {
             // User Login
             loginContainer.style.display = 'none'; 

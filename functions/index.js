@@ -5,6 +5,8 @@ const { SecretManagerServiceClient } = require("@google-cloud/secret-manager");
 const crypto = require("crypto");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { handleBoard } = require("./board");
+const { handleDevice, kirimPush } = require("./devices");
+const { pesanPermintaanBaru, jalankanRingkasanPagi, jalankanPeringatanKedaluwarsa } = require("./push");
 const { STATUS_BATAL, LIMITS, isCancelled, sisaKapasitas, cekAturanTempat, validateRequest } = require("./submit");
 
 admin.initializeApp();
@@ -543,6 +545,13 @@ async function submitReservationHandler(req, res) {
         expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + LIMITS.pendingTtlJam * 3600 * 1000)
       });
     });
+    // Beri tahu admin lewat push (tidak boleh menggagalkan atau menunda lama respons ke tamu).
+    try {
+      await Promise.race([
+        kirimPush({ admin, db, logger }, pesanPermintaanBaru(d)),
+        new Promise((resolve) => setTimeout(resolve, 4000))
+      ]);
+    } catch (e) { logger.warn("push permintaan baru gagal:", e && e.message); }
     res.status(200).json({ ok: true, id: reqRef.id });
   } catch (err) {
     if (err instanceof SubmitError) {
@@ -678,4 +687,34 @@ exports._reservationStatusHandler = reservationStatusHandler; // untuk tes
 exports.boardReservations = onRequest(
   { region: REGION, cors: ALLOWED_ORIGINS, memory: "256MiB", maxInstances: 5 },
   (req, res) => handleBoard(req, res, { admin, logger })
+);
+
+// ============================================================
+// Notifikasi untuk aplikasi Android admin.
+//  - registerDevice / unregisterDevice: aplikasi mendaftarkan token FCM dengan token login admin.
+//  - pengingatPagi: tiap 07:00 WIB, ringkasan hari ini + jumlah pengingat H-3/H-1/terima kasih + permintaan hampir kedaluwarsa.
+//  - peringatanKedaluwarsa: tiap jam, peringatan SEKALI untuk permintaan yang sisa waktunya <= 6 jam.
+// Permintaan baru dikirim langsung dari submitReservation. Logika: functions/devices.js, functions/push.js.
+// ============================================================
+exports.registerDevice = onRequest(
+  { region: REGION, cors: ALLOWED_ORIGINS, memory: "256MiB", maxInstances: 3 },
+  (req, res) => handleDevice(req, res, { admin, db: admin.firestore(), logger }, "register")
+);
+exports.unregisterDevice = onRequest(
+  { region: REGION, cors: ALLOWED_ORIGINS, memory: "256MiB", maxInstances: 3 },
+  (req, res) => handleDevice(req, res, { admin, db: admin.firestore(), logger }, "unregister")
+);
+exports.pengingatPagi = onSchedule(
+  { region: REGION, schedule: "0 7 * * *", timeZone: "Asia/Jakarta", memory: "256MiB" },
+  async () => {
+    const hasil = await jalankanRingkasanPagi({ admin, db: admin.firestore(), logger });
+    logger.info("pengingatPagi:", JSON.stringify(hasil));
+  }
+);
+exports.peringatanKedaluwarsa = onSchedule(
+  { region: REGION, schedule: "every 60 minutes", timeZone: "Asia/Jakarta", memory: "256MiB" },
+  async () => {
+    const hasil = await jalankanPeringatanKedaluwarsa({ admin, db: admin.firestore(), logger });
+    if (hasil.dikirim) logger.info("peringatanKedaluwarsa:", JSON.stringify(hasil));
+  }
 );

@@ -30,3 +30,9 @@ test("salinan reservasi-core.js di reservasids sama persis dengan sumbernya (dol
   const sumber = fs.readFileSync(corePath, "utf8").replace(/\r\n/g, "\n");
   assert.equal(salinan, sumber, "reservasi-core.js tidak sinkron; jalankan scripts/sync-core.sh");
 });
+
+test("salinan functions/reservasi-core.js sama persis dengan sumbernya (dolansawahhomepage)", { skip: !ada && "repo dolansawahhomepage tidak ditemukan" }, () => {
+  const salinan = fs.readFileSync(path.resolve(__dirname, "../reservasi-core.js"), "utf8").replace(/\r\n/g, "\n");
+  const sumber = fs.readFileSync(corePath, "utf8").replace(/\r\n/g, "\n");
+  assert.equal(salinan, sumber, "functions/reservasi-core.js tidak sinkron; jalankan scripts/sync-core.sh");
+});
