@@ -588,3 +588,54 @@ exports.cleanupRateLimits = onSchedule(
     await batch.commit();
   }
 );
+
+// ============================================================
+// reservationStatus: tamu melihat status permintaannya lewat ID permintaan
+// (dikirim balik oleh submitReservation). Koleksi reservation_requests tidak
+// boleh dibaca publik, jadi hanya field aman yang dikembalikan: tanggal, jam,
+// tempat, jumlah, nama, status. Tanpa nomor HP, menu, atau catatan.
+// ============================================================
+async function reservationStatusHandler(req, res) {
+  if (req.method !== "GET") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+  const id = String(req.query.id || "");
+  if (!/^[A-Za-z0-9]{15,40}$/.test(id)) {
+    res.status(400).json({ code: "id", message: "Tautan tidak valid." });
+    return;
+  }
+  try {
+    const db = admin.firestore();
+    res.set("Cache-Control", "no-store");
+    const pick = (x) => ({ date: String(x.date || ""), jam: String(x.jam || "").slice(0, 5), tempat: String(x.tempat || "").slice(0, 100), jumlah: Math.max(0, parseInt(x.jumlah, 10) || 0), nama: String(x.nama || "").slice(0, 80) });
+
+    const reqSnap = await db.collection("reservation_requests").doc(id).get();
+    if (reqSnap.exists) {
+      const x = reqSnap.data() || {};
+      const s = String(x.status || "pending").toLowerCase();
+      const status = s === "ditolak" ? "ditolak" : s === "kedaluwarsa" ? "kedaluwarsa" : "menunggu";
+      res.status(200).json({ status, ...pick(x) });
+      return;
+    }
+    // Sudah disetujui: dokumen permintaan dihapus, reservasi menyimpan requestId.
+    const ok = await db.collection("reservations").where("requestId", "==", id).limit(1).get();
+    if (!ok.empty) {
+      const doc = ok.docs[0];
+      const x = doc.data() || {};
+      const batal = isCancelled(x);
+      res.status(200).json({ status: batal ? "dibatalkan" : "disetujui", reservationId: batal ? null : doc.id, ...pick(x) });
+      return;
+    }
+    res.status(404).json({ code: "tidak_ada", message: "Permintaan tidak ditemukan." });
+  } catch (err) {
+    logger.error("reservationStatus gagal:", err);
+    res.status(502).json({ code: "server", message: "Gagal memuat status." });
+  }
+}
+
+exports.reservationStatus = onRequest(
+  { region: REGION, cors: ALLOWED_ORIGINS, memory: "256MiB", maxInstances: 5 },
+  reservationStatusHandler
+);
+exports._reservationStatusHandler = reservationStatusHandler; // untuk tes

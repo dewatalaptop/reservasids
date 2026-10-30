@@ -11,7 +11,8 @@ function makeDb(seed) {
   for (const [c, docs] of Object.entries(seed)) cols[c] = new Map(Object.entries(docs));
   let autoId = 0;
   const col = (name) => (cols[name] = cols[name] || new Map());
-  const refOf = (name, id) => ({ _col: name, id, _isRef: true });
+  const refOf = (name, id) => ({ _col: name, id, _isRef: true,
+    async get() { const data = col(name).get(id); return { exists: data !== undefined, id, data: () => data }; } });
   const query = (name, filters = [], lim = Infinity) => ({
     _isQuery: true, name, filters, lim,
     where(f, op, v) { return query(name, [...filters, [f, op, v]], lim); },
@@ -67,6 +68,7 @@ function load(db) {
   delete require.cache[require.resolve("../index.js")];
   const mod = require("../index.js");
   Module._load = orig;
+  load.mod = mod;
   return mod._submitReservationHandler;
 }
 
@@ -191,4 +193,35 @@ test("handler: honeypot dan metode salah", async () => {
   const res = { status(c) { this.c = c; return this; }, json() {} };
   await h({ method: "GET" }, res);
   assert.equal(res.c, 405);
+});
+
+// ---------- reservationStatus ----------
+function getStatus(h, id) {
+  return new Promise((resolve) => {
+    const res = { code: 200, set() {}, status(c) { this.code = c; return this; }, json(o) { resolve({ status: this.code, body: o }); } };
+    h({ method: "GET", query: { id } }, res);
+  });
+}
+test("reservationStatus: menunggu, ditolak, kedaluwarsa, disetujui, batal, tak ada, id buruk", async () => {
+  const seed = baseSeed();
+  const D = futureDate();
+  seed.reservation_requests.AAAAAAAAAAAAAAAAAAAA = { date: D, jam: "10:00", tempat: "Gazebo A", jumlah: 5, nama: "Budi", nomorHp: "62811", status: "pending" };
+  seed.reservation_requests.BBBBBBBBBBBBBBBBBBBB = { date: D, tempat: "G", jumlah: 1, nama: "x", status: "ditolak" };
+  seed.reservation_requests.CCCCCCCCCCCCCCCCCCCC = { date: D, tempat: "G", jumlah: 1, nama: "x", status: "kedaluwarsa" };
+  seed.reservations.res1 = { requestId: "DDDDDDDDDDDDDDDDDDDD", date: D, tempat: "G", jumlah: 2, nama: "y", nomorHp: "6282", status: "approved" };
+  seed.reservations.res2 = { requestId: "EEEEEEEEEEEEEEEEEEEE", date: D, tempat: "G", jumlah: 2, nama: "z", status: "batal" };
+  load(makeDb(seed));
+  const h = load.mod._reservationStatusHandler;
+  const a = await getStatus(h, "AAAAAAAAAAAAAAAAAAAA");
+  assert.equal(a.body.status, "menunggu");
+  assert.equal(a.body.nomorHp, undefined); // data pribadi tidak bocor
+  assert.equal((await getStatus(h, "BBBBBBBBBBBBBBBBBBBB")).body.status, "ditolak");
+  assert.equal((await getStatus(h, "CCCCCCCCCCCCCCCCCCCC")).body.status, "kedaluwarsa");
+  const d = await getStatus(h, "DDDDDDDDDDDDDDDDDDDD");
+  assert.deepEqual([d.body.status, d.body.reservationId], ["disetujui", "res1"]);
+  assert.equal(d.body.nomorHp, undefined);
+  const e = await getStatus(h, "EEEEEEEEEEEEEEEEEEEE");
+  assert.deepEqual([e.body.status, e.body.reservationId], ["dibatalkan", null]);
+  assert.equal((await getStatus(h, "ZZZZZZZZZZZZZZZZZZZZ")).status, 404);
+  assert.equal((await getStatus(h, "../x")).status, 400);
 });
