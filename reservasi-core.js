@@ -115,6 +115,44 @@
     };
   }
 
+  // ---------- Laporan operasional ----------
+  // Okupansi per tempat untuk satu bulan ("YYYY-MM"): jumlah reservasi, total tamu, rata-rata tamu per reservasi dan
+  // rata-rata tamu dibanding kapasitas. kapasitas: { namaTempat: angka }. Reservasi batal/ditolak/kedaluwarsa diabaikan.
+  function laporanOkupansi(reservations, kapasitas, bulan) {
+    var per = {}, jam = {}, totalRes = 0, totalTamu = 0;
+    (reservations || []).forEach(function (r) {
+      if (!r || !r.date || String(r.date).slice(0, 7) !== bulan || isBatal(r)) return;
+      var t = r.tempat || "(tanpa tempat)", n = Math.max(0, parseInt(r.jumlah, 10) || 0);
+      var e = per[t] = per[t] || { tempat: t, reservasi: 0, tamu: 0 };
+      e.reservasi++; e.tamu += n; totalRes++; totalTamu += n;
+      if (r.jam) jam[r.jam] = (jam[r.jam] || 0) + 1;
+    });
+    var baris = Object.keys(per).map(function (t) {
+      var e = per[t], kap = (kapasitas && kapasitas[t]) || 0;
+      e.rataTamu = e.reservasi ? Math.round(e.tamu / e.reservasi) : 0;
+      e.kapasitas = kap || null;
+      e.okupansiPersen = kap ? Math.round(100 * e.rataTamu / kap) : null;
+      return e;
+    }).sort(function (a, b) { return b.tamu - a.tamu; });
+    var jamTersibuk = Object.keys(jam).map(function (j) { return { jam: j, jumlah: jam[j] }; })
+      .sort(function (a, b) { return b.jumlah - a.jumlah || a.jam.localeCompare(b.jam); }).slice(0, 3);
+    return { baris: baris, totalReservasi: totalRes, totalTamu: totalTamu, jamTersibuk: jamTersibuk };
+  }
+
+  // Konversi permintaan tamu: hanya permintaan lewat alur baru (submitReservation) yang bisa dilacak sampai akhir;
+  // reservasi disetujui dikenali dari field requestId. Permintaan lama dihapus saat disetujui, jadi tidak bisa dihitung mundur.
+  function laporanKonversi(requests, reservations) {
+    var c = { menunggu: 0, ditolak: 0, kedaluwarsa: 0, disetujui: 0 };
+    (requests || []).forEach(function (q) {
+      var s = String((q && q.status) || "pending").toLowerCase();
+      if (s === "ditolak") c.ditolak++; else if (s === "kedaluwarsa") c.kedaluwarsa++; else c.menunggu++;
+    });
+    (reservations || []).forEach(function (r) { if (r && r.requestId) c.disetujui++; });
+    c.total = c.menunggu + c.ditolak + c.kedaluwarsa + c.disetujui;
+    c.persenDisetujui = c.total ? Math.round(100 * c.disetujui / c.total) : null;
+    return c;
+  }
+
   // ---------- Pengingat (dipakai panel dasbor web; aplikasi Android memakai logika yang sama) ----------
   var STATUS_BATAL = ["batal", "dibatalkan", "cancel", "cancelled", "canceled", "ditolak", "rejected", "kedaluwarsa"];
   function isBatal(r) { return STATUS_BATAL.indexOf(String((r && r.status) == null ? "" : r.status).trim().toLowerCase()) >= 0; }
@@ -194,7 +232,7 @@
     estimasiDp: estimasiDp, statusBayar: statusBayar,
     isBatal: isBatal, tsMillis: tsMillis, ymdWib: ymdWib, tambahHari: tambahHari, selisihHari: selisihHari,
     daftarPengingat: daftarPengingat, nomorWa: nomorWa, pesanPengingat: pesanPengingat,
-    buatCatatanAudit: buatCatatanAudit,
+    buatCatatanAudit: buatCatatanAudit, laporanOkupansi: laporanOkupansi, laporanKonversi: laporanKonversi,
     DURASI_RESERVASI_MENIT: DURASI_RESERVASI_MENIT, JEDA_ANTAR_RESERVASI_MENIT: JEDA_ANTAR_RESERVASI_MENIT, JENDELA_BENTROK_MENIT: JENDELA_BENTROK_MENIT, menitDariJam: menitDariJam, sisaKapasitas: sisaKapasitas
   };
 });
