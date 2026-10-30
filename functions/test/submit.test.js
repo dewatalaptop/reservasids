@@ -73,7 +73,7 @@ function load(db) {
   const orig = Module._load;
   Module._load = function (request, ...rest) {
     if (request === "firebase-admin") return adminFake;
-    if (request === "@google-cloud/secret-manager") return { SecretManagerServiceClient: class {} };
+    if (request === "@google-cloud/secret-manager") return { SecretManagerServiceClient: class { async accessSecretVersion() { return [{ payload: { data: Buffer.from("kunci-palsu") } }]; } } };
     return orig.call(this, request, ...rest);
   };
   delete require.cache[require.resolve("../index.js")];
@@ -315,4 +315,26 @@ test("sanitasi: tag HTML dibuang dari nama dan catatan; baris baru catatan tetap
   assert.equal(S.validateRequest(good({ nama: "A".repeat(81) })).code, "nama");
   assert.equal(S.validateRequest(good({ nama: "  Siti   Aminah  " })).data.nama, "Siti Aminah");
   assert.equal(S.validateRequest(good({ nama: "Bud\u0000i" })).data.nama, "Budi"); // karakter kontrol dibuang
+});
+
+// ---------- analisis catatan AI ----------
+test("analisis AI memberi ruang token untuk 'berpikir' (400 memotong jawaban) dan menerima jawaban lengkap", async () => {
+  load(makeDb(baseSeed()));
+  const calls = [];
+  const realFetch = global.fetch;
+  global.fetch = async (url, opt) => {
+    const body = JSON.parse(opt.body);
+    calls.push(body);
+    // meniru Gemini: token berpikir ~400 ikut dihitung; di bawah 1000 jawabannya terpotong
+    const content = body.max_tokens >= 1000
+      ? '{"items": [{"mentionedText": "es jeruk", "possibleMatch": null, "suggestedQuantity": 3}]}'
+      : '{"items": [{"mentionedText": "es jeruk", "possibleMatch';
+    return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content } }] }), clone() { return this; }, text: async () => "" };
+  };
+  try {
+    const r = await load.mod._analyzeTambahanWithAi({ tambahan: "tambah 3 es jeruk " + Math.random(), knownMenuNames: [], existingMenus: [] });
+    assert.ok(calls[0].max_tokens >= 1500, "max_tokens terlalu kecil: " + calls[0].max_tokens);
+    assert.equal(r.items.length, 1);
+    assert.equal(r.items[0].suggestedQuantity, 3);
+  } finally { global.fetch = realFetch; }
 });

@@ -64,6 +64,7 @@ async function getSharedSecret(name) {
   }
 }
 
+const AI_MAX_TOKENS = 2000;
 const ZAI_FALLBACK_MODEL = "glm-4.5-flash";
 const GEMINI_MODEL = "gemini-3.6-flash";
 
@@ -292,9 +293,10 @@ Jangan mengarang menu yang tidak ada di daftar sah. Kalau tidak yakin ada di daf
       { role: "user", content: `Catatan Request Tambahan: "${tambahan}"` }
     ],
     temperature: 0.1,
-    // Jawaban selalu JSON pendek (beberapa item singkat) -- batasi supaya model
-    // tidak menghabiskan waktu generate token yang tidak perlu.
-    max_tokens: 400
+    // Jawaban JSON-nya pendek, TAPI model Gemini memakai token "berpikir" tersembunyi yang ikut dihitung dalam batas ini
+    // (terukur 2026-10-30: 14 token terlihat + ~400 token berpikir = terpotong di 400, finish_reason "length", JSON tak terbaca,
+    // sehingga item tambahan di catatan tidak pernah terdeteksi). Batas 2000 menghasilkan jawaban lengkap.
+    max_tokens: AI_MAX_TOKENS
   };
 
   const { ok, data } = await callAiWithFallback(body);
@@ -558,6 +560,7 @@ exports.submitReservation = onRequest(
   submitReservationHandler
 );
 exports._submitReservationHandler = submitReservationHandler; // untuk tes
+exports._analyzeTambahanWithAi = analyzeTambahanWithAi; // untuk tes
 
 // ============================================================
 // expirePendingRequests: permintaan yang tidak diproses admin dalam
