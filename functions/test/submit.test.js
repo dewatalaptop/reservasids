@@ -302,3 +302,17 @@ test("expirePending: dokumen yang sudah disetujui/dihapus saat jalan tidak ditim
   assert.equal(await load.mod._expirePendingHandler(), 0);
   assert.equal(db._cols.reservation_requests.get("a").status, "ditolak");
 });
+
+// ---------- sanitasi (lapisan kedua XSS) ----------
+test("sanitasi: tag HTML dibuang dari nama dan catatan; baris baru catatan tetap; nama kosong setelah dibersihkan ditolak", () => {
+  const r = S.validateRequest(good({ nama: "<img src=x onerror=alert(1)>Budi", tambahan: "Kursi bayi <script>x</script>\nlantai 1" }));
+  assert.equal(r.ok, true);
+  assert.equal(/[<>]/.test(r.data.nama), false);
+  assert.ok(r.data.nama.endsWith("Budi"));
+  assert.equal(/[<>]/.test(r.data.tambahan), false);
+  assert.ok(r.data.tambahan.includes("\n")); // baris baru dipertahankan
+  assert.equal(S.validateRequest(good({ nama: "<<>>" })).code, "nama");
+  assert.equal(S.validateRequest(good({ nama: "A".repeat(81) })).code, "nama");
+  assert.equal(S.validateRequest(good({ nama: "  Siti   Aminah  " })).data.nama, "Siti Aminah");
+  assert.equal(S.validateRequest(good({ nama: "Bud\u0000i" })).data.nama, "Budi"); // karakter kontrol dibuang
+});

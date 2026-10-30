@@ -55,6 +55,13 @@ function usedCapacity(docs, tempat) {
   return used;
 }
 
+// Lapisan kedua melawan XSS tersimpan: data tamu tampil di dasbor admin. Halaman sudah meng-escape, tapi tag HTML
+// juga dibuang di sumbernya. Nama orang/catatan tidak butuh < > atau karakter kontrol.
+const KARAKTER_BERBAHAYA = /[<>\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+function bersihkanTeks(v, maks) {
+  return String(v == null ? "" : v).replace(KARAKTER_BERBAHAYA, "").replace(/\s+/g, " ").trim().slice(0, maks);
+}
+
 function fail(code, message) {
   return { ok: false, code, message };
 }
@@ -84,13 +91,14 @@ function validateRequest(body, now = Date.now()) {
   const tempat = String(b.tempat || "").trim();
   if (!tempat || tempat.length > 100) return fail("tempat", "Tempat tidak valid.");
 
-  const nama = String(b.nama || "").trim();
-  if (!nama || nama.length > 80) return fail("nama", "Nama wajib diisi (maksimal 80 karakter).");
+  if (String(b.nama || "").trim().length > 80) return fail("nama", "Nama wajib diisi (maksimal 80 karakter).");
+  const nama = bersihkanTeks(b.nama, 80);
+  if (!nama) return fail("nama", "Nama wajib diisi (maksimal 80 karakter).");
 
   const nomorHp = normalizePhone(b.nomorHp);
   if (!isValidPhone(nomorHp)) return fail("nomorHp", "Nomor HP tidak valid.");
 
-  const tambahan = String(b.tambahan || "").slice(0, 500);
+  const tambahan = String(b.tambahan == null ? "" : b.tambahan).replace(KARAKTER_BERBAHAYA, "").trim().slice(0, 500); // baris baru tetap boleh
 
   const rawMenus = Array.isArray(b.menus) ? b.menus : [];
   if (rawMenus.length > LIMITS.maxMenuItems) return fail("menus", "Terlalu banyak item menu.");
@@ -107,4 +115,4 @@ function validateRequest(body, now = Date.now()) {
   return { ok: true, data: { date, jam, jumlah, tempat, nama, nomorHp, tambahan, menus } };
 }
 
-module.exports = { STATUS_BATAL, LIMITS, isIsoDate, todayWIB, addDays, normalizePhone, isValidPhone, isCancelled, usedCapacity, validateRequest };
+module.exports = { bersihkanTeks, STATUS_BATAL, LIMITS, isIsoDate, todayWIB, addDays, normalizePhone, isValidPhone, isCancelled, usedCapacity, validateRequest };
