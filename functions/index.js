@@ -4,7 +4,7 @@ const admin = require("firebase-admin");
 const { SecretManagerServiceClient } = require("@google-cloud/secret-manager");
 const crypto = require("crypto");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { STATUS_BATAL, LIMITS, isCancelled, usedCapacity, validateRequest } = require("./submit");
+const { STATUS_BATAL, LIMITS, isCancelled, sisaKapasitas, cekAturanTempat, validateRequest } = require("./submit");
 
 admin.initializeApp();
 
@@ -524,10 +524,13 @@ async function submitReservationHandler(req, res) {
 
       const capParsed = parseInt(loc.capacity, 10);
       const capacity = Number.isFinite(capParsed) ? capParsed : 50; // data kapasitas kosong/rusak -> bawaan 50, bukan tak terbatas
-      const used = usedCapacity([...confirmedSnap.docs.map((x) => x.data()), ...pendingDocs], d.tempat);
-      const remaining = capacity - used;
+      const semuaHariItu = [...confirmedSnap.docs.map((x) => x.data()), ...pendingDocs];
+      const aturan = cekAturanTempat(semuaHariItu, d.tempat, d.jumlah);
+      if (aturan) throw new SubmitError(409, aturan.code, aturan.message);
+      // Kapasitas per jendela waktu (reservasi yang jamnya berdekatan), bukan jumlah seharian.
+      const { sisa: remaining } = sisaKapasitas(semuaHariItu, d.tempat, d.jam, capacity);
       if (remaining < d.jumlah) {
-        throw new SubmitError(409, "kapasitas_penuh", `Tempat "${d.tempat}" sudah tidak tersedia untuk ${d.jumlah} orang (sisa ${Math.max(0, remaining)}). Silakan pilih tempat lain.`);
+        throw new SubmitError(409, "kapasitas_penuh", `Tempat "${d.tempat}" sekitar jam ${d.jam} sudah tidak tersedia untuk ${d.jumlah} orang (sisa ${Math.max(0, remaining)}). Silakan pilih tempat atau jam lain.`);
       }
 
       tx.set(rlRef, { n: (rlSnap.exists ? rlSnap.data().n : 0) + 1, expireAt: admin.firestore.Timestamp.fromMillis(Date.now() + 2 * 3600 * 1000) });

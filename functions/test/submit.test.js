@@ -338,3 +338,58 @@ test("analisis AI memberi ruang token untuk 'berpikir' (400 memotong jawaban) da
     assert.equal(r.items[0].suggestedQuantity, 3);
   } finally { global.fetch = realFetch; }
 });
+
+// ---------- kapasitas per jendela waktu (keputusan pemilik 2026-10-31) ----------
+test("sisaKapasitas: hanya reservasi berjendela < 150 menit yang dijumlahkan; batas tepat 150 tidak", () => {
+  const items = [
+    { tempat: "A", jumlah: 30, jam: "10:00" },
+    { tempat: "A", jumlah: 20, jam: "12:30" },        // tepat 150 menit dari 10:00 -> tidak bentrok dengan jam 10:00
+    { tempat: "A", jumlah: 15, jam: "16:30" },
+    { tempat: "B", jumlah: 99, jam: "10:00" },        // tempat lain
+    { tempat: "A", jumlah: 50, jam: "10:30", status: "batal" },
+    { tempat: "A", jumlah: 40, jam: "10:15", status: "kedaluwarsa" }
+  ];
+  assert.equal(S.sisaKapasitas(items, "A", "10:00", 100).terpakai, 30);        // 12:30 tepat 150 -> tidak ikut
+  assert.equal(S.sisaKapasitas(items, "A", "11:00", 100).terpakai, 50);        // 10:00 (60) dan 12:30 (90) ikut
+  assert.equal(S.sisaKapasitas(items, "A", "12:29", 100).terpakai, 50);        // 10:00 (149) ikut, 12:30 ikut
+  assert.equal(S.sisaKapasitas(items, "A", "19:00", 100).terpakai, 0);         // 16:30 = 150 -> tidak ikut
+  assert.equal(S.sisaKapasitas(items, "A", "17:00", 100).sisa, 85);
+  assert.equal(S.sisaKapasitas(items, "A", "17:00", 100, 1440).terpakai, 65);  // jendela seharian = aturan lama
+});
+
+test("sisaKapasitas: data lama tanpa jam dihitung penuh; jam baru tak valid -> hitung semua (hati-hati)", () => {
+  const items = [{ tempat: "A", jumlah: 10 }, { tempat: "A", jumlah: 5, jam: "08:00" }];
+  assert.equal(S.sisaKapasitas(items, "A", "20:00", 50).terpakai, 10);
+  assert.equal(S.sisaKapasitas(items, "A", "", 50).terpakai, 15);
+});
+
+test("handler: jam berjauhan di tempat yang sama diterima walau total seharian melebihi kapasitas", async () => {
+  const seed = baseSeed();
+  seed.locations.l1.capacity = 30;
+  seed.reservations.r1 = { date: futureDate(), tempat: "Gazebo A", jumlah: 25, jam: "10:00", nomorHp: "62811" };
+  const h = load(makeDb(seed));
+  assert.equal((await call(h, good({ jam: "16:30", jumlah: 25 }))).status, 200);                 // aturan lama: ditolak
+  const dekat = await call(h, good({ jam: "11:30", jumlah: 10, nomorHp: "082999999990" }), "7.7.0.1");
+  assert.equal(dekat.status, 409);
+  assert.equal(dekat.body.code, "kapasitas_penuh");
+  assert.ok(dekat.body.message.includes("11:30"));
+});
+
+test("handler: Full Blok minimal 200 orang; Lantai 1 bagian tertutup bila Full Blok dipesan (seharian)", async () => {
+  const FB = "Lantai 1 Full Blok (peserta wajib di atas 200 orang)";
+  const seed = baseSeed();
+  seed.locations.l2 = { name: FB, capacity: 340 };
+  seed.locations.l3 = { name: "Lantai 1 depan", capacity: 110 };
+  const h = load(makeDb(seed));
+  const kecil = await call(h, good({ tempat: FB, jumlah: 150, menus: [] }), "6.0.0.1");
+  assert.deepEqual([kecil.status, kecil.body.code], [409, "min_200"]);
+  assert.equal((await call(h, good({ tempat: FB, jumlah: 220, menus: [], nomorHp: "081300000001" }), "6.0.0.2")).status, 200);
+  const bagian = await call(h, good({ tempat: "Lantai 1 depan", jam: "18:00", jumlah: 10, menus: [], nomorHp: "081300000002" }), "6.0.0.3");
+  assert.deepEqual([bagian.status, bagian.body.code], [409, "full_blok_terisi"]);
+});
+
+test("cekAturanTempat: Full Blok yang batal tidak menutup bagian Lantai 1", () => {
+  const items = [{ tempat: "Lantai 1 Full Blok (peserta wajib di atas 200 orang)", jumlah: 250, status: "batal" }];
+  assert.equal(S.cekAturanTempat(items, "Lantai 1 tengah", 20), null);
+  assert.equal(S.cekAturanTempat([], "Pondok 1", 5), null);
+});

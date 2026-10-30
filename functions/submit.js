@@ -62,6 +62,47 @@ function bersihkanTeks(v, maks) {
   return String(v == null ? "" : v).replace(KARAKTER_BERBAHAYA, "").replace(/\s+/g, " ").trim().slice(0, maks);
 }
 
+// ---------- Kapasitas tempat ----------
+// Keputusan pemilik (2026-10-31): kapasitas dinilai per JENDELA WAKTU, bukan jumlah seharian. Reservasi di tempat yang sama
+// hanya dijumlahkan bila jamnya berdekatan (selisih < JENDELA_BENTROK_MENIT = gratis 2,5 jam). Data historis: aturan
+// seharian menolak 18,7% reservasi yang di lapangan diterima; jendela 150 menit 10,4%.
+// SALINAN fungsi yang sama ada di dolansawahhomepage/assets/reservasi-core.js (tampilan sisa kapasitas di form tamu);
+// test/parity-core.test.js memastikan keduanya sama bila kedua repo berdampingan.
+const JENDELA_BENTROK_MENIT = 150;
+
+function menitDariJam(t) {
+  const m = /^(\d{1,2}):(\d{2})/.exec(String(t || ""));
+  return m ? (+m[1]) * 60 + (+m[2]) : NaN;
+}
+
+// items: [{tempat, jumlah, jam, status}] pada tanggal yang sama. Yang batal/ditolak/kedaluwarsa diabaikan; yang tanpa jam
+// (data lama) dihitung penuh (hati-hati). Mengembalikan {terpakai, sisa}.
+function sisaKapasitas(items, tempat, jam, kapasitas, jendela) {
+  const w = jendela == null ? JENDELA_BENTROK_MENIT : jendela;
+  const dasar = menitDariJam(jam);
+  let terpakai = 0;
+  for (const it of items || []) {
+    if (!it || it.tempat !== tempat || isCancelled(it)) continue;
+    const j = menitDariJam(it.jam);
+    if (isNaN(j) || isNaN(dasar) || Math.abs(j - dasar) < w) terpakai += Math.max(0, parseInt(it.jumlah, 10) || 0);
+  }
+  return { terpakai, sisa: kapasitas - terpakai };
+}
+
+// Aturan khusus Lantai 1 (dulu hanya di form tamu, kini juga di server): "Full Blok" wajib minimal 200 orang, dan bila
+// Full Blok sudah dipesan pada tanggal itu, Lantai 1 depan/tengah/belakang tidak tersedia (dihitung seharian, seperti sebelumnya).
+function cekAturanTempat(items, tempat, jumlah) {
+  const t = String(tempat || "").toLowerCase();
+  if (t.includes("full blok") && jumlah < 200) {
+    return { code: "min_200", message: "Lantai 1 Full Blok hanya untuk minimal 200 orang." };
+  }
+  const bagianLantai1 = t.includes("lantai 1 depan") || t.includes("lantai 1 tengah") || t.includes("lantai 1 belakang");
+  if (bagianLantai1 && (items || []).some((i) => i && !isCancelled(i) && String(i.tempat || "").toLowerCase().includes("lantai 1 full blok"))) {
+    return { code: "full_blok_terisi", message: "Lantai 1 pada tanggal ini sudah dipesan Full Blok. Silakan pilih tempat lain." };
+  }
+  return null;
+}
+
 function fail(code, message) {
   return { ok: false, code, message };
 }
@@ -115,4 +156,4 @@ function validateRequest(body, now = Date.now()) {
   return { ok: true, data: { date, jam, jumlah, tempat, nama, nomorHp, tambahan, menus } };
 }
 
-module.exports = { bersihkanTeks, STATUS_BATAL, LIMITS, isIsoDate, todayWIB, addDays, normalizePhone, isValidPhone, isCancelled, usedCapacity, validateRequest };
+module.exports = { JENDELA_BENTROK_MENIT, menitDariJam, sisaKapasitas, cekAturanTempat, bersihkanTeks, STATUS_BATAL, LIMITS, isIsoDate, todayWIB, addDays, normalizePhone, isValidPhone, isCancelled, usedCapacity, validateRequest };
