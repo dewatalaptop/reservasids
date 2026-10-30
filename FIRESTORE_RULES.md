@@ -1,5 +1,37 @@
 # Aturan Firestore project `reservasi-dolan-sawah` — menutup baca publik data tamu
 
+## STATUS 2026-10-30 — semua klien sudah siap, aturan BELUM diterbitkan
+Pemeriksaan anonim (`bash scripts/verify-firestore-rules.sh`, hanya membaca kode status) menunjukkan **daftar `reservations`
+dan `reservation_requests` masih bisa dibaca siapa pun tanpa login** (nama + nomor HP tamu terbuka). Yang sudah live dan membuat
+penutupan ini aman:
+
+| Pembaca/penulis | Cara sekarang |
+|---|---|
+| Form tamu `reservasimandiri.html`, `pesantempat.html` | ketersediaan lewat fungsi `publicAvailability`; kirim permintaan lewat fungsi `submitReservation` (Admin SDK) |
+| Pelacak tamu `reservasi.html?r=` | fungsi `reservationStatus` (tanpa data pribadi) |
+| Halaman tamu `reservasi.html?id=` | `get` satu dokumen `reservations` (ID acak) — tetap diizinkan |
+| Dasbor admin, kalender admin, papan staf | login Firebase Auth |
+| Fungsi AI, `dolan-sawah-ai` | Admin SDK (mengabaikan aturan) |
+
+Efek samping yang diterima: halaman lama yang masih tersimpan di cache browser tamu (form versi V9) akan gagal mengirim sampai dimuat ulang
+(GitHub Pages meng-cache sekitar 10 menit). Salinan lama di repo `testwebsite1` akan rusak bila dipakai.
+
+### Prosedur terbit (urut, ±5 menit)
+1. Firebase Console → Firestore → Rules. **Salin seluruh aturan yang berlaku sekarang** ke berkas aman (cadangan; tombol riwayat juga menyimpannya).
+2. Ubah HANYA dua blok di bawah (bagian "Perubahan aturan"). Untuk `reservation_requests` pakai `allow create: if false;` — hanya fungsi
+   `submitReservation` yang menulis; form publik tidak lagi menulis langsung. Sisanya jangan diubah.
+3. Terbitkan (Publish).
+4. Jalankan `bash scripts/verify-firestore-rules.sh` — semua baris harus OK (LIST reservations/reservation_requests = 403).
+5. Uji manual: (a) buka form reservasi mandiri dan kirim satu permintaan uji → harus berhasil dan muncul di inbox admin; (b) buka tautan pelacak yang
+   muncul; (c) login di dasbor admin: inbox, kalender, Pengingat tetap terisi; (d) buka satu `reservasi.html?id=<ID valid>`.
+6. Bila ada yang rusak: Console → Rules → riwayat → pulihkan versi lama (satu klik). Tidak ada data yang berubah oleh aturan.
+
+### Opsi pengetatan tambahan (disarankan)
+`request.auth != null` berarti SIAPA PUN yang punya akun Firebase Auth lolos. Bila pendaftaran mandiri terbuka di Authentication → Settings,
+orang asing bisa membuat akun lalu membaca semua reservasi. Pilih salah satu:
+- tutup pendaftaran mandiri (Authentication → Settings → User actions → matikan "Enable create (sign-up)"), atau
+- batasi dengan daftar email staf di aturan, mis. `request.auth.token.email in ['admin1@…', 'admin2@…']` (ganti dengan email staf sebenarnya).
+
 ## Masalahnya
 Koleksi `reservations` dan `reservation_requests` dulu bisa dibaca siapa saja tanpa login
 (nama, nomor HP, menu, catatan, DP). Halaman publik membacanya langsung dari browser,
@@ -29,7 +61,7 @@ match /reservations/{id} {
   allow create, update, delete: if request.auth != null;   // samakan dengan aturan tulis yang berlaku sekarang
 }
 match /reservation_requests/{id} {
-  allow create: if true;                    // form publik; pertahankan validasi field yang sudah ada
+  allow create: if false;                   // hanya fungsi submitReservation (Admin SDK) yang menulis; form publik tidak menulis langsung
   allow read, update, delete: if request.auth != null;
 }
 ```
