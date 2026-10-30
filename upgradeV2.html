@@ -16,6 +16,8 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <!-- Aturan bisnis bersama (PPN/DP/bentrok kapasitas). SALINAN dari dolansawahhomepage/assets/reservasi-core.js; jangan diedit di sini, jalankan scripts/sync-core.sh -->
+  <script src="reservasi-core.js"></script>
 
   <style>
     :root {
@@ -1115,21 +1117,12 @@
     // Prioritas: pakai orderTotal/price yang sudah tersimpan (snapshot saat reservasi dibuat).
     // Fallback: reservasi lama tanpa snapshot dihitung pakai harga menu saat ini (live).
     function getReservationOrderTotal(r) {
-        if (typeof r.orderTotal === 'number') return r.orderTotal;
-        if (Array.isArray(r.menus) && r.menus.length > 0) {
-            return r.menus.reduce((sum, item) => {
-                const price = (typeof item.price === 'number') ? item.price : (menuPrices[item.name] || 0);
-                return sum + price * (parseInt(item.quantity) || 0);
-            }, 0);
-        }
-        if (r.menu) { return menuPrices[r.menu] || 0; }
-        return 0;
+        return ReservasiCore.hitungSubtotal(r, menuPrices); // aturan di reservasi-core.js
     }
     
     // Total setelah PPN 10% (orderTotal/harga menu tersimpan SEBELUM pajak) -- sama dengan halaman tamu reservasi.html.
     function getReservationGrandTotal(r) {
-        const sub = getReservationOrderTotal(r);
-        return sub + Math.round(sub * 0.10);
+        return ReservasiCore.hitungGrandTotal(getReservationOrderTotal(r));
     }
 
     function cleanPhoneNumber(phone) { 
@@ -1602,14 +1595,16 @@
             }
         }
 
-        const toMinutes = (t) => { const p = (t || '').split(':').map(Number); return (p[0] || 0) * 60 + (p[1] || 0); };
-        const newMin = toMinutes(jamBaru);
+        // Aturan bentrok dari reservasi-core.js (sama dengan server & form tamu): tiap reservasi 2,5 jam + jeda 2 jam
+        // = jendela 270 menit di tempat yang sama. Reservasi batal/ditolak tidak dihitung.
+        const newMin = ReservasiCore.menitDariJam(jamBaru);
 
         const clashing = candidates.filter(r =>
             r.tempat === tempat &&
             r.id !== excludeId &&
+            !ReservasiCore.isBatal(r) &&
             r.jam &&
-            Math.abs(toMinutes(r.jam) - newMin) < 60
+            Math.abs(ReservasiCore.menitDariJam(r.jam) - newMin) < ReservasiCore.JENDELA_BENTROK_MENIT
         );
         if (clashing.length === 0) return null;
 
@@ -1634,7 +1629,7 @@
       const targetDate = `${currentYear}-${tanggalDipilih}`;
       const conflict = await checkAggregateConflict(formData.tempat, formData.jam, formData.jumlah, targetDate, null);
       if (conflict) {
-          const lanjut = confirm(`Perhatian: Pada ${formatDateIndo(targetDate)} sekitar jam ${formData.jam} di "${formData.tempat}" sudah ada ${conflict.count} reservasi lain dengan total ${conflict.totalJumlah} orang, melebihi kapasitas tempat (${conflict.capacity} orang). Tetap simpan reservasi ini?`);
+          const lanjut = confirm(`Perhatian: Pada ${formatDateIndo(targetDate)} sekitar jam ${formData.jam} di "${formData.tempat}" (reservasi 2,5 jam + jeda 2 jam) sudah ada ${conflict.count} reservasi lain dengan total ${conflict.totalJumlah} orang, melebihi kapasitas tempat (${conflict.capacity} orang). Tetap simpan reservasi ini?`);
           if (!lanjut) return;
       }
 
@@ -1674,7 +1669,7 @@
 
       const conflict = await checkAggregateConflict(formData.tempat, formData.jam, formData.jumlah, targetDate, id);
       if (conflict) {
-          const lanjut = confirm(`Perhatian: Pada ${formatDateIndo(targetDate)} sekitar jam ${formData.jam} di "${formData.tempat}" sudah ada ${conflict.count} reservasi lain dengan total ${conflict.totalJumlah} orang, melebihi kapasitas tempat (${conflict.capacity} orang). Tetap simpan perubahan ini?`);
+          const lanjut = confirm(`Perhatian: Pada ${formatDateIndo(targetDate)} sekitar jam ${formData.jam} di "${formData.tempat}" (reservasi 2,5 jam + jeda 2 jam) sudah ada ${conflict.count} reservasi lain dengan total ${conflict.totalJumlah} orang, melebihi kapasitas tempat (${conflict.capacity} orang). Tetap simpan perubahan ini?`);
           if (!lanjut) return;
       }
       

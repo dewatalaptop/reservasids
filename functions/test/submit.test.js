@@ -340,20 +340,21 @@ test("analisis AI memberi ruang token untuk 'berpikir' (400 memotong jawaban) da
 });
 
 // ---------- kapasitas per jendela waktu (keputusan pemilik 2026-10-31) ----------
-test("sisaKapasitas: hanya reservasi berjendela < 150 menit yang dijumlahkan; batas tepat 150 tidak", () => {
+test("sisaKapasitas: durasi 2,5 jam + jeda 2 jam = jendela 270 menit; batas tepat 270 tidak bentrok", () => {
+  assert.equal(S.JENDELA_BENTROK_MENIT, 270);
   const items = [
     { tempat: "A", jumlah: 30, jam: "10:00" },
-    { tempat: "A", jumlah: 20, jam: "12:30" },        // tepat 150 menit dari 10:00 -> tidak bentrok dengan jam 10:00
-    { tempat: "A", jumlah: 15, jam: "16:30" },
+    { tempat: "A", jumlah: 20, jam: "14:30" },        // tepat 270 menit dari 10:00 -> tidak bentrok dengan jam 10:00
+    { tempat: "A", jumlah: 15, jam: "19:00" },
     { tempat: "B", jumlah: 99, jam: "10:00" },        // tempat lain
     { tempat: "A", jumlah: 50, jam: "10:30", status: "batal" },
     { tempat: "A", jumlah: 40, jam: "10:15", status: "kedaluwarsa" }
   ];
-  assert.equal(S.sisaKapasitas(items, "A", "10:00", 100).terpakai, 30);        // 12:30 tepat 150 -> tidak ikut
-  assert.equal(S.sisaKapasitas(items, "A", "11:00", 100).terpakai, 50);        // 10:00 (60) dan 12:30 (90) ikut
-  assert.equal(S.sisaKapasitas(items, "A", "12:29", 100).terpakai, 50);        // 10:00 (149) ikut, 12:30 ikut
-  assert.equal(S.sisaKapasitas(items, "A", "19:00", 100).terpakai, 0);         // 16:30 = 150 -> tidak ikut
-  assert.equal(S.sisaKapasitas(items, "A", "17:00", 100).sisa, 85);
+  assert.equal(S.sisaKapasitas(items, "A", "10:00", 100).terpakai, 30);        // 14:30 tepat 270 -> tidak ikut
+  assert.equal(S.sisaKapasitas(items, "A", "13:00", 100).terpakai, 50);        // 10:00 (180) dan 14:30 (90) ikut
+  assert.equal(S.sisaKapasitas(items, "A", "14:29", 100).terpakai, 50);        // 10:00 (269) ikut, 14:30 ikut
+  assert.equal(S.sisaKapasitas(items, "A", "23:50", 100).terpakai, 0);         // 19:00 = 290 -> tidak ikut
+  assert.equal(S.sisaKapasitas(items, "A", "23:00", 100).terpakai, 15);        // 19:00 = 240 -> ikut
   assert.equal(S.sisaKapasitas(items, "A", "17:00", 100, 1440).terpakai, 65);  // jendela seharian = aturan lama
 });
 
@@ -373,6 +374,8 @@ test("handler: jam berjauhan di tempat yang sama diterima walau total seharian m
   assert.equal(dekat.status, 409);
   assert.equal(dekat.body.code, "kapasitas_penuh");
   assert.ok(dekat.body.message.includes("11:30"));
+  const jeda = await call(h, good({ jam: "14:00", jumlah: 10, nomorHp: "082999999991" }), "7.7.0.2");
+  assert.equal(jeda.status, 409);                                                                  // 240 menit < 270: jeda 2 jam belum terpenuhi
 });
 
 test("handler: Full Blok minimal 200 orang; Lantai 1 bagian tertutup bila Full Blok dipesan (seharian)", async () => {

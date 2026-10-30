@@ -530,7 +530,7 @@ async function submitReservationHandler(req, res) {
       // Kapasitas per jendela waktu (reservasi yang jamnya berdekatan), bukan jumlah seharian.
       const { sisa: remaining } = sisaKapasitas(semuaHariItu, d.tempat, d.jam, capacity);
       if (remaining < d.jumlah) {
-        throw new SubmitError(409, "kapasitas_penuh", `Tempat "${d.tempat}" sekitar jam ${d.jam} sudah tidak tersedia untuk ${d.jumlah} orang (sisa ${Math.max(0, remaining)}). Silakan pilih tempat atau jam lain.`);
+        throw new SubmitError(409, "kapasitas_penuh", `Tempat "${d.tempat}" pada jam ${d.jam} (reservasi berdurasi 2,5 jam dengan jeda 2 jam antar reservasi) sudah tidak tersedia untuk ${d.jumlah} orang (sisa ${Math.max(0, remaining)}). Silakan pilih tempat atau jam lain.`);
       }
 
       tx.set(rlRef, { n: (rlSnap.exists ? rlSnap.data().n : 0) + 1, expireAt: admin.firestore.Timestamp.fromMillis(Date.now() + 2 * 3600 * 1000) });

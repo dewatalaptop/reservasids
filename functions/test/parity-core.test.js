@@ -24,3 +24,9 @@ test("paritas server vs klien: sisaKapasitas sama pada 5000 kasus acak", { skip:
     assert.deepEqual(C.sisaKapasitas(items, "A", jam, kap, jendela), S.sisaKapasitas(items, "A", jam, kap, jendela), JSON.stringify({ items, jam, kap, jendela }));
   }
 });
+
+test("salinan reservasi-core.js di reservasids sama persis dengan sumbernya (dolansawahhomepage)", { skip: !ada && "repo dolansawahhomepage tidak ditemukan" }, () => {
+  const salinan = fs.readFileSync(path.resolve(__dirname, "../../reservasi-core.js"), "utf8").replace(/\r\n/g, "\n");
+  const sumber = fs.readFileSync(corePath, "utf8").replace(/\r\n/g, "\n");
+  assert.equal(salinan, sumber, "reservasi-core.js tidak sinkron; jalankan scripts/sync-core.sh");
+});

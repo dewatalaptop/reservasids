@@ -63,12 +63,15 @@ function bersihkanTeks(v, maks) {
 }
 
 // ---------- Kapasitas tempat ----------
-// Keputusan pemilik (2026-10-31): kapasitas dinilai per JENDELA WAKTU, bukan jumlah seharian. Reservasi di tempat yang sama
-// hanya dijumlahkan bila jamnya berdekatan (selisih < JENDELA_BENTROK_MENIT = gratis 2,5 jam). Data historis: aturan
-// seharian menolak 18,7% reservasi yang di lapangan diterima; jendela 150 menit 10,4%.
+// Keputusan pemilik (2026-10-31): kapasitas dinilai per JENDELA WAKTU, bukan jumlah seharian. Tiap reservasi berlangsung
+// 2,5 jam dan di tempat yang sama diberi jeda 2 jam sebelum reservasi berikutnya, jadi dua reservasi saling bentrok bila
+// jam mulainya berbeda < 2,5 + 2 = 4,5 jam (270 menit); hanya yang bentrok yang dijumlahkan terhadap kapasitas.
+// Data historis (1638 reservasi): aturan seharian menolak 18,7%, jendela 270 menit 14,8%, jendela 150 menit 10,4%.
 // SALINAN fungsi yang sama ada di dolansawahhomepage/assets/reservasi-core.js (tampilan sisa kapasitas di form tamu);
 // test/parity-core.test.js memastikan keduanya sama bila kedua repo berdampingan.
-const JENDELA_BENTROK_MENIT = 150;
+const DURASI_RESERVASI_MENIT = 150;
+const JEDA_ANTAR_RESERVASI_MENIT = 120;
+const JENDELA_BENTROK_MENIT = DURASI_RESERVASI_MENIT + JEDA_ANTAR_RESERVASI_MENIT;
 
 function menitDariJam(t) {
   const m = /^(\d{1,2}):(\d{2})/.exec(String(t || ""));
@@ -156,4 +159,4 @@ function validateRequest(body, now = Date.now()) {
   return { ok: true, data: { date, jam, jumlah, tempat, nama, nomorHp, tambahan, menus } };
 }
 
-module.exports = { JENDELA_BENTROK_MENIT, menitDariJam, sisaKapasitas, cekAturanTempat, bersihkanTeks, STATUS_BATAL, LIMITS, isIsoDate, todayWIB, addDays, normalizePhone, isValidPhone, isCancelled, usedCapacity, validateRequest };
+module.exports = { DURASI_RESERVASI_MENIT, JEDA_ANTAR_RESERVASI_MENIT, JENDELA_BENTROK_MENIT, menitDariJam, sisaKapasitas, cekAturanTempat, bersihkanTeks, STATUS_BATAL, LIMITS, isIsoDate, todayWIB, addDays, normalizePhone, isValidPhone, isCancelled, usedCapacity, validateRequest };
