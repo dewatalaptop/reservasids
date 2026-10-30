@@ -81,6 +81,40 @@
     return { terpakai: terpakai, sisa: kapasitas - terpakai };
   }
 
+  // ---------- Audit log (siapa mengubah apa) ----------
+  // Dipakai dasbor admin dan kalender admin. Hanya field operasional yang disimpan beserta nilainya; data pribadi (nama,
+  // nomor HP, catatan) hanya ditandai "diubah" tanpa nilai. Nomor HP tidak pernah masuk log.
+  var FIELD_AUDIT = ["date", "jam", "tempat", "jumlah", "dp", "tipeDp", "status", "lunas", "orderTotal"];
+  var FIELD_PRIBADI = ["nama", "nomorHp", "tambahan"];
+
+  function ringkasMenu(ms) {
+    if (!Array.isArray(ms) || !ms.length) return "";
+    return ms.map(function (m) { return (m && m.name) + " x" + (m && m.quantity); }).join(", ").slice(0, 300);
+  }
+
+  function nilaiAudit(v) { return v === undefined ? null : v; }
+
+  // aksi: tambah | ubah | hapus | setujui | tolak. sebelum/sesudah: objek reservasi (atau null).
+  function buatCatatanAudit(aksi, koleksi, dokId, sebelum, sesudah, oleh) {
+    var a = sebelum || {}, b = sesudah || {}, perubahan = {};
+    FIELD_AUDIT.forEach(function (f) {
+      var dari = nilaiAudit(a[f]), ke = nilaiAudit(b[f]);
+      var beda = (dari === null || ke === null) ? dari !== ke : String(dari) !== String(ke);
+      if (beda) perubahan[f] = { dari: dari, ke: ke };
+    });
+    var mDari = ringkasMenu(a.menus), mKe = ringkasMenu(b.menus);
+    if (mDari !== mKe) perubahan.menus = { dari: mDari || null, ke: mKe || null };
+    FIELD_PRIBADI.forEach(function (f) {
+      if (sebelum && sesudah && String(a[f] || "") !== String(b[f] || "")) perubahan[f] = "diubah";
+    });
+    var acuan = sesudah || sebelum || {};
+    return {
+      aksi: aksi, koleksi: koleksi, dokId: String(dokId || ""),
+      nama: String(acuan.nama || "").slice(0, 80), tanggal: String(acuan.date || ""),
+      oleh: String(oleh || "").slice(0, 120), perubahan: perubahan
+    };
+  }
+
   // ---------- Pengingat (dipakai panel dasbor web; aplikasi Android memakai logika yang sama) ----------
   var STATUS_BATAL = ["batal", "dibatalkan", "cancel", "cancelled", "canceled", "ditolak", "rejected", "kedaluwarsa"];
   function isBatal(r) { return STATUS_BATAL.indexOf(String((r && r.status) == null ? "" : r.status).trim().toLowerCase()) >= 0; }
@@ -160,6 +194,7 @@
     estimasiDp: estimasiDp, statusBayar: statusBayar,
     isBatal: isBatal, tsMillis: tsMillis, ymdWib: ymdWib, tambahHari: tambahHari, selisihHari: selisihHari,
     daftarPengingat: daftarPengingat, nomorWa: nomorWa, pesanPengingat: pesanPengingat,
+    buatCatatanAudit: buatCatatanAudit,
     DURASI_RESERVASI_MENIT: DURASI_RESERVASI_MENIT, JEDA_ANTAR_RESERVASI_MENIT: JEDA_ANTAR_RESERVASI_MENIT, JENDELA_BENTROK_MENIT: JENDELA_BENTROK_MENIT, menitDariJam: menitDariJam, sisaKapasitas: sisaKapasitas
   };
 });

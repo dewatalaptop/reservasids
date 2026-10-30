@@ -1116,6 +1116,17 @@
     // Hitung total nilai pesanan sebuah reservasi.
     // Prioritas: pakai orderTotal/price yang sudah tersimpan (snapshot saat reservasi dibuat).
     // Fallback: reservasi lama tanpa snapshot dihitung pakai harga menu saat ini (live).
+// Audit log: siapa mengubah apa. TIDAK BOLEH menghalangi penyimpanan (gagal -> hanya peringatan di konsol).
+    // Aturan Firestore harus mengizinkan create pada koleksi audit_log (lihat firestore.rules di repo reservasids).
+    function catatAudit(aksi, koleksi, dokId, sebelum, sesudah) {
+      try {
+        const u = auth.currentUser;
+        const entri = ReservasiCore.buatCatatanAudit(aksi, koleksi, dokId, sebelum, sesudah, u && u.email);
+        entri.at = firebase.firestore.FieldValue.serverTimestamp();
+        db.collection('audit_log').add(entri).catch(err => console.warn('audit_log gagal:', err && err.message));
+      } catch (err) { console.warn('audit_log gagal:', err && err.message); }
+    }
+    
     function getReservationOrderTotal(r) {
         return ReservasiCore.hitungSubtotal(r, menuPrices); // aturan di reservasi-core.js
     }
@@ -1646,7 +1657,8 @@
 
       showLoader();
       try {
-        await db.collection('reservations').add(data);
+        const refBaru = await db.collection('reservations').add(data);
+        catatAudit('tambah', 'reservations', refBaru.id, null, data);
         showToast("Reservasi berhasil disimpan!");
         closePopup('addFormPopup');
       } catch (e) {
@@ -1681,7 +1693,9 @@
     async function actuallySimpanPerubahanReservasi(id, formData, targetDate, tanggalBerubah) {
       showLoader();
       try {
+        const sebelumUbah = findReservationById(id);
         await db.collection('reservations').doc(id).update(formData);
+        catatAudit('ubah', 'reservations', id, sebelumUbah, Object.assign({}, sebelumUbah || {}, formData));
         showToast(tanggalBerubah
             ? `Reservasi dipindahkan ke ${formatDateIndo(targetDate)}`
             : "Perubahan berhasil disimpan");
@@ -1697,7 +1711,9 @@
       if (!confirm("Yakin ingin menghapus reservasi ini?")) return;
       showLoader();
       try { 
+          const sebelumHapus = findReservationById(id);
           await db.collection('reservations').doc(id).delete(); 
+          catatAudit('hapus', 'reservations', id, sebelumHapus, null);
           showToast("Reservasi berhasil dihapus"); 
       } catch (e) { 
           showToast("Gagal menghapus reservasi", "error"); 
