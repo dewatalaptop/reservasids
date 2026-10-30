@@ -3,7 +3,7 @@
   "description": "Cloud Functions for reservasi-dolan-sawah (AI reservation assistant)",
   "main": "index.js",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "scripts": {
     "logs": "firebase functions:log"
