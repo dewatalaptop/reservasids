@@ -13,20 +13,24 @@ function makeDb(seed) {
   const col = (name) => (cols[name] = cols[name] || new Map());
   const refOf = (name, id) => ({ _col: name, id, _isRef: true,
     async get() { const data = col(name).get(id); return { exists: data !== undefined, id, data: () => data }; } });
-  const query = (name, filters = [], lim = Infinity) => ({
-    _isQuery: true, name, filters, lim,
-    where(f, op, v) { return query(name, [...filters, [f, op, v]], lim); },
-    limit(n) { return query(name, filters, n); },
+  const query = (name, filters = [], lim = Infinity, order = null, after = null) => ({
+    _isQuery: true, name, filters, lim, order, after,
+    where(f, op, v) { return query(name, [...filters, [f, op, v]], lim, order, after); },
+    limit(n) { return query(name, filters, n, order, after); },
+    orderBy(f) { return query(name, filters, lim, f, after); },
+    startAfter(d) { return query(name, filters, lim, order, d.id); },
     async get() { return run(this); }
   });
   function run(q) {
-    const docs = [];
+    let docs = [];
     for (const [id, data] of col(q.name)) {
       const ok = q.filters.every(([f, op, v]) => (op === "==" ? data[f] === v : op === "<=" ? data[f] <= v : false));
       if (ok) docs.push({ id, ref: refOf(q.name, id), data: () => data });
-      if (docs.length >= q.lim) break;
     }
-    return { docs, empty: docs.length === 0, forEach: (fn) => docs.forEach(fn) };
+    if (q.order) docs.sort((a, b) => a.data()[q.order] - b.data()[q.order] || a.id.localeCompare(b.id));
+    if (q.after) docs = docs.slice(docs.findIndex((d) => d.id === q.after) + 1);
+    docs = docs.slice(0, q.lim);
+    return { docs, empty: docs.length === 0, size: docs.length, forEach: (fn) => docs.forEach(fn) };
   }
   const db = {
     _cols: cols,
@@ -37,13 +41,20 @@ function makeDb(seed) {
         get: async (x) => {
           if (x._isQuery) return run(x);
           const data = col(x._col).get(x.id);
-          return { exists: data !== undefined, data: () => data };
+          return { exists: data !== undefined, id: x.id, data: () => data };
         },
+        update: (r, d) => writes.push(["update", r, d]),
         set: (r, d) => writes.push(["set", r, d]),
         create: (r, d) => writes.push(["create", r, d])
       };
       const out = await fn(tx);
-      for (const [, r, d] of writes) col(r._col).set(r.id, d);
+      for (const [kind, r, d] of writes) {
+        if (kind === "update") {
+          const cur = { ...col(r._col).get(r.id) };
+          for (const [k, v] of Object.entries(d)) { if (v === "__DEL__") delete cur[k]; else cur[k] = v; }
+          col(r._col).set(r.id, cur);
+        } else col(r._col).set(r.id, d);
+      }
       return out;
     }
   };
@@ -54,8 +65,8 @@ function load(db) {
   const adminFake = {
     initializeApp() {},
     firestore: Object.assign(() => db, {
-      FieldValue: { serverTimestamp: () => "TS" },
-      Timestamp: { fromMillis: (ms) => ({ ms }), now: () => ({ ms: Date.now() }) }
+      FieldValue: { serverTimestamp: () => "TS", delete: () => "__DEL__" },
+      Timestamp: { fromMillis: (ms) => ({ ms, valueOf: () => ms }), now: () => ({ ms: Date.now(), valueOf: () => Date.now() }) }
     }),
     auth: () => ({})
   };
@@ -90,7 +101,7 @@ const good = (over = {}) => ({
 });
 const baseSeed = () => ({
   locations: { l1: { name: "Gazebo A", capacity: 30 } },
-  menus: { m1: { name: "Nasi Box" } },
+  menus: { "Nasi Box": { price: 25000 } }, // bentuk nyata: nama = ID dokumen, hanya field price
   reservations: {}, reservation_requests: {}, date_status: {}, rate_limits: {}
 });
 
@@ -224,4 +235,70 @@ test("reservationStatus: menunggu, ditolak, kedaluwarsa, disetujui, batal, tak a
   assert.deepEqual([e.body.status, e.body.reservationId], ["dibatalkan", null]);
   assert.equal((await getStatus(h, "ZZZZZZZZZZZZZZZZZZZZ")).status, 404);
   assert.equal((await getStatus(h, "../x")).status, 400);
+});
+
+// ---------- regresi dari penguji independen ----------
+test("menu bentuk nyata (nama = ID dokumen) lolos; menu palsu ditolak", async () => {
+  const h = load(makeDb(baseSeed()));
+  assert.equal((await call(h, good())).status, 200);
+  assert.equal((await call(h, good({ nomorHp: "082999999999", menus: [{ name: "Menu Palsu", quantity: 1 }] }), "8.8.8.8")).body.code, "menus");
+});
+test("kapasitas lokasi rusak/kosong memakai bawaan 50, bukan tak terbatas", async () => {
+  for (const cap of ["abc", undefined, null]) {
+    const seed = baseSeed();
+    seed.locations.l1.capacity = cap;
+    const h = load(makeDb(seed));
+    assert.equal((await call(h, good({ jumlah: 51 }))).body.code, "kapasitas_penuh", String(cap));
+    assert.equal((await call(h, good({ jumlah: 50 }))).status, 200, String(cap));
+  }
+});
+test("duplikat juga terhadap reservasi yang sudah disetujui", async () => {
+  const seed = baseSeed();
+  seed.reservations.r1 = { date: futureDate(), tempat: "Gazebo A", jumlah: 5, nomorHp: "6281234567890", status: "approved" };
+  assert.equal((await call(load(makeDb(seed)), good())).body.code, "duplikat");
+});
+test("jam hari ini yang sudah lewat ditolak; jam esok tidak", () => {
+  const noon = Date.parse("2026-11-02T06:00:00Z"); // 13:00 WIB
+  const base = good({ date: "2026-11-02", jam: "10:00" });
+  assert.equal(S.validateRequest(base, noon).code, "jam");
+  assert.equal(S.validateRequest({ ...base, jam: "13:30" }, noon).ok, true);
+  assert.equal(S.validateRequest({ ...base, date: "2026-11-03", jam: "10:00" }, noon).ok, true);
+});
+test("batas laju memakai elemen terakhir X-Forwarded-For (tidak bisa dipalsukan di depan)", async () => {
+  const h = load(makeDb(baseSeed()));
+  let last;
+  for (let i = 0; i < 11; i++) {
+    last = await new Promise((resolve) => {
+      const res = { code: 200, status(c) { this.code = c; return this; }, json(o) { resolve({ status: this.code, body: o }); } };
+      h({ method: "POST", ip: "10.0.0.1", headers: { "x-forwarded-for": `palsu${i}, 203.0.113.9` },
+          body: good({ date: S.addDays(S.todayWIB(), 10 + i), nomorHp: `08111000${String(i).padStart(4, "0")}`, jumlah: 1 }) }, res);
+    });
+  }
+  assert.equal(last.status, 429);
+});
+
+// ---------- expirePendingRequests ----------
+test("expirePending: 450 non-pending berexpiresAt lampau tidak menutup jalan pending", async () => {
+  const seed = baseSeed();
+  const old = Date.now() - 3 * 3600 * 1000;
+  for (let i = 0; i < 450; i++) seed.reservation_requests["d" + String(i).padStart(4, "0")] = { status: "ditolak", expiresAt: { ms: old - 1000 + i, valueOf: () => old - 1000 + i } };
+  seed.reservation_requests.p1 = { status: "pending", date: futureDate(), expiresAt: { ms: old, valueOf: () => old } };
+  seed.reservation_requests.p2 = { status: "pending", date: futureDate(), expiresAt: { ms: Date.now() + 1e7, valueOf: () => Date.now() + 1e7 } };
+  const db = makeDb(seed);
+  load(db);
+  const n = await load.mod._expirePendingHandler();
+  assert.equal(n, 1);
+  const p1 = db._cols.reservation_requests.get("p1");
+  assert.equal(p1.status, "kedaluwarsa");
+  assert.equal(p1.expiresAt, undefined); // tidak ikut dipindai lagi
+  assert.equal(db._cols.reservation_requests.get("p2").status, "pending");
+});
+test("expirePending: dokumen yang sudah disetujui/dihapus saat jalan tidak ditimpa", async () => {
+  const seed = baseSeed();
+  const old = Date.now() - 1000;
+  seed.reservation_requests.a = { status: "ditolak", expiresAt: { ms: old, valueOf: () => old } };
+  const db = makeDb(seed);
+  load(db);
+  assert.equal(await load.mod._expirePendingHandler(), 0);
+  assert.equal(db._cols.reservation_requests.get("a").status, "ditolak");
 });

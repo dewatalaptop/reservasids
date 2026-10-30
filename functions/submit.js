@@ -73,6 +73,11 @@ function validateRequest(body, now = Date.now()) {
   const jam = String(b.jam || "");
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(jam)) return fail("jam", "Jam tidak valid.");
 
+  if (date === today) {
+    const nowWib = new Date(now + 7 * 3600 * 1000).toISOString().slice(11, 16);
+    if (jam < nowWib) return fail("jam", "Jam tersebut sudah lewat.");
+  }
+
   const jumlah = Number(b.jumlah);
   if (!Number.isInteger(jumlah) || jumlah < 1 || jumlah > LIMITS.maxJumlah) return fail("jumlah", "Jumlah orang tidak valid.");
 

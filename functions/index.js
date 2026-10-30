@@ -475,7 +475,11 @@ async function submitReservationHandler(req, res) {
   }
   const d = v.data;
   const db = admin.firestore();
-  const ipHash = crypto.createHash("sha256").update(String(req.ip || "unknown")).digest("hex").slice(0, 24);
+  // Di Cloud Run, req.ip bisa berupa IP proxy Google. Elemen TERAKHIR X-Forwarded-For ditambahkan oleh infrastruktur Google
+  // (yang pertama bisa dipalsukan klien), jadi itu yang dipakai; req.ip hanya cadangan.
+  const xff = String((req.headers && req.headers["x-forwarded-for"]) || "").split(",").map((x) => x.trim()).filter(Boolean);
+  const clientIp = xff.length ? xff[xff.length - 1] : String(req.ip || "unknown");
+  const ipHash = crypto.createHash("sha256").update(clientIp).digest("hex").slice(0, 24);
   const hourKey = new Date().toISOString().slice(0, 13);
   const rlRef = db.collection("rate_limits").doc(`${ipHash}_${hourKey}`);
   const reqRef = db.collection("reservation_requests").doc();
@@ -500,21 +504,24 @@ async function submitReservationHandler(req, res) {
         throw new SubmitError(409, "ditutup", "Tanggal ini sudah ditutup oleh admin.");
       }
       if (menusSnap) {
-        const known = new Set(menusSnap.docs.map((x) => String(x.data().name || "").trim()));
+        // Di koleksi menus, NAMA menu adalah ID dokumen (field hanya price); field name tidak ada di data nyata.
+      const known = new Set(menusSnap.docs.flatMap((x) => [String(x.id).trim(), String(x.data().name || "").trim()]).filter(Boolean));
         const unknown = d.menus.find((m) => !known.has(m.name));
         if (unknown) throw new SubmitError(400, "menus", `Menu "${unknown.name}" tidak dikenal.`);
       }
 
       const pendingDocs = pendingSnap.docs.map((x) => x.data());
       const mine = pendingDocs.filter((x) => x.nomorHp === d.nomorHp && !isCancelled(x));
-      if (mine.some((x) => x.tempat === d.tempat)) {
-        throw new SubmitError(409, "duplikat", "Permintaan untuk tanggal dan tempat ini sudah kami terima. Admin akan menghubungi WhatsApp Anda.");
+      const approvedSame = confirmedSnap.docs.some((x) => { const y = x.data(); return y.nomorHp === d.nomorHp && y.tempat === d.tempat && !isCancelled(y); });
+      if (approvedSame || mine.some((x) => x.tempat === d.tempat)) {
+        throw new SubmitError(409, "duplikat", "Permintaan/reservasi untuk tanggal dan tempat ini sudah kami terima. Admin akan menghubungi WhatsApp Anda.");
       }
       if (mine.length >= LIMITS.maxPendingPerNomor) {
         throw new SubmitError(429, "terlalu_sering", "Permintaan dari nomor ini sudah banyak yang menunggu. Hubungi admin via WhatsApp.");
       }
 
-      const capacity = loc.capacity !== undefined && loc.capacity !== null ? parseInt(loc.capacity, 10) : 50;
+      const capParsed = parseInt(loc.capacity, 10);
+      const capacity = Number.isFinite(capParsed) ? capParsed : 50; // data kapasitas kosong/rusak -> bawaan 50, bukan tak terbatas
       const used = usedCapacity([...confirmedSnap.docs.map((x) => x.data()), ...pendingDocs], d.tempat);
       const remaining = capacity - used;
       if (remaining < d.jumlah) {
@@ -559,22 +566,39 @@ exports._submitReservationHandler = submitReservationHandler; // untuk tes
 // expiresAt (dibuat lewat submitReservation); permintaan lama tidak disentuh.
 // Query satu field saja (tanpa indeks gabungan); status disaring di kode.
 // ============================================================
+async function expirePendingHandler() {
+  const db = admin.firestore();
+  const now = admin.firestore.Timestamp.now();
+  let last = null, expired = 0;
+  // Berhalaman: dokumen non-pending yang masih punya expiresAt lampau tidak boleh menutup jalan pending (limit 400 tanpa halaman).
+  for (let page = 0; page < 25; page++) {
+    let q = db.collection("reservation_requests").where("expiresAt", "<=", now).orderBy("expiresAt").limit(400);
+    if (last) q = q.startAfter(last);
+    const snap = await q.get();
+    if (snap.empty) break;
+    last = snap.docs[snap.docs.length - 1];
+    for (const x of snap.docs) {
+      if (String(x.data().status || "").toLowerCase() !== "pending") continue;
+      // Cek ulang status di dalam transaksi: admin mungkin baru saja menyetujui/menolak/menghapusnya.
+      const done = await db.runTransaction(async (tx) => {
+        const cur = await tx.get(x.ref);
+        if (!cur.exists || String(cur.data().status || "").toLowerCase() !== "pending") return false;
+        tx.update(x.ref, { status: "kedaluwarsa", expiredAt: admin.firestore.FieldValue.serverTimestamp(), expiresAt: admin.firestore.FieldValue.delete() });
+        return true;
+      });
+      if (done) expired++;
+    }
+    if (snap.size < 400) break;
+  }
+  if (expired) logger.info(`expirePendingRequests: ${expired} permintaan kedaluwarsa`);
+  return expired;
+}
+
 exports.expirePendingRequests = onSchedule(
   { region: REGION, schedule: "every 60 minutes", timeZone: "Asia/Jakarta", memory: "256MiB" },
-  async () => {
-    const db = admin.firestore();
-    const snap = await db.collection("reservation_requests")
-      .where("expiresAt", "<=", admin.firestore.Timestamp.now())
-      .limit(400)
-      .get();
-    const due = snap.docs.filter((x) => String(x.data().status || "").toLowerCase() === "pending");
-    if (!due.length) return;
-    const batch = db.batch();
-    due.forEach((x) => batch.update(x.ref, { status: "kedaluwarsa", expiredAt: admin.firestore.FieldValue.serverTimestamp() }));
-    await batch.commit();
-    logger.info(`expirePendingRequests: ${due.length} permintaan kedaluwarsa`);
-  }
+  expirePendingHandler
 );
+exports._expirePendingHandler = expirePendingHandler; // untuk tes
 
 // Bersihkan penghitung batas laju yang sudah lewat (cukup 1 kali sehari).
 exports.cleanupRateLimits = onSchedule(
