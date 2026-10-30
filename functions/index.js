@@ -2,6 +2,9 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const admin = require("firebase-admin");
 const { SecretManagerServiceClient } = require("@google-cloud/secret-manager");
+const crypto = require("crypto");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { STATUS_BATAL, LIMITS, isCancelled, usedCapacity, validateRequest } = require("./submit");
 
 admin.initializeApp();
 
@@ -373,7 +376,7 @@ exports.checkReservationCompleteness = onRequest(
 // ============================================================
 const AVAIL_MAX_DAYS = 62;
 const AVAIL_MAX_DOCS = 3000;
-const CANCELLED_STATUSES = ["batal", "dibatalkan", "cancel", "cancelled", "canceled", "ditolak", "rejected"];
+const CANCELLED_STATUSES = STATUS_BATAL;
 
 function isIsoDate(s) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ""));
@@ -431,5 +434,157 @@ exports.publicAvailability = onRequest(
       logger.error("publicAvailability gagal:", err);
       res.status(502).json({ error: "Gagal memuat ketersediaan." });
     }
+  }
+);
+
+
+// ============================================================
+// submitReservation: satu-satunya jalan tamu mengirim permintaan reservasi.
+//
+// Sebelumnya form publik mengecek kapasitas di browser lalu menulis langsung
+// ke reservation_requests. Dua tamu yang mengirim bersamaan sama-sama lolos
+// (balapan), dan siapa pun bisa menulis permintaan palsu yang menahan kursi.
+// Di sini: validasi isi, cek tanggal ditutup, kapasitas, duplikat, dan batas
+// laju dilakukan di server dalam SATU transaksi.
+// ============================================================
+class SubmitError extends Error {
+  constructor(status, code, message) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+async function findLocation(tx, db, tempat) {
+  for (const col of ["locations", "Locations"]) {
+    const snap = await tx.get(db.collection(col).where("name", "==", tempat).limit(1));
+    if (!snap.empty) return snap.docs[0].data();
+  }
+  return null;
+}
+
+async function submitReservationHandler(req, res) {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+  const v = validateRequest(req.body);
+  if (!v.ok) {
+    res.status(v.code === "spam" ? 403 : 400).json({ code: v.code, message: v.message });
+    return;
+  }
+  const d = v.data;
+  const db = admin.firestore();
+  const ipHash = crypto.createHash("sha256").update(String(req.ip || "unknown")).digest("hex").slice(0, 24);
+  const hourKey = new Date().toISOString().slice(0, 13);
+  const rlRef = db.collection("rate_limits").doc(`${ipHash}_${hourKey}`);
+  const reqRef = db.collection("reservation_requests").doc();
+
+  try {
+    await db.runTransaction(async (tx) => {
+      // Semua pembacaan dulu, baru penulisan (aturan transaksi Firestore).
+      const [rlSnap, loc, closedSnap, confirmedSnap, pendingSnap, menusSnap] = await Promise.all([
+        tx.get(rlRef),
+        findLocation(tx, db, d.tempat),
+        tx.get(db.collection("date_status").where("date", "==", d.date)),
+        tx.get(db.collection("reservations").where("date", "==", d.date)),
+        tx.get(db.collection("reservation_requests").where("date", "==", d.date)),
+        d.menus.length ? tx.get(db.collection("menus")) : Promise.resolve(null)
+      ]);
+
+      if ((rlSnap.exists ? rlSnap.data().n : 0) >= LIMITS.maxPerJamPerIp) {
+        throw new SubmitError(429, "terlalu_sering", "Terlalu banyak permintaan. Coba lagi satu jam lagi atau hubungi admin via WhatsApp.");
+      }
+      if (!loc) throw new SubmitError(400, "tempat", "Tempat tidak ditemukan.");
+      if (closedSnap.docs.some((x) => x.data().isFull === true)) {
+        throw new SubmitError(409, "ditutup", "Tanggal ini sudah ditutup oleh admin.");
+      }
+      if (menusSnap) {
+        const known = new Set(menusSnap.docs.map((x) => String(x.data().name || "").trim()));
+        const unknown = d.menus.find((m) => !known.has(m.name));
+        if (unknown) throw new SubmitError(400, "menus", `Menu "${unknown.name}" tidak dikenal.`);
+      }
+
+      const pendingDocs = pendingSnap.docs.map((x) => x.data());
+      const mine = pendingDocs.filter((x) => x.nomorHp === d.nomorHp && !isCancelled(x));
+      if (mine.some((x) => x.tempat === d.tempat)) {
+        throw new SubmitError(409, "duplikat", "Permintaan untuk tanggal dan tempat ini sudah kami terima. Admin akan menghubungi WhatsApp Anda.");
+      }
+      if (mine.length >= LIMITS.maxPendingPerNomor) {
+        throw new SubmitError(429, "terlalu_sering", "Permintaan dari nomor ini sudah banyak yang menunggu. Hubungi admin via WhatsApp.");
+      }
+
+      const capacity = loc.capacity !== undefined && loc.capacity !== null ? parseInt(loc.capacity, 10) : 50;
+      const used = usedCapacity([...confirmedSnap.docs.map((x) => x.data()), ...pendingDocs], d.tempat);
+      const remaining = capacity - used;
+      if (remaining < d.jumlah) {
+        throw new SubmitError(409, "kapasitas_penuh", `Tempat "${d.tempat}" sudah tidak tersedia untuk ${d.jumlah} orang (sisa ${Math.max(0, remaining)}). Silakan pilih tempat lain.`);
+      }
+
+      tx.set(rlRef, { n: (rlSnap.exists ? rlSnap.data().n : 0) + 1, expireAt: admin.firestore.Timestamp.fromMillis(Date.now() + 2 * 3600 * 1000) });
+      tx.create(reqRef, {
+        ...d,
+        status: "pending",
+        via: "Web App V10",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + LIMITS.pendingTtlJam * 3600 * 1000)
+      });
+    });
+    res.status(200).json({ ok: true, id: reqRef.id });
+  } catch (err) {
+    if (err instanceof SubmitError) {
+      res.status(err.status).json({ code: err.code, message: err.message });
+      return;
+    }
+    logger.error("submitReservation gagal:", err);
+    res.status(502).json({ code: "server", message: "Gagal mengirim permintaan. Silakan coba lagi." });
+  }
+}
+
+exports.submitReservation = onRequest(
+  {
+    region: REGION,
+    cors: ALLOWED_ORIGINS,
+    memory: "256MiB",
+    maxInstances: 10
+  },
+  submitReservationHandler
+);
+exports._submitReservationHandler = submitReservationHandler; // untuk tes
+
+// ============================================================
+// expirePendingRequests: permintaan yang tidak diproses admin dalam
+// pendingTtlJam dilepas dari kapasitas (status -> kedaluwarsa), bukan dihapus,
+// supaya tamu masih bisa melihat statusnya. Hanya dokumen yang punya
+// expiresAt (dibuat lewat submitReservation); permintaan lama tidak disentuh.
+// Query satu field saja (tanpa indeks gabungan); status disaring di kode.
+// ============================================================
+exports.expirePendingRequests = onSchedule(
+  { region: REGION, schedule: "every 60 minutes", timeZone: "Asia/Jakarta", memory: "256MiB" },
+  async () => {
+    const db = admin.firestore();
+    const snap = await db.collection("reservation_requests")
+      .where("expiresAt", "<=", admin.firestore.Timestamp.now())
+      .limit(400)
+      .get();
+    const due = snap.docs.filter((x) => String(x.data().status || "").toLowerCase() === "pending");
+    if (!due.length) return;
+    const batch = db.batch();
+    due.forEach((x) => batch.update(x.ref, { status: "kedaluwarsa", expiredAt: admin.firestore.FieldValue.serverTimestamp() }));
+    await batch.commit();
+    logger.info(`expirePendingRequests: ${due.length} permintaan kedaluwarsa`);
+  }
+);
+
+// Bersihkan penghitung batas laju yang sudah lewat (cukup 1 kali sehari).
+exports.cleanupRateLimits = onSchedule(
+  { region: REGION, schedule: "every 24 hours", timeZone: "Asia/Jakarta", memory: "256MiB" },
+  async () => {
+    const db = admin.firestore();
+    const snap = await db.collection("rate_limits").where("expireAt", "<=", admin.firestore.Timestamp.now()).limit(400).get();
+    if (snap.empty) return;
+    const batch = db.batch();
+    snap.docs.forEach((x) => batch.delete(x.ref));
+    await batch.commit();
   }
 );
