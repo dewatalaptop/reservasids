@@ -10,7 +10,7 @@ const crypto = require("crypto");
 
 const MAX_PERANGKAT_PER_AKUN = 10;
 const TOKEN_RE = /^[A-Za-z0-9:_\-]{50,4096}$/;
-const KODE_TOKEN_MATI = ["messaging/registration-token-not-registered", "messaging/invalid-registration-token", "messaging/invalid-argument"];
+const KODE_TOKEN_MATI = ["messaging/registration-token-not-registered", "messaging/invalid-registration-token"];  // invalid-argument sengaja tidak termasuk: bisa muncul karena muatan pesan cacat, bukan token rusak (akan menghapus semua perangkat)
 
 function docIdUntuk(token) { return crypto.createHash("sha256").update(token).digest("hex"); }
 

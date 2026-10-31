@@ -208,3 +208,13 @@ test("peringatan kedaluwarsa tanpa perangkat terdaftar: tidak ditandai (perangka
   await P.jalankanPeringatanKedaluwarsa(env, NOW);
   assert.equal(env.cols.reservation_requests.get("dekat").notifiedExpiring, undefined);
 });
+
+test("kirimPush: messaging/invalid-argument (muatan cacat) TIDAK menghapus perangkat", async () => {
+  const env = makeEnv();
+  await panggil(env, "register", "tok-admin", { token: TOKEN });
+  await panggil(env, "register", "tok-admin2", { token: TOKEN2 });
+  env.setFail(() => "messaging/invalid-argument");
+  const h = await D.kirimPush(env, { channel: "permintaan_baru", title: "t", body: "b", tab: "inbox" });
+  assert.equal(h.dibuang, 0);
+  assert.equal(h.gagal, 2);
+});
