@@ -6,7 +6,7 @@ const crypto = require("crypto");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { handleBoard } = require("./board");
 const { handleDevice, kirimPush } = require("./devices");
-const { pesanPermintaanBaru, jalankanRingkasanPagi, jalankanPeringatanKedaluwarsa } = require("./push");
+const { pesanPermintaanBaru, jalankanRingkasanPagi } = require("./push");
 const { STATUS_BATAL, LIMITS, isCancelled, sisaKapasitas, cekAturanTempat, validateRequest } = require("./submit");
 
 admin.initializeApp();
@@ -541,8 +541,8 @@ async function submitReservationHandler(req, res) {
         ...d,
         status: "pending",
         via: "Web App V10",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + LIMITS.pendingTtlJam * 3600 * 1000)
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+        // Tanpa expiresAt: permintaan menunggu sampai admin menyetujui/menolak (batas 48 jam dihapus 2026-11-06).
       });
     });
     // Beri tahu admin lewat push (tidak boleh menggagalkan atau menunda lama respons ke tamu).
@@ -575,46 +575,6 @@ exports.submitReservation = onRequest(
 exports._submitReservationHandler = submitReservationHandler; // untuk tes
 exports._analyzeTambahanWithAi = analyzeTambahanWithAi; // untuk tes
 
-// ============================================================
-// expirePendingRequests: permintaan yang tidak diproses admin dalam
-// pendingTtlJam dilepas dari kapasitas (status -> kedaluwarsa), bukan dihapus,
-// supaya tamu masih bisa melihat statusnya. Hanya dokumen yang punya
-// expiresAt (dibuat lewat submitReservation); permintaan lama tidak disentuh.
-// Query satu field saja (tanpa indeks gabungan); status disaring di kode.
-// ============================================================
-async function expirePendingHandler() {
-  const db = admin.firestore();
-  const now = admin.firestore.Timestamp.now();
-  let last = null, expired = 0;
-  // Berhalaman: dokumen non-pending yang masih punya expiresAt lampau tidak boleh menutup jalan pending (limit 400 tanpa halaman).
-  for (let page = 0; page < 25; page++) {
-    let q = db.collection("reservation_requests").where("expiresAt", "<=", now).orderBy("expiresAt").limit(400);
-    if (last) q = q.startAfter(last);
-    const snap = await q.get();
-    if (snap.empty) break;
-    last = snap.docs[snap.docs.length - 1];
-    for (const x of snap.docs) {
-      if (String(x.data().status || "").toLowerCase() !== "pending") continue;
-      // Cek ulang status di dalam transaksi: admin mungkin baru saja menyetujui/menolak/menghapusnya.
-      const done = await db.runTransaction(async (tx) => {
-        const cur = await tx.get(x.ref);
-        if (!cur.exists || String(cur.data().status || "").toLowerCase() !== "pending") return false;
-        tx.update(x.ref, { status: "kedaluwarsa", expiredAt: admin.firestore.FieldValue.serverTimestamp(), expiresAt: admin.firestore.FieldValue.delete() });
-        return true;
-      });
-      if (done) expired++;
-    }
-    if (snap.size < 400) break;
-  }
-  if (expired) logger.info(`expirePendingRequests: ${expired} permintaan kedaluwarsa`);
-  return expired;
-}
-
-exports.expirePendingRequests = onSchedule(
-  { region: REGION, schedule: "every 60 minutes", timeZone: "Asia/Jakarta", memory: "256MiB" },
-  expirePendingHandler
-);
-exports._expirePendingHandler = expirePendingHandler; // untuk tes
 
 // Bersihkan penghitung batas laju yang sudah lewat (cukup 1 kali sehari).
 exports.cleanupRateLimits = onSchedule(
@@ -692,8 +652,8 @@ exports.boardReservations = onRequest(
 // ============================================================
 // Notifikasi untuk aplikasi Android admin.
 //  - registerDevice / unregisterDevice: aplikasi mendaftarkan token FCM dengan token login admin.
-//  - pengingatPagi: tiap 07:00 WIB, ringkasan hari ini + jumlah pengingat H-3/H-1/terima kasih + permintaan hampir kedaluwarsa.
-//  - peringatanKedaluwarsa: tiap jam, peringatan SEKALI untuk permintaan yang sisa waktunya <= 6 jam.
+//  - pengingatPagi: tiap 07:00 WIB, ringkasan hari ini + jumlah pengingat H-3/H-1/terima kasih.
+//  (peringatanKedaluwarsa dan expirePendingRequests dihapus 2026-11-06: permintaan tidak lagi kedaluwarsa otomatis.)
 // Permintaan baru dikirim langsung dari submitReservation. Logika: functions/devices.js, functions/push.js.
 // ============================================================
 exports.registerDevice = onRequest(
@@ -709,12 +669,5 @@ exports.pengingatPagi = onSchedule(
   async () => {
     const hasil = await jalankanRingkasanPagi({ admin, db: admin.firestore(), logger });
     logger.info("pengingatPagi:", JSON.stringify(hasil));
-  }
-);
-exports.peringatanKedaluwarsa = onSchedule(
-  { region: REGION, schedule: "every 60 minutes", timeZone: "Asia/Jakarta", memory: "256MiB" },
-  async () => {
-    const hasil = await jalankanPeringatanKedaluwarsa({ admin, db: admin.firestore(), logger });
-    if (hasil.dikirim) logger.info("peringatanKedaluwarsa:", JSON.stringify(hasil));
   }
 );

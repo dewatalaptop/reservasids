@@ -134,14 +134,14 @@ test("usedCapacity mengabaikan batal, ditolak, kedaluwarsa, tempat lain", () => 
 });
 
 // ---------- handler ----------
-test("handler: permintaan sah tersimpan dengan status pending dan expiresAt", async () => {
+test("handler: permintaan sah tersimpan dengan status pending, tanpa expiresAt (tidak kedaluwarsa otomatis)", async () => {
   const db = makeDb(baseSeed());
   const r = await call(load(db), good());
   assert.equal(r.status, 200);
   const saved = [...db._cols.reservation_requests.values()][0];
   assert.equal(saved.status, "pending");
   assert.equal(saved.nomorHp, "6281234567890");
-  assert.ok(saved.expiresAt.ms > Date.now());
+  assert.equal(saved.expiresAt, undefined);
 });
 test("handler: kapasitas penuh ditolak (409) dan kursi terhitung dari pending + confirmed", async () => {
   const seed = baseSeed();
@@ -277,30 +277,13 @@ test("batas laju memakai elemen terakhir X-Forwarded-For (tidak bisa dipalsukan 
   assert.equal(last.status, 429);
 });
 
-// ---------- expirePendingRequests ----------
-test("expirePending: 450 non-pending berexpiresAt lampau tidak menutup jalan pending", async () => {
-  const seed = baseSeed();
-  const old = Date.now() - 3 * 3600 * 1000;
-  for (let i = 0; i < 450; i++) seed.reservation_requests["d" + String(i).padStart(4, "0")] = { status: "ditolak", expiresAt: { ms: old - 1000 + i, valueOf: () => old - 1000 + i } };
-  seed.reservation_requests.p1 = { status: "pending", date: futureDate(), expiresAt: { ms: old, valueOf: () => old } };
-  seed.reservation_requests.p2 = { status: "pending", date: futureDate(), expiresAt: { ms: Date.now() + 1e7, valueOf: () => Date.now() + 1e7 } };
-  const db = makeDb(seed);
+// ---------- tanpa kedaluwarsa otomatis ----------
+test("fungsi kedaluwarsa otomatis sudah dihapus", () => {
+  const db = makeDb(baseSeed());
   load(db);
-  const n = await load.mod._expirePendingHandler();
-  assert.equal(n, 1);
-  const p1 = db._cols.reservation_requests.get("p1");
-  assert.equal(p1.status, "kedaluwarsa");
-  assert.equal(p1.expiresAt, undefined); // tidak ikut dipindai lagi
-  assert.equal(db._cols.reservation_requests.get("p2").status, "pending");
-});
-test("expirePending: dokumen yang sudah disetujui/dihapus saat jalan tidak ditimpa", async () => {
-  const seed = baseSeed();
-  const old = Date.now() - 1000;
-  seed.reservation_requests.a = { status: "ditolak", expiresAt: { ms: old, valueOf: () => old } };
-  const db = makeDb(seed);
-  load(db);
-  assert.equal(await load.mod._expirePendingHandler(), 0);
-  assert.equal(db._cols.reservation_requests.get("a").status, "ditolak");
+  assert.equal(load.mod._expirePendingHandler, undefined);
+  assert.equal(load.mod.expirePendingRequests, undefined);
+  assert.equal(load.mod.peringatanKedaluwarsa, undefined);
 });
 
 // ---------- sanitasi (lapisan kedua XSS) ----------
