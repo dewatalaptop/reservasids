@@ -71,27 +71,40 @@ const AI_MAX_TOKENS = 2000;
 const ZAI_FALLBACK_MODEL = "glm-4.5-flash";
 const GEMINI_MODEL = "gemini-3.6-flash";
 
-async function callGemini(body) {
+// timeoutMs opsional: tanpa batas, permintaan yang macet (Gemini 503/lambat) bisa menahan
+// fungsi sampai batas 60 detik Cloud Run (terlihat di log 2026-11-17).
+async function callGemini(body, timeoutMs) {
   const apiKey = await getSharedSecret("GEMINI_API_KEY");
-  return fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+  const kirim = (b) => fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(b),
+    signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined
   });
+  const res = await kirim(body);
+  // reasoning_effort mengurangi token "berpikir" (sumber utama lambat); kalau model menolaknya, ulangi tanpa parameter itu.
+  if (res.status === 400 && body.reasoning_effort) {
+    logger.warn("AI proxy: Gemini menolak reasoning_effort, ulangi tanpa parameter itu.");
+    const { reasoning_effort: _abaikan, ...tanpa } = body;
+    return kirim(tanpa);
+  }
+  return res;
 }
 
-async function callZai(body) {
+async function callZai(body, timeoutMs) {
   const apiKey = await getSharedSecret("ZAI_API_KEY");
+  const { reasoning_effort: _abaikan, ...rest } = body;
   return fetch("https://api.z.ai/api/paas/v4/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`
     },
-    body: JSON.stringify({ ...body, model: ZAI_FALLBACK_MODEL })
+    body: JSON.stringify({ ...rest, model: ZAI_FALLBACK_MODEL }),
+    signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined
   });
 }
 
@@ -108,11 +121,12 @@ async function callZai(body) {
 // round-trip database di jalur tercepat. minInstances:1 membuat sebagian
 // besar traffic tetap kena instance yang sama sehingga cooldown ini efektif.
 // ============================================================
-const GEMINI_COOLDOWN_MS = 30 * 60 * 1000; // 30 menit
+const GEMINI_COOLDOWN_MS = 30 * 60 * 1000; // 30 menit (kuota habis)
+const GEMINI_BUSY_COOLDOWN_MS = 3 * 60 * 1000; // 3 menit (server sibuk/lambat)
 let geminiRateLimitedUntil = 0;
 
-async function callZaiOnly(body) {
-  const zaiRes = await callZai(body);
+async function callZaiOnly(body, timeoutMs) {
+  const zaiRes = await callZai(body, timeoutMs);
   const zaiData = await zaiRes.json();
   if (!zaiRes.ok) logger.error(`AI proxy: z.ai gagal (${zaiRes.status}):`, JSON.stringify(zaiData));
   return { ok: zaiRes.ok, status: zaiRes.status, data: zaiData };
@@ -122,17 +136,27 @@ async function callZaiOnly(body) {
 // atau masih dalam jendela cooldown sejak 429 terakhir. Mengembalikan
 // { ok, status, data } supaya pemanggil tidak perlu tahu provider mana
 // yang akhirnya menjawab.
-async function callAiWithFallback(body) {
+// opts.geminiMs / opts.zaiMs: batas waktu per penyedia (opsional, dipakai pemeriksaan catatan yang harus cepat).
+async function callAiWithFallback(body, opts = {}) {
   if (Date.now() < geminiRateLimitedUntil) {
-    logger.info("AI proxy: masih cooldown rate-limit Gemini, langsung z.ai.");
-    return callZaiOnly(body);
+    logger.info("AI proxy: masih cooldown Gemini, langsung z.ai.");
+    return callZaiOnly(body, opts.zaiMs);
   }
 
-  const geminiRes = await callGemini(body);
+  let geminiRes;
+  try {
+    geminiRes = await callGemini(body, opts.geminiMs);
+  } catch (err) {
+    // Batas waktu habis / jaringan putus: anggap sama dengan 503.
+    logger.warn(`AI proxy: Gemini tidak menjawab (${err.name}), coba fallback ke z.ai.`);
+    geminiRateLimitedUntil = Date.now() + GEMINI_BUSY_COOLDOWN_MS;
+    return callZaiOnly(body, opts.zaiMs);
+  }
   if (geminiRes.status === 429 || geminiRes.status >= 500) {
-    if (geminiRes.status === 429) geminiRateLimitedUntil = Date.now() + GEMINI_COOLDOWN_MS;
+    // 429 = kuota harian habis (lama); 503 = server sibuk (sebentar) -- keduanya tidak perlu dicoba ulang tiap permintaan.
+    geminiRateLimitedUntil = Date.now() + (geminiRes.status === 429 ? GEMINI_COOLDOWN_MS : GEMINI_BUSY_COOLDOWN_MS);
     logger.warn(`AI proxy: Gemini gagal (${geminiRes.status}), coba fallback ke z.ai.`);
-    return callZaiOnly(body);
+    return callZaiOnly(body, opts.zaiMs);
   }
   if (!geminiRes.ok) {
     const errText = await geminiRes.clone().text();
@@ -296,13 +320,21 @@ Jangan mengarang menu yang tidak ada di daftar sah. Kalau tidak yakin ada di daf
       { role: "user", content: `Catatan Request Tambahan: "${tambahan}"` }
     ],
     temperature: 0.1,
+    reasoning_effort: "low",
     // Jawaban JSON-nya pendek, TAPI model Gemini memakai token "berpikir" tersembunyi yang ikut dihitung dalam batas ini
     // (terukur 2026-10-30: 14 token terlihat + ~400 token berpikir = terpotong di 400, finish_reason "length", JSON tak terbaca,
     // sehingga item tambahan di catatan tidak pernah terdeteksi). Batas 2000 menghasilkan jawaban lengkap.
     max_tokens: AI_MAX_TOKENS
   };
 
-  const { ok, data } = await callAiWithFallback(body);
+  let ok, data;
+  try {
+    // Admin menunggu jawaban ini sebelum bisa kirim WA/menyimpan: Gemini paling lama 6 detik, z.ai 4 detik.
+    ({ ok, data } = await callAiWithFallback(body, { geminiMs: 6000, zaiMs: 4000 }));
+  } catch (err) {
+    logger.warn("checkReservationCompleteness: AI terlalu lama/gagal:", err.name || err.message);
+    return { items: [], error: "AI terlalu lama menjawab." };
+  }
   if (!ok) return { items: [], error: "AI tidak bisa diakses saat ini." };
 
   const content = data?.choices?.[0]?.message?.content;
