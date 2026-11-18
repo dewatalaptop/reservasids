@@ -11,7 +11,7 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -1477,6 +1477,7 @@
     // =========================================
     
     function showAddForm() {
+      catatanSudahDicekAi = null;
         const form = document.getElementById('reservation-form');
         form.reset();
         
@@ -1498,6 +1499,7 @@
     }
 
     function editReservasi(id) {
+      catatanSudahDicekAi = null;
       const res = findReservationById(id); 
       if (!res) { showToast("Reservasi tidak ditemukan", "error"); return; }
       
@@ -1716,6 +1718,7 @@
             : "Perubahan berhasil disimpan");
         closePopup('editFormPopup');
       } catch (e) {
+        console.error("Gagal menyimpan perubahan reservasi:", e);
         showToast("Gagal menyimpan perubahan", "error");
       } finally {
         hideLoader();
@@ -1756,17 +1759,30 @@
         return key ? locationsData[key].capacity : null;
     }
 
+    // Batas tunggu pemeriksaan AI. Lewat dari ini, hasil deteksi otomatis sederhana yang dipakai.
+    const AI_TIMEOUT_MS = 12000;
+    // Catatan yang sudah dicek AI pada form yang sedang terbuka: setelah admin menekan "Tambahkan" lalu Simpan
+    // lagi, AI tidak dipanggil ulang (tidak menunggu dua kali); deteksi otomatis tetap jalan.
+    let catatanSudahDicekAi = null;
+
     async function callAiFunction(functionName, payload) {
         const user = auth.currentUser;
         if (!user) throw new Error('Belum login');
         const token = await user.getIdToken();
-        const res = await fetch(`${AI_FUNCTIONS_BASE_URL}/${functionName}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error(`AI function gagal (${res.status})`);
-        return res.json();
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), AI_TIMEOUT_MS);
+        try {
+            const res = await fetch(`${AI_FUNCTIONS_BASE_URL}/${functionName}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload),
+                signal: ctrl.signal
+            });
+            if (!res.ok) throw new Error(`AI function gagal (${res.status})`);
+            return await res.json();
+        } finally {
+            clearTimeout(timer);
+        }
     }
 
     // --- Progress bar simulasi saat AI menganalisa ---
@@ -1836,30 +1852,43 @@
             return;
         }
 
-        showAiLoadingProgress();
-        let result;
-        try {
-            result = await callAiFunction('checkReservationCompleteness', {
-                reservation: formData,
-                capacity,
-                knownMenuNames: Object.keys(detailMenu)
-            });
-        } catch (e) {
-            console.warn('Pengecekan AI tidak tersedia, lanjut simpan tanpa peringatan:', e);
+        // Deteksi aturan (instan, tanpa jaringan): pola "nama + jumlah" seperti "sate ayam 30".
+        // Tetap jalan walau AI gagal, supaya item berbayar tidak diam-diam terlewat.
+        const knownMenuNames = Object.keys(detailMenu);
+        const aturanItems = ReservasiCore.deteksiItemCatatan(note, knownMenuNames, formData.menus);
+
+        let analisis = {}, aiGagal = false;
+        if (note !== catatanSudahDicekAi) {
+            showAiLoadingProgress();
+            try {
+                const result = await callAiFunction('checkReservationCompleteness', {
+                    reservation: formData,
+                    capacity,
+                    knownMenuNames
+                });
+                analisis = result.tambahanAnalysis || {};
+                aiGagal = !!analisis.error;
+                if (!aiGagal) catatanSudahDicekAi = note;
+            } catch (e) {
+                console.warn('Pengecekan AI tidak tersedia, pakai deteksi otomatis saja:', e);
+                aiGagal = true;
+            }
             hideAiLoadingProgress();
+        }
+
+        // possibleMatch yang bukan nama menu sungguhan akan terhitung Rp0 -> jadikan item custom (harga diisi staf).
+        const aiItems = ReservasiCore.gabungItemCatatan(analisis.items || [], aturanItems)
+            .map(it => it.possibleMatch && !detailMenu.hasOwnProperty(it.possibleMatch) ? { ...it, possibleMatch: null } : it);
+
+        if (ruleFlags.length === 0 && aiItems.length === 0 && !aiGagal) {
             saveCallback();
             return;
         }
-        hideAiLoadingProgress();
 
-        const aiItems = (result.tambahanAnalysis && result.tambahanAnalysis.items) || [];
-
-        if (ruleFlags.length === 0 && aiItems.length === 0) {
-            saveCallback();
-            return;
-        }
-
-        showAiCheckPopup(ruleFlags, aiItems, formId, saveCallback);
+        const flags = aiGagal
+            ? ruleFlags.concat([{ field: 'ai', severity: 'warning', message: `AI sedang sibuk. Hasil di bawah hanya dari deteksi otomatis sederhana; baca ulang catatan: "${note.slice(0, 200)}"` }])
+            : ruleFlags;
+        showAiCheckPopup(flags, aiItems, formId, saveCallback);
     }
 
     function showAiCheckPopup(ruleFlags, aiItems, formId, saveCallback) {
@@ -1929,7 +1958,7 @@
                 showToast('Isi harga satuan dulu sebelum menambahkan.', 'error');
                 return;
             }
-            addCustomMenuRow(formId, item.mentionedText, quantity, price);
+            addCustomMenuRow(formId, ReservasiCore.namaItemCatatan(item.mentionedText), quantity, price);
         }
 
         closePopup('aiCheckPopup');

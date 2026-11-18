@@ -7,6 +7,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { handleBoard } = require("./board");
 const { handleDevice, kirimPush } = require("./devices");
 const { pesanPermintaanBaru, jalankanRingkasanPagi } = require("./push");
+const ReservasiCore = require("./reservasi-core"); // salinan dari dolansawahhomepage (scripts/sync-core.sh)
 const { STATUS_BATAL, LIMITS, isCancelled, sisaKapasitas, cekAturanTempat, validateRequest } = require("./submit");
 
 admin.initializeApp();
@@ -96,14 +97,17 @@ async function callGemini(body, timeoutMs) {
 
 async function callZai(body, timeoutMs) {
   const apiKey = await getSharedSecret("ZAI_API_KEY");
-  const { reasoning_effort: _abaikan, ...rest } = body;
+  const { reasoning_effort: hemat, ...rest } = body;
+  // Pemanggil yang minta reasoning rendah (jalur cepat) -> matikan mode berpikir GLM: tanpa ini glm-4.5-flash
+  // berpikir panjang dulu dan sering lewat batas 4 detik (log 2026-11-18 02:00).
+  const thinking = hemat ? { thinking: { type: "disabled" } } : {};
   return fetch("https://api.z.ai/api/paas/v4/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`
     },
-    body: JSON.stringify({ ...rest, model: ZAI_FALLBACK_MODEL }),
+    body: JSON.stringify({ ...rest, ...thinking, model: ZAI_FALLBACK_MODEL }),
     signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined
   });
 }
@@ -289,9 +293,70 @@ function buildAiCacheKey(tambahan, knownMenuNames, selectedMenuNames) {
   ]);
 }
 
+// Satu percobaan AI -> hasil JSON {items} yang sudah terbaca, atau lempar error (status gagal / JSON rusak / batas waktu).
+async function cobaAiJson(panggil) {
+  const { ok, status, data } = await panggil();
+  if (!ok) throw new Error(`status ${status}`);
+  const parsed = extractJsonFromAiText(data?.choices?.[0]?.message?.content);
+  if (!parsed || !Array.isArray(parsed.items)) throw new Error("JSON tidak terbaca");
+  return parsed;
+}
+
+async function geminiJalurCepat(body, timeoutMs) {
+  let r;
+  try {
+    r = await callGemini(body, timeoutMs);
+  } catch (err) {
+    geminiRateLimitedUntil = Date.now() + GEMINI_BUSY_COOLDOWN_MS;
+    throw err;
+  }
+  if (r.status === 429 || r.status >= 500) {
+    geminiRateLimitedUntil = Date.now() + (r.status === 429 ? GEMINI_COOLDOWN_MS : GEMINI_BUSY_COOLDOWN_MS);
+    throw new Error(`Gemini ${r.status}`);
+  }
+  return { ok: r.ok, status: r.status, data: await r.json() };
+}
+
+// Jalur cepat untuk pemeriksaan catatan (admin menunggu): Gemini dulu; kalau belum menjawab dalam hedgeMs
+// (atau langsung gagal), z.ai (gratis) ikut dijalankan berbarengan dan jawaban valid PERTAMA yang dipakai.
+// Biasanya hanya satu panggilan; dua panggilan hanya saat Gemini lambat. Total paling lama ~hedgeMs + zaiMs.
+function callAiCepat(body, { geminiMs = 7000, hedgeMs = 2500, zaiMs = 6000 } = {}) {
+  return new Promise((resolve, reject) => {
+    let berjalan = 0, selesai = false, zaiMulai = false, timer = null;
+    const galat = [];
+    const sukses = (hasil) => { if (selesai) return; selesai = true; clearTimeout(timer); resolve(hasil); };
+    const gagal = (err) => {
+      galat.push(err && (err.name === "TimeoutError" ? "timeout" : err.message));
+      berjalan--;
+      if (selesai) return;
+      if (!zaiMulai) { mulaiZai(); return; }
+      if (berjalan === 0) { selesai = true; clearTimeout(timer); reject(new Error(galat.join("; "))); }
+    };
+    const jalankan = (nama, panggil) => {
+      berjalan++;
+      cobaAiJson(panggil).then((hasil) => { logger.info(`AI catatan: dijawab ${nama}.`); sukses(hasil); }, gagal);
+    };
+    const mulaiZai = () => {
+      if (zaiMulai || selesai) return;
+      zaiMulai = true;
+      jalankan("z.ai", () => callZaiOnly(body, zaiMs));
+    };
+    if (Date.now() < geminiRateLimitedUntil) { mulaiZai(); return; }
+    jalankan("Gemini", () => geminiJalurCepat(body, geminiMs));
+    timer = setTimeout(mulaiZai, hedgeMs);
+  });
+}
+
+// Hasil AI digabung dengan deteksi aturan (reservasi-core.js, sama dengan yang dijalankan di halaman admin):
+// pola "nama + jumlah" seperti "sate ayam 30" tetap tertangkap walau AI gagal/lambat.
 async function analyzeTambahanWithAi({ tambahan, knownMenuNames, existingMenus }) {
   if (!tambahan || !tambahan.trim()) return { items: [] };
+  const aturan = ReservasiCore.deteksiItemCatatan(tambahan, knownMenuNames, existingMenus);
+  const ai = await analyzeTambahanAiSaja({ tambahan, knownMenuNames, existingMenus });
+  return { ...ai, items: ReservasiCore.gabungItemCatatan(ai.items, aturan) };
+}
 
+async function analyzeTambahanAiSaja({ tambahan, knownMenuNames, existingMenus }) {
   const selectedMenuNames = (existingMenus || []).map((m) => m.name);
 
   const cacheKey = buildAiCacheKey(tambahan, knownMenuNames, selectedMenuNames);
@@ -300,18 +365,27 @@ async function analyzeTambahanWithAi({ tambahan, knownMenuNames, existingMenus }
     logger.info("checkReservationCompleteness: cache hit, skip panggilan AI.");
     return cached.result;
   }
-  const systemPrompt = `Kamu asisten admin restoran/tempat reservasi bernama Dolan Sawah.
-Tugasmu HANYA membaca catatan "Request Tambahan" (teks bebas dari staf/pelanggan) dan
-mendeteksi apakah ada permintaan barang/menu tambahan yang KEMUNGKINAN berbayar tapi
-belum dimasukkan sebagai paket menu terstruktur (sehingga tidak ikut terhitung harga).
+  const pesananSekarang = (existingMenus || []).map((m) => `${m.name} x${m.quantity || 1}`);
+  const systemPrompt = `Kamu asisten admin tempat makan & reservasi Dolan Sawah. Baca catatan "Request Tambahan"
+(teks bebas, sering singkat/typo/bahasa Jawa) dan temukan SEMUA makanan, minuman, atau barang yang diminta tamu
+dan kemungkinan berbayar, tapi BELUM ada di pesanan. Contoh yang termasuk: lauk/sate/snack/kue/minuman/tumpeng/
+kerupuk/buah/air mineral/sewa alat/dekorasi/kue ulang tahun -- walaupun TIDAK ada di daftar menu sistem.
 
-Daftar nama menu yang SAH ada di sistem (cocokkan ke sini kalau relevan): ${JSON.stringify(knownMenuNames || [])}
-Menu yang SUDAH dipilih di reservasi ini: ${JSON.stringify(selectedMenuNames)}
+Daftar menu sistem: ${JSON.stringify(knownMenuNames || [])}
+Pesanan sekarang: ${JSON.stringify(pesananSekarang)}
 
-Balas HANYA dengan JSON valid, tanpa markdown, format persis:
-{"items": [{"mentionedText": "kutipan singkat dari catatan", "possibleMatch": "nama menu dari daftar sah jika cocok, atau null", "suggestedQuantity": angka jumlah yang disebutkan di catatan (mis. "kerupuk 20pcs" -> 20, "es teh 5 gelas" -> 5), atau null kalau tidak disebutkan, "note": "penjelasan singkat kenapa ini perlu dicek staf"}]}
-Kalau catatan hanya berisi permintaan non-berbayar (misal: "tolong tidak pedas", "dekat pintu masuk", "request ulang tahun tanpa tambahan barang"), balas {"items": []}.
-Jangan mengarang menu yang tidak ada di daftar sah. Kalau tidak yakin ada di daftar, isi possibleMatch: null.`;
+Aturan:
+- Satu objek per barang. Angka di dekat barang = jumlahnya ("sate ayam 30" -> 30, "30 tusuk sate" -> 30, "es teh x5" -> 5).
+- possibleMatch HANYA diisi nama persis dari daftar menu sistem bila jelas barang yang sama; selain itu null.
+- Lewati barang yang sudah ada di pesanan sekarang (nama sama/mirip).
+- BUKAN barang: jumlah orang/pax, jam, tanggal, uang/DP, nomor HP, posisi tempat duduk, permintaan rasa ("tidak pedas").
+
+Contoh:
+Catatan: "sate ayam 30, tolong tidak pedas" -> {"items":[{"mentionedText":"sate ayam 30","possibleMatch":null,"suggestedQuantity":30,"note":"Lauk tambahan di luar paket"}]}
+Catatan: "40 orang datang jam 10, dekat kolam" -> {"items":[]}
+Catatan: "tambah tumpeng 1 sama kerupuk" -> {"items":[{"mentionedText":"tumpeng 1","possibleMatch":"Sego Tumpeng","suggestedQuantity":1,"note":"Ada di menu"},{"mentionedText":"kerupuk","possibleMatch":null,"suggestedQuantity":null,"note":"Snack tambahan, jumlah belum disebut"}]}
+
+Balas HANYA JSON valid tanpa markdown: {"items":[{"mentionedText":"...","possibleMatch":null,"suggestedQuantity":null,"note":"..."}]}`;
 
   const body = {
     model: GEMINI_MODEL,
@@ -327,21 +401,15 @@ Jangan mengarang menu yang tidak ada di daftar sah. Kalau tidak yakin ada di daf
     max_tokens: AI_MAX_TOKENS
   };
 
-  let ok, data;
+  let parsed;
   try {
-    // Admin menunggu jawaban ini sebelum bisa kirim WA/menyimpan: Gemini paling lama 6 detik, z.ai 4 detik.
-    ({ ok, data } = await callAiWithFallback(body, { geminiMs: 6000, zaiMs: 4000 }));
+    // Admin menunggu jawaban ini sebelum bisa kirim WA/menyimpan: paling lama ~8,5 detik (lihat callAiCepat).
+    parsed = await callAiCepat(body);
   } catch (err) {
-    logger.warn("checkReservationCompleteness: AI terlalu lama/gagal:", err.name || err.message);
-    return { items: [], error: "AI terlalu lama menjawab." };
+    logger.warn("checkReservationCompleteness: AI gagal semua:", err.message);
+    return { items: [], error: "AI sedang sibuk, hasil hanya dari deteksi otomatis sederhana." };
   }
-  if (!ok) return { items: [], error: "AI tidak bisa diakses saat ini." };
-
-  const content = data?.choices?.[0]?.message?.content;
-  const parsed = extractJsonFromAiText(content);
-  if (!parsed || !Array.isArray(parsed.items)) {
-    return { items: [], error: "Jawaban AI tidak bisa dibaca." };
-  }
+  parsed.items = parsed.items.filter((it) => it && typeof it.mentionedText === "string" && it.mentionedText.trim());
 
   if (aiResultCache.size >= AI_CACHE_MAX_ENTRIES) {
     const oldestKey = aiResultCache.keys().next().value;

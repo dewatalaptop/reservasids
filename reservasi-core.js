@@ -225,7 +225,103 @@
     return "Halo Kak *" + nama + "*,\n\nTerima kasih banyak atas kunjungannya ke *Dolan Sawah*. Semoga Kakak dan rombongan menikmati hidangan dan suasananya. Kami tunggu kedatangan Kakak kembali!";
   }
 
+  // ---- Deteksi item berbayar di catatan bebas, TANPA AI (instan, gratis) ----
+  // Menangkap pola "nama + jumlah" ("sate ayam 30", "30 tusuk sate", "es teh x5", "tumpeng 2 tampah").
+  // Jaring pengaman ketika AI sibuk/lambat, sekaligus digabung dengan hasil AI. Bukan pengganti AI:
+  // permintaan tanpa angka ("tambah kerupuk") tetap mengandalkan AI.
+  var SATUAN = "pcs|pc|biji|bh|buah|porsi|psi|prs|tusuk|tsk|gelas|gls|cup|botol|btl|bungkus|bks|box|dus|kotak|pack|pak|ekor|potong|ptg|kg|ons|liter|ltr|lusin|loyang|tampah|piring|mangkok|mangkuk|pkt|set|x";
+  var RE_SATUAN_AWAL = new RegExp("^(" + SATUAN + ")\\b\\s*");
+  var RE_SATUAN_AKHIR = new RegExp("\\s*\\b(" + SATUAN + ")$");
+  var KATA_ORANG = /\b(orang|org|pax|peserta|anak|dewasa|lansia|balita|bayi|tamu|rombongan|siswa|murid|guru)\b/;
+  var KATA_BUKAN_ITEM = /\b(jam|pukul|wib|menit|hari|tgl|tanggal|bulan|tahun|thn|meja|kursi|lantai|lt|nomor|no|km|meter|ultah|hp|wa|rek|rekening|dp|lunas|bayar|transfer)\b|ulang\s+tahun/;
+  var KATA_PENGISI = /^(?:(?:tambah|tambahan|minta|pesan|pesen|order|request|req|mohon|tolong|plus|extra|ekstra|sama|juga|mau|ada|dengan|dan|untuk|utk|buat|ya|sekalian)\b\s*)+|\s*\b(?:(?:ya|juga|saja|aja|dong|kak|tambahan|lagi)\s*)+$/g;
+
+  function normNama(s) {
+    return String(s || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/(\d)([a-z])/g, "$1 $2").replace(/([a-z])(\d)/g, "$1 $2").replace(/\s+/g, " ").trim();
+  }
+  // Nama item tanpa angka & satuan, untuk membandingkan "sate ayam 30" dengan item custom "Sate ayam".
+  function intiNama(s) {
+    var t = normNama(s).replace(/\b(x)?\d+(x)?\b/g, " ").replace(/\s+/g, " ").trim();
+    var lama;
+    do { lama = t; t = t.replace(RE_SATUAN_AWAL, "").replace(RE_SATUAN_AKHIR, "").replace(KATA_PENGISI, "").trim(); } while (t !== lama);
+    return t;
+  }
+
+  function cocokkanMenu(nama, knownMenuNames) {
+    var n = normNama(nama);
+    if (n.length < 3) return null;
+    var kandidat = (knownMenuNames || []).filter(function (m) {
+      var k = normNama(m);
+      if (!k || k === "ots" || k === "custom") return false;
+      return k === n || (" " + n + " ").indexOf(" " + k + " ") >= 0 || (n.length >= 4 && (" " + k + " ").indexOf(" " + n + " ") >= 0);
+    });
+    if (kandidat.length === 1) return kandidat[0];
+    var persis = kandidat.filter(function (m) { return normNama(m) === n; });
+    return persis.length === 1 ? persis[0] : null;
+  }
+
+  // note: teks catatan; knownMenuNames: nama menu master; selectedMenus: [{name, quantity}] yang sudah ada di pesanan.
+  // Hasil: [{mentionedText, possibleMatch, suggestedQuantity, note, sumber: "aturan"}] (format sama dengan hasil AI).
+  function deteksiItemCatatan(note, knownMenuNames, selectedMenus) {
+    var sudah = (selectedMenus || []).map(function (m) { return intiNama(m && m.name); }).filter(Boolean);
+    var hasil = [], dilihat = {};
+    String(note || "").split(/[\n,;+&/]|\s-\s|\bdan\b/i).forEach(function (bagian) {
+      var asli = bagian.trim();
+      if (/\b\d{1,2}[.:]\d{2}\b/.test(asli)) return;                    // jam
+      var s = " " + normNama(asli.replace(/(\d)[.,](\d{3})\b/g, "$1$2")) + " ";
+      if (!/\d/.test(s)) return;
+      if (/\b(rp|ribu|rb|jt|juta|k)\b/.test(s) || /\d\s*(rb|k)\b/.test(s)) return; // uang
+      if (KATA_ORANG.test(s) || KATA_BUKAN_ITEM.test(s) || /\bke\s*\d/.test(s)) return;
+      var angka = s.match(/\d+/g) || [];
+      if (angka.length !== 1) return;                                   // dua angka atau lebih: terlalu ambigu
+      var qty = parseInt(angka[0], 10);
+      if (!(qty >= 1 && qty <= 999)) return;                            // nomor HP/tahun bukan jumlah
+      var nama = intiNama(s);
+      if (!/[a-z]{3,}/.test(nama) || nama.split(" ").length > 5) return;
+      var cocok = cocokkanMenu(nama, knownMenuNames);
+      var kunci = cocok ? normNama(cocok) : nama;
+      if (dilihat[kunci]) return;
+      var sudahAda = sudah.some(function (x) { return x === nama || x === kunci || (x.length >= 4 && (nama.indexOf(x) >= 0 || x.indexOf(nama) >= 0)); });
+      if (sudahAda) return;
+      dilihat[kunci] = 1;
+      hasil.push({
+        mentionedText: asli.slice(0, 80), possibleMatch: cocok, suggestedQuantity: qty,
+        note: cocok ? "Menu ini disebut di catatan tapi belum ada di pesanan." : "Disebut dengan jumlah di catatan, kemungkinan berbayar. Isi harga bila memang dijual.",
+        sumber: "aturan"
+      });
+    });
+    return hasil;
+  }
+
+  // Gabungkan hasil AI dan hasil aturan tanpa dobel (item yang sama dari dua sumber -> satu, data AI diutamakan).
+  function gabungItemCatatan(aiItems, aturanItems) {
+    var out = [], kunciAda = [];
+    function kunci(it) { return it.possibleMatch ? "m:" + normNama(it.possibleMatch) : "n:" + intiNama(it.mentionedText); }
+    function sama(a, b) {
+      if (a === b) return true;
+      var x = a.slice(2), y = b.slice(2);
+      return x.length >= 4 && y.length >= 4 && (x.indexOf(y) >= 0 || y.indexOf(x) >= 0);
+    }
+    (aiItems || []).concat(aturanItems || []).forEach(function (it) {
+      if (!it || !it.mentionedText) return;
+      var k = kunci(it), i = -1;
+      for (var j = 0; j < kunciAda.length; j++) if (sama(kunciAda[j], k)) { i = j; break; }
+      if (i < 0) { out.push(Object.assign({}, it)); kunciAda.push(k); return; }
+      if (out[i].suggestedQuantity == null && it.suggestedQuantity != null) out[i].suggestedQuantity = it.suggestedQuantity;
+      if (!out[i].possibleMatch && it.possibleMatch) out[i].possibleMatch = it.possibleMatch;
+    });
+    return out;
+  }
+
+  // Nama rapi untuk item custom dari catatan: "Tambah sate ayam 30 tusuk ya" -> "Sate ayam" (jumlah sudah di kolom sendiri).
+  function namaItemCatatan(mentionedText) {
+    var n = intiNama(mentionedText);
+    if (!/[a-z]{3,}/.test(n)) return String(mentionedText || "").trim();
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  }
+
   return {
+    deteksiItemCatatan: deteksiItemCatatan, gabungItemCatatan: gabungItemCatatan, intiNama: intiNama, namaItemCatatan: namaItemCatatan,
     PPN_RATE: PPN_RATE, DP_RATE: DP_RATE, DP_MINIMUM_OTS: DP_MINIMUM_OTS,
     isOtsMenu: isOtsMenu, isCustomMenu: isCustomMenu,
     hitungSubtotal: hitungSubtotal, hitungPpn: hitungPpn, hitungGrandTotal: hitungGrandTotal,
