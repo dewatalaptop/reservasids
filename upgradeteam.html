@@ -533,7 +533,8 @@
 
     if (r.menus && r.menus.length) {
       r.menus.forEach(item => {
-        const harga = getPriceByName(item.name);
+        // Item custom (harga manual, mis. dari popup AI) membawa harga sendiri; tanpa ini papan menghitungnya Rp0.
+        const harga = (typeof item.price === 'number') ? item.price : getPriceByName(item.name);
         const qty   = parseInt(item.quantity) || 1;
         const line  = harga * qty;
         subTotal += line;
@@ -546,9 +547,11 @@
       menus.push({ name: r.menu, qty, harga, line: harga * qty });
     }
 
-    // ✅ Extra dari catatan tambahan ikut dihitung
+    // ✅ Extra dari catatan tambahan ikut dihitung -- KECUALI menu yang sudah ada di pesanan
+    // (mis. sudah ditambahkan admin lewat popup AI): kalau tidak, kasir menghitungnya dua kali.
     if (r.tambahan) {
-      const extras = parseExtraOrdersFromNotes(r.tambahan);
+      const sudahDipesan = new Set((r.menus || []).map(m => String((m && m.name) || '').trim().toLowerCase()));
+      const extras = parseExtraOrdersFromNotes(r.tambahan).filter(item => !sudahDipesan.has(item.name.trim().toLowerCase()));
       extras.forEach(item => {
         const harga = getPriceByName(item.name);
         const qty   = item.quantity || 1;
